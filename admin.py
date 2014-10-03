@@ -35,7 +35,7 @@ class SyncToProd(BaseHandler):
   def post(self):
     if administrator():
       try:
-        url = 'https://shout-about.appspot.com/put_place_api'
+        url = 'https://rayv-app.appspot.com/admin/put_place_api'
         place_list = json.loads(self.request.params['list'])
         for place in place_list:
           form_fields = itemKeyToJSONPoint(place)
