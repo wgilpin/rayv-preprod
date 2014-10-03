@@ -49,7 +49,7 @@ class SyncToProd(BaseHandler):
           for place in place_list:
             it = Item.get(place)
             form_fields = itemKeyToJSONPoint(place)
-            vote = it.votes.filter("voter =", seed_user).get().comment
+            vote = it.votes.filter("voter =", seed_user).get()
             form_fields['myComment'] = vote.comment
             form_fields['voteScore'] = vote.vote
             form_data = urllib.urlencode(form_fields)
