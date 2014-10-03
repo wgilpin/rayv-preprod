@@ -649,12 +649,14 @@ class updateItemAPI(BaseHandler):
   def post(self):
     #https://cloud.google.com/appengine/docs/python/appidentity/#Python_Asserting_identity_to_other_App_Engine_apps
     logging.debug("updateItemAPI")
-    if app_identity.get_application_id() != settings.API_TARGET_APP_ID:
-      logging.debug("updateItemAPI 403: %s != %s"%(app_identity.get_application_id(),settings.API_TARGET_APP_ID))
-      self.abort(403)
-    app_id = self.request.headers.get('X-Appengine-Inbound-Appid', None)
-    logging.info('updateItemAPI: from app %s'%app_id)
-    if app_id in settings.ALLOWED_APP_IDS:
+    #TODO: Security
+    #if app_identity.get_application_id() != settings.API_TARGET_APP_ID:
+    #  logging.debug("updateItemAPI 403: %s != %s"%(app_identity.get_application_id(),settings.API_TARGET_APP_ID))
+    #  self.abort(403)
+    #app_id = self.request.headers.get('X-Appengine-Inbound-Appid', None)
+    #logging.info('updateItemAPI: from app %s'%app_id)
+    #if app_id in settings.ALLOWED_APP_IDS:
+    if True:
       seed_user = None
       for u in User.query():
         if 'pegah' in u.auth_ids:
