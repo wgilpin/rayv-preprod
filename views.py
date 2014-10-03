@@ -648,7 +648,9 @@ def update_item_internal(self, user_id):
 class updateItemAPI(BaseHandler):
   def post(self):
     #https://cloud.google.com/appengine/docs/python/appidentity/#Python_Asserting_identity_to_other_App_Engine_apps
+    logging.debug("updateItemAPI")
     if app_identity.get_application_id() != settings.API_TARGET_APP_ID:
+      logging.debug("updateItemAPI 403")
       self.abort(403)
     app_id = self.request.headers.get('X-Appengine-Inbound-Appid', None)
     logging.info('updateItemAPI: from app %s'%app_id)
@@ -666,6 +668,7 @@ class updateItemAPI(BaseHandler):
         logging.error("updateItemAPI - couldn't get seed user")
         self.abort(500)
     else:
+      logging.debug("updateItemAPI not allowed")
       self.abort(403)
 
 

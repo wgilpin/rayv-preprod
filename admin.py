@@ -36,12 +36,14 @@ class SyncToProd(BaseHandler):
   def post(self):
     if administrator():
       try:
+        logging.info("SyncToProd")
         seed_user = None
         for u in User.all():
           if 'pegah' in u.auth_ids:
             seed_user = u.key().id()
             break
         if seed_user:
+          logging.info("SyncToProd seed user")
           url = 'https://rayv-app.appspot.com/admin/put_place_api'
           place_list = json.loads(self.request.params['list'])
           for place in place_list:
