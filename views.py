@@ -590,7 +590,7 @@ def update_item_internal(self, user_id):
 
   # it.place_name = self.request.get('new-title') set in get_unique_place
   it.address = self.request.get('address')
-  it.owner = self.user_id
+  it.owner = user_id
   if img:
     it.photo = img
   else:
@@ -611,12 +611,17 @@ def update_item_internal(self, user_id):
       it.photo = img
 
   # category
-  posted_cat = self.request.get("new-item-category")
+  if "new-item-category" in self.request.params:
+    posted_cat = self.request.get("new-item-category")
+  else:
+    posted_cat = self.request.get("category")
   try:
     cat = Category.get_by_key_name(posted_cat)
   except:
     cat = None
   it.category = cat
+  if "place_name" in self.request.params:
+    it.place_name = self.request.params['place_name']
   it.put()
   # refresh cache
   memcache_touch_place(it)
@@ -669,6 +674,7 @@ class updateItemAPI(BaseHandler):
           params += '"%s": "%s"'%(k, self.request.params[k])
         logging.debug("updateItemAPI params: "+params)
         update_item_internal(self, seed_user)
+        logging.debug("updateItemAPI Done ")
         self.response.out.write("OK")
       else:
         logging.error("updateItemAPI - couldn't get seed user")

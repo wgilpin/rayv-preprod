@@ -3,7 +3,7 @@ import logging
 from operator import itemgetter
 import pickle
 from google.appengine.api import images, memcache
-from google.appengine.api.images import CORRECT_ORIENTATION
+from google.appengine.api.images import CORRECT_ORIENTATION, BadRequestError
 from google.appengine.ext import db
 import math
 from auth_model import User, memcache_get_user_dict
@@ -310,7 +310,7 @@ class Item(db.Model):
           logging.error("could not memcache Item " + key)
       return item
     except Exception, e:
-      logging.error("get_item", exc_info=True)
+      logging.info("get_item", exc_info=True)
       return None
 
 
