@@ -65,7 +65,7 @@ def map_and_db_search(exclude_user_id, filter_kind, include_maps_data, lat, lng,
     #points["count"] = 0
     # todo: this returns all items - limit?
     for gpt in includeList:
-      jPt = itemToJSONPoint(gpt, my_locn)
+      jPt = itemToJSONPoint(gpt,my_locn)
       points["points"].append(jPt)
       points["count"] += 1
 
