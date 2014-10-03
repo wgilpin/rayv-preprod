@@ -38,9 +38,9 @@ class SyncToProd(BaseHandler):
       try:
         logging.info("SyncToProd")
         seed_user = None
-        for u in User.all():
+        for u in User.query():
           if 'pegah' in u.auth_ids:
-            seed_user = u.key().id()
+            seed_user = u.key.id()
             break
         if seed_user:
           logging.info("SyncToProd seed user")

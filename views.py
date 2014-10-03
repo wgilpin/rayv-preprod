@@ -656,9 +656,9 @@ class updateItemAPI(BaseHandler):
     logging.info('updateItemAPI: from app %s'%app_id)
     if app_id in settings.ALLOWED_APP_IDS:
       seed_user = None
-      for u in User.all():
+      for u in User.query():
         if 'pegah' in u.auth_ids:
-          seed_user = u.key().id()
+          seed_user = u.key.id()
           break
       if seed_user:
         logging.debug("updateItemAPI user:"+str(seed_user))
