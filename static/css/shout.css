@@ -183,6 +183,18 @@
     background-color: #dedede !important;
 }
 
+.new-mini-btn > span {
+    padding-left: 10px;
+    padding-top: 4px;
+    height: 27px;
+    width: 18px;
+}
+
+.new-mini-btn > span > span {
+    background: url("/static/images/search.png") no-repeat;
+    width: 18px;
+}
+
 .new-mini-btn .ui-btn-up-b {
     background-color: #c3c3c3 !important;
 }
@@ -661,12 +673,15 @@ div {
     height: auto;
 }
 
+.item-up-votes, .item-down-votes {
+    font-size: x-large;
+}
+
 .item-votes {
-    font-size: xx-large;
-    color: #514ece;
+    color: rgba(91, 90, 239, 0.59);
     position: relative;
     float: right;
-    width: 51px;
+    width: 71px;
     height: 51px;
     text-align: center;
     line-height: 51px;
@@ -674,12 +689,28 @@ div {
     text-shadow: 1px 1px #a8f;
 }
 
-.item-downvotes {
-    background-image: url('/static/images/noentry.png');
+.item-down {
+    background: url('/static/images/no-entry-3.png') no-repeat;
 }
 
-.item-upvotes {
-    background-image: url('/static/images/heart.png');
+.item-up {
+    background: url('/static/images/heart-3.png') no-repeat;
+}
+
+.item-none {
+    background: url('/static/images/star-3.png') no-repeat;
+}
+
+.item-up-votes {
+    position: relative;
+    top: -12px;
+    right: 45px;
+}
+
+.item-down-votes {
+    position: relative;
+    top: -37px;
+    right: 45px;
 }
 
 .ui-content {

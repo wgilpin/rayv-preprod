@@ -230,7 +230,7 @@
         <div class="square-control">
             <input name="new-title" id="new-place-name-box" placeholder="Place Name"
                value="" type="text" class="new-mini-input">
-            <a href="" data-ajax=false id="new-search-name-btn" data-role="button" data-inline="true" data-theme="f" class="new-mini-btn" data-icon="search"></a>
+            <a href="" data-ajax=false id="new-search-name-btn" data-role="button" data-inline="true" data-theme="f" class="new-mini-btn" ></a>
         </div>
         <div class="square-control">
 
@@ -241,7 +241,7 @@
                 <label id="new-search-label-place" for="new-search-radio-place">Near A Place</label>
                 <input name="new-near" id="new-place-near" placeholder="Near Address"
                        value="" type="text">
-                <a data-ajax=false id="new-search-place-btn" data-role="button" data-inline="true" data-theme="f" class="new-mini-btn" data-icon="search"></a>
+                <a data-ajax=false id="new-search-place-btn" data-role="button" data-inline="true" data-theme="f" class="new-mini-btn" ></a>
 
             </fieldset>
         </div>
@@ -255,75 +255,6 @@
         </div>
     </div>
     <div id="new-place-list" data-controltype="htmlblock">
-    </div>
-</div>
-<div data-role="page" data-control-title="Find Place" id="new-page">
-    <div data-theme="a" data-role="header">
-        <a id="new-cancel" data-role="button" data-theme="a" href="#new-place"
-           data-icon="arrow-l" data-iconpos="left" class="ui-btn-left">
-            Back
-        </a>
-
-        <h3 id="new-shout-page-title">
-            Find Place
-        </h3>
-    </div>
-    <div data-role="content">
-        <div data-role="fieldcontain" data-controltype="textinput">
-            <label for="new-name">
-                Name of Establishment
-            </label>
-            <input name="" id="new-name" placeholder="Name" value="" type="text" data-mini="true">
-        </div>
-        <a id="new-address-my-locn-btn" data-role="button" href="#new-page">
-            Search Near Me
-        </a>
-        <hr style="height:3px; background-color:#ccc; border:0; margin-top:12px; margin-bottom:12px;">
-        <div data-controltype="textblock">
-            <p style="text-align: center;" data-mce-style="text-align: center;">
-                <b style="font-size: large;">
-                    Or
-                </b>
-            </p>
-        </div>
-        <hr style="height:3px; background-color:#ccc; border:0; margin-top:12px; margin-bottom:12px;">
-        <div data-role="fieldcontain" data-controltype="textinput">
-            <label for="new-address">
-                Search near location
-            </label>
-            <input name="" id="new-address" placeholder="Address" value="" type="text"
-                   data-mini="true">
-        </div>
-        <a id="new-address-next-btn" data-role="button" data-theme="e" href="#new-page"
-           data-icon="arrow-r" data-iconpos="right">
-            Search Near That Location
-        </a>
-
-        <div id="search-location-loading" data-controltype="htmlblock">
-            <div style="width: 46px; height:46px;margin-left: auto ;margin-right: auto ;">
-                <img src="/static/images/ajax-loader.gif">
-            </div>
-        </div>
-        <hr style="height:3px; background-color:#ccc; border:0; margin-top:12px; margin-bottom:12px;">
-        <ul id="new-addresses-list" data-role="listview" data-divider-theme="b"
-            data-inset="true">
-            <li data-role="list-divider" role="heading">
-                Addresses
-            </li>
-            <li data-theme="c">
-                <a href="#list-page" data-transition="slide">
-                    None Found
-                </a>
-            </li>
-        </ul>
-        <div id="create-new-address-box" data-controltype="htmlblock">
-            <span class="bold hidden" id="find-place-none">
-                <br>
-                None Found
-                <br>
-                <br>
-            </span>
-        </div>
     </div>
 </div>
 <div data-role="page" data-control-title="NewAddresses" id="new-address-list-page">
@@ -368,7 +299,7 @@
 </div>
 <div data-role="page" data-control-title="New Address Create" id="create-new-address">
     <div data-theme="a" data-role="header">
-        <a data-role="button" href="#new-page" data-icon="arrow-l" data-iconpos="left"
+        <a data-role="button" href="#new-place" data-icon="arrow-l" data-iconpos="left"
            class="ui-btn-left">
             Back
         </a>

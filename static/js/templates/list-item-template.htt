@@ -10,10 +10,20 @@
 
             </div>
             <div class="list-item-text-container list-item-container-spacer">
-                <span class="item-upvotes item-votes">{{ pt.up }}</span>
-                {{ if pt.down|more > 0}}
-                <span class="item-downvotes item-votes">{{ pt.down }}</span>
-                {{/if}}
+                    {{if pt.vote|more>0}}
+                    <div class="item-up item-votes">
+                    {{/if }}
+                    {{if pt.vote|less>0}}
+                    <div class="item-down item-votes">
+                    {{/if}}
+                    {{if pt.vote|equals>0 }}
+                    <div class="item-none item-votes">
+                    {{/if}}
+                    <div class="item-up-votes">{{ pt.up }}</div>
+                    {{if pt.down|more>0}}
+                    <div class="item-down-votes">{{ pt.down }}</div>
+                    {{/if }}
+                </div>
                 <div class="list-item-title">
                     {{ pt.place_name }}
                 </div>
@@ -28,7 +38,7 @@
                     {{/if}}
                 </div>
 
-            </div>
-        </div>
+                    </div>
+                </div>
     </a>
 </li>

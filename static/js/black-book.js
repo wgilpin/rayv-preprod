@@ -177,9 +177,6 @@ var BB = {
         creatorMapMarker: null,
         marker: null,
         navBarActive: false,
-        // lastPosition is a navigator.geolocation.getCurrentPosition object
-//      -.coords {latitude, longitude }
-//      -.timestamp
         lastGPSPosition: {"latitude": 0,
             "longitude": 0,
             "isSet": false,
@@ -253,7 +250,7 @@ var BB = {
 
         },
 
-//every server call, we look for dirty data and append it if needed
+        //every server call, we look for dirty data and append it if needed
         check_for_dirty_data: function (obj) {
             if (obj) {
                 if ("dirty_list" in obj) {
@@ -762,7 +759,7 @@ var BB = {
                     $("#new-category>option:contains('" + $("#selectmenu2").val() + "')").attr("selected", true);
                     $("#new-name").val(place);
                 }
-                $.mobile.changePage("#new-page");
+                $.mobile.changePage("#new-detail");
             }
             // go to the page
         },
@@ -1443,16 +1440,16 @@ var BB = {
             function lookAddressList_inner(obj) {
                 try {
 
-                BB.check_for_dirty_data(obj);
+                    BB.check_for_dirty_data(obj);
 
-                //safe_title = .replace(/\"/g, "&quot;").replace(/\'/g, "&lsquo;"),
-                // https://github.com/adammark/Markup.js/
-                var context = {'items': obj.local.points};
-                var UIlist = Mark.up(BB.add_search_nearby_template, context);
+                    //safe_title = .replace(/\"/g, "&quot;").replace(/\'/g, "&lsquo;"),
+                    // https://github.com/adammark/Markup.js/
+                    var context = {'items': obj.local.points};
+                    var UIlist = Mark.up(BB.add_search_nearby_template, context);
 
-                $("#new-place-list").html(UIlist).listview().trigger('create').trigger('updatelayout');
-                $(".found-address").on("click", BB.item_create);
-                $("#manual-address-lookup").val(currentItem.address);
+                    $("#new-place-list").html(UIlist).listview().trigger('create').trigger('updatelayout');
+                    $(".found-address").on("click", BB.item_create);
+                    $("#manual-address-lookup").val(currentItem.address);
                 }
                 catch (e) {
                     console.error("lookupAddressList");
@@ -1511,10 +1508,10 @@ var BB = {
             currentItem.address = $("#new-place-near").val();
             BB.lookupAddressList(event);
         },
-        
-        add_search_name: function(){
-          //lookup a place by name in the add page
-          name = $("#new-place-name-box").val();
+
+        add_search_name: function () {
+            //lookup a place by name in the add page
+            name = $("#new-place-name-box").val();
         },
 
         take_photo_click: function () {
@@ -1766,161 +1763,163 @@ var BB = {
 $(function () {
 
 
-    function onPageShow(event, ui) {
-        var previousPage = ui.prevPage.attr("id");
-        switch (event.target.id) {
-            case "list-page":
-                BB.pageToList(event, previousPage);
-                break;
-            case "map-page":
-                BB.pageToMap(event);
-                break;
-            case "new-place":
-                BB.pageToNewPlace(event, previousPage);
-                break;
-            case "image-page":
-                BB.pageToImage(event);
-                break;
-            case "new-detail":
-                if (currentItem.key) {
-                    BB.item_load_for_edit();
-                }
-                break;
-            case "item-page":
-                BB.pageToItem(event, previousPage);
-                break;
-            case "create-new-address":
-                BB.pageToCreateAddress(event, previousPage);
-                break;
-            case "new-address-list-page":
-                $("#new-addresses-list").trigger('create').trigger('updatelayout');
-                try {
-                    $("#new-addresses-list").listview('refresh');
-                } catch (e) {
-                }
-                break;
-            case "settings-page":
-                $.get('/user_profile', {}, function (data) {
-                    $("#settings-screen-name").val(jQuery.parseJSON(data).screen_name);
-                });
-                break;
-        }
-    }
-
-    function beforePageShow(event, data) {
-        //some pages are ones you mustn't land on from outside as they need loading
-        console.log("beforePageShow " + data.prevPage.attr("id") + ">" + event.target.id);
-        if (event.target.id == "item-page") {
-            BB.clearItemPage();
-        }
-        if ((event.target.id == "item-page") ||
-            (event.target.id == "map-page") ||
-            (event.target.id == "new-detail") ||
-            (event.target.id == "new-page") ||
-            (event.target.id == "new-address-list-page") ||
-            (event.target.id == "create-new-address") ||
-            (event.target.id == "new-place")) {
-            if (!data.prevPage.attr("id"))
-                $.mobile.changePage("#list-page");
-        }
-
-        if (event.target.id == "map-page") {
-            if (!BB.theMap) {
-                BB.map_init();
+        function onPageShow(event, ui) {
+            var previousPage = ui.prevPage.attr("id");
+            switch (event.target.id) {
+                case "list-page":
+                    BB.pageToList(event, previousPage);
+                    break;
+                case "map-page":
+                    BB.pageToMap(event);
+                    break;
+                case "new-place":
+                    BB.pageToNewPlace(event, previousPage);
+                    break;
+                case "image-page":
+                    BB.pageToImage(event);
+                    break;
+                case "new-detail":
+                    if (currentItem.key) {
+                        BB.item_load_for_edit();
+                    }
+                    break;
+                case "item-page":
+                    BB.pageToItem(event, previousPage);
+                    break;
+                case "create-new-address":
+                    BB.pageToCreateAddress(event, previousPage);
+                    break;
+                case "new-address-list-page":
+                    $("#new-addresses-list").trigger('create').trigger('updatelayout');
+                    try {
+                        $("#new-addresses-list").listview('refresh');
+                    } catch (e) {
+                    }
+                    break;
+                case "settings-page":
+                    $.get('/user_profile', {}, function (data) {
+                        $("#settings-screen-name").val(jQuery.parseJSON(data).screen_name);
+                    });
+                    break;
             }
         }
-        function remove_old_place_searches() {
-            var UIlist = Mark.up(BB.add_search_nearby_template, {});
-            $("#new-page").append(UIlist).listview().trigger('create').trigger('updatelayout');
-        }
 
-        if (event.target.id == "new-page") {
-            $("#search-location-loading").hide();
-            //remove old results
-            $("#new-page ul").remove();
-            BB.process_template({}, remove_old_place_searches);
-        }
-        if (event.target.id == "new-place") {
-            if (data.prevPage.attr("id") == "new-detail") {
-                //coming back from new page
+        function beforePageShow(event, data) {
+            //some pages are ones you mustn't land on from outside as they need loading
+            console.log("beforePageShow " + data.prevPage.attr("id") + ">" + event.target.id);
+            if (event.target.id == "item-page") {
+                BB.clearItemPage();
             }
+            if ((event.target.id == "item-page") ||
+                (event.target.id == "map-page") ||
+                (event.target.id == "new-detail") ||
+//            (event.target.id == "new-page") ||
+                (event.target.id == "new-address-list-page") ||
+                (event.target.id == "create-new-address") ||
+                (event.target.id == "new-place")) {
+                if (!data.prevPage.attr("id"))
+                    $.mobile.changePage("#list-page");
+            }
+
+            if (event.target.id == "map-page") {
+                if (!BB.theMap) {
+                    BB.map_init();
+                }
+            }
+//        function remove_old_place_searches() {
+//            var UIlist = Mark.up(BB.add_search_nearby_template, {});
+//            $("#new-page").append(UIlist).listview().trigger('create').trigger('updatelayout');
+//        }
+
+//        if (event.target.id == "new-page") {
+//            $("#search-location-loading").hide();
+//            //remove old results
+//            $("#new-page ul").remove();
+//            BB.process_template({}, remove_old_place_searches);
+//        }
+            if (event.target.id == "new-place") {
+                if (data.prevPage.attr("id") == "new-detail") {
+                    //coming back from new page
+                }
+            }
+            if (!BB.navBarActive) {
+                event.preventDefault();
+            }
+            //$("#item-img").hide();
         }
-        if (!BB.navBarActive) {
-            event.preventDefault();
+
+
+        try {
+            $('div[data-role=page]').bind('pageshow', onPageShow);
+            $(document).bind("pagebeforeshow", beforePageShow);
         }
-        //$("#item-img").hide();
-    }
+        catch (e) {
+            BB.log(e);
+        }
 
+        // change the default jquery "contains" selector so it matches case insensitive
+        // from: http://css-tricks.com/snippets/jquery/make-jquery-contains-case-insensitive/
+        $.expr[":"].contains = $.expr.createPseudo(function (arg) {
+            return function (elem) {
+                return $(elem).text().toUpperCase().indexOf(arg.toUpperCase()) >= 0;
+            };
+        });
 
-    try {
-        $('div[data-role=page]').bind('pageshow', onPageShow);
-        $(document).bind("pagebeforeshow", beforePageShow);
-    }
-    catch (e) {
-        BB.log(e);
-    }
-
-    // change the default jquery "contains" selector so it matches case insensitive
-    // from: http://css-tricks.com/snippets/jquery/make-jquery-contains-case-insensitive/
-    $.expr[":"].contains = $.expr.createPseudo(function (arg) {
-        return function (elem) {
-            return $(elem).text().toUpperCase().indexOf(arg.toUpperCase()) >= 0;
+        //add a pipe to markup.js so we can do x-> 100%-x
+        Mark.pipes.subFrom = function (a, b) {
+            try {
+                return parseInt(b) - parseInt(a);
+            }
+            catch (e) {
+                return 0;
+            }
         };
-    });
-
-    //add a pipe to markup.js so we can do x-> 100%-x
-    Mark.pipes.subFrom = function (a, b) {
-        try {
-            return parseInt(b) - parseInt(a);
-        }
-        catch (e) {
-            return 0;
-        }
-    };
 
 
-    //add a pipe to markup.js to show x if x>y
-    Mark.pipes.above = function (a, b) {
-        try {
-            if (parseInt(a) > parseInt(b))
-                return a;
-            else
+        //add a pipe to markup.js to show x if x>y
+        Mark.pipes.above = function (a, b) {
+            try {
+                if (parseInt(a) > parseInt(b))
+                    return a;
+                else
+                    return "";
+            }
+            catch (e) {
                 return "";
+            }
+        };
+
+
+        if (!navigator.geolocation) {
+            console.error("$. NEED GEO");
+            alert("LBS Are Off");
+            //todo: Note: jQuery.mobile.changePage is deprecated as of jQuery Mobile 1.4.0 and will be removed in 1.5.0. Use the pagecontainer widget's change() method instead.
+            //   $( ":mobile-pagecontainer" ).pagecontainer( "change", "need-geo.html");
+            $.mobile.changePage("/need-geo.html")
         }
-        catch (e) {
-            return "";
+        else {
+            console.log("populateMainList call");
+
+
+            window.scrollTo(0, 1);
         }
-    };
 
 
-    if (!navigator.geolocation) {
-        console.error("$. NEED GEO");
-        alert("LBS Are Off");
-        //todo: Note: jQuery.mobile.changePage is deprecated as of jQuery Mobile 1.4.0 and will be removed in 1.5.0. Use the pagecontainer widget's change() method instead.
-        //   $( ":mobile-pagecontainer" ).pagecontainer( "change", "need-geo.html");
-        $.mobile.changePage("/need-geo.html")
+        BB.lastGPSTime = 0;
+        if (!navigator.geolocation) {
+            alert("Please check Location Services are on for Safari");
+            console.log("Could not get position");
+            $.mobile.changePage("#need-geo");
+        }
+        else {
+            navigator.geolocation.getCurrentPosition(BB.firstWatchPositionSuccess, BB.watchPositionError, BB.watchPositionOptions)
+        }
+        BB.setupListeners();
+        console.log("JS Init'd");
+        $("#loading").html('.');
     }
-    else {
-        console.log("populateMainList call");
-
-
-        window.scrollTo(0, 1);
-    }
-
-
-    BB.lastGPSTime = 0;
-    if (!navigator.geolocation) {
-        alert("Please check Location Services are on for Safari");
-        console.log("Could not get position");
-        $.mobile.changePage("#need-geo");
-    }
-    else {
-        navigator.geolocation.getCurrentPosition(BB.firstWatchPositionSuccess, BB.watchPositionError, BB.watchPositionOptions)
-    }
-    BB.setupListeners();
-    console.log("JS Init'd");
-    $("#loading").html('.');
-});
+)
+;
 
 
 /////////////////
