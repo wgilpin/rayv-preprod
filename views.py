@@ -52,7 +52,7 @@ def map_and_db_search(exclude_user_id, filter_kind, include_maps_data, lat, lng,
     place_names=list_of_place_names,
     ignore_votes=True)
   if include_maps_data:
-    googPts = get_google_db_places(lat, lng, text_to_search, 2000)
+    googPts = get_google_db_places(lat, lng, text_to_search, 5000)
     includeList = []
     # todo: step through both in sequence
     try:
