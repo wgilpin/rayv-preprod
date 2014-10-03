@@ -35,7 +35,7 @@ class SyncToProd(BaseHandler):
   def post(self):
     if administrator():
       try:
-        url = 'https://rayv-app.appspot.com/put_place_api'
+        url = 'https://shout-about.appspot.com/put_place_api'
         place_list = json.loads(self.request.params['list'])
         for place in place_list:
           form_fields = itemKeyToJSONPoint(place)
@@ -46,5 +46,5 @@ class SyncToProd(BaseHandler):
               headers={'Content-Type': 'application/x-www-form-urlencoded'})
       except Exception, e:
         logging.error('admin.SyncToProd '+str(e))
-    logging.log("Sync Done to Prod")
+    logging.info("Sync Done to Prod")
     self.response.out.write("OK")

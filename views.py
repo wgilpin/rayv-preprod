@@ -648,7 +648,7 @@ class updateItemAPI(BaseHandler):
   def post(self):
     #https://cloud.google.com/appengine/docs/python/appidentity/#Python_Asserting_identity_to_other_App_Engine_apps
     app_id = self.request.headers.get('X-Appengine-Inbound-Appid', None)
-    logging.log('updateItemAPI: from app %s'%app_id)
+    logging.info('updateItemAPI: from app %s'%app_id)
     if app_id in settings.ALLOWED_APP_IDS:
       update_item_internal(self)
       self.response.out.write("OK")
