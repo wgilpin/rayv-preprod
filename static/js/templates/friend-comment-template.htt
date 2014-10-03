@@ -1,0 +1,9 @@
+<span class="item-friend-name">{{ name }}:</span>
+{{ if vote.vote|more>0}}
+<img src="/static/images/heart-small.png">
+{{/if}}
+{{ if vote.vote|less>0}}
+<img src="/static/images/noentry-small.png">
+{{/if}}
+<br>
+&emsp;&emsp;<span class="item-friend-comment">"{{ vote.comment }}"</span><br>

@@ -1,0 +1,6 @@
+{% extends "main.html" %}
+
+{% block maincontent %}
+    <p class="message">{% autoescape off %}{{ message }}{% endautoescape %}</p>
+
+{% endblock %}

@@ -1,0 +1,34 @@
+<li data-theme='c' data-icon='false'>
+    <a
+
+            data-key='{{ pt.key }}'
+            href='#item-page' data-transition='slide'>
+        <div class="list-item-container">
+            <div class="item-img-container">
+                <img class="item-pic"
+                     src="{{ pt.thumbnail }}">
+
+            </div>
+            <div class="list-item-text-container list-item-container-spacer">
+                <span class="item-upvotes item-votes">{{ pt.up }}</span>
+                {{ if pt.down|more > 0}}
+                <span class="item-downvotes item-votes">{{ pt.down }}</span>
+                {{/if}}
+                <div class="list-item-title">
+                    {{ pt.place_name }}
+                </div>
+                <div class="list-item-category">
+                    {{ pt.category }}
+                </div>
+                <div class="list-item-dist">
+                    {{ pt.distance }}
+                    {{ if icon}}
+                    <img class="list-item-number" width="18" height="18"
+                         src="/static/images/{{ icon }}.png">
+                    {{/if}}
+                </div>
+
+            </div>
+        </div>
+    </a>
+</li>

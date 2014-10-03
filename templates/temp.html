@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<style>
+.item-img-container {
+    width: 65px;
+    margin: 1px;
+    float: left;
+}
+
+.item-pic {
+    width: auto;
+    height: 65px;
+    max-width: 65px;
+    max-height: 55px;
+    overflow: hidden;
+}
+
+.list-item-container {
+    height: 60px;
+    width: 100%;
+}
+
+.list-item-text-container {
+    xwidth: 100%;
+    height: 100%;
+    xfloat: left;
+    margin: 1px;
+}
+
+.list-item-container-spacer {
+    margin-left: 65px;
+}
+
+.list-item-title {
+    width: 100%;
+    font-size: small;
+    xtext-align: center;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.list-item-category {
+    width: 100%;
+    font-size: small;
+    color: darkorange;
+    xtext-align: center;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.list-item-bar-container {
+    position: relative;
+    height: 20px;
+    bottom: 0;
+    left: 0;
+}
+
+.list-item-bar-entry {
+    float: right;
+    height: 20px;
+    font-size: small;
+    font-family: arial, sans-serif;
+}
+
+.list-item-bar-right {
+    text-align: right;
+    background-color: lightpink;
+}
+
+.list-item-bar-left {
+    background-color: lightgreen;
+}
+
+.list-item-dist {
+    position: relative;
+    xtop: -4px;
+    xleft: 40%;
+    xmargin-left: auto;
+    xmargin-right: auto;
+    text-align: center;
+    xdisplay: inline-block;
+    font-size: small;
+    font-family: arial, sans-serif;
+    width: 53px;
+    xborder: 1px solid darkgrey;
+    /* Fallback for web browsers that doesn't support RGBa */
+    xbackground: rgb(210, 210, 210);
+    /* RGBa with 0.6 opacity */
+    xbackground: rgba(255, 255, 255, 0.8);
+}
+
+.item-page-list-item-dist {
+    width: 288px;
+    border: 1px solid gray;
+    background-color: lightgray;
+    text-align: center;
+    font-size: small;
+    margin-bottom: 5px;
+}
+
+.ui-li .ui-btn-inner a.ui-link-inherit, .ui-li-static.ui-li {
+    padding: .1em 5px;
+    display: block;
+}
+
+.ui-collapsible-content .ui-listview-inset {
+    margin: .1em 0;
+}
+
+.ui-content {
+    padding: 5px;
+}
+
+#new-item-li {
+    padding: 1em 2em;
+}
+
+.rotl {
+    -moz-transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
+}
+
+.rotr {
+    -moz-transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+}
+
+.rotated-large {
+    position: relative;
+    top: 10%;
+}
+
+#new-preview {
+    display: inline;
+}
+
+#new-preview > img {
+    max-width: 60px;
+    height: 60px;
+    width: auto;
+    max-height: 60px;
+    margin: 10px;
+}
+
+#new-preview-box > fieldset {
+    display: inline;
+}
+
+#item-img[style] {
+    border: 0px !important;
+}
+
+#item-img > img {
+    height: 100%;
+    margin-left: -25%;
+    margin-right: auto;
+    left: 50%;
+    position: absolute;
+}
+
+.float-high {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: auto;
+    width: 100%;
+    text-align: center;
+    z-index: 9999;
+}
+
+.splash {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #252525;
+    background-repeat: no-repeat;
+    text-align: center;
+    z-index: 9999;
+}
+
+.splash > img {
+    width: 100%;
+}
+
+.hidden {
+    display: none;
+}
+
+.popup {
+    background-color: lightyellow;
+    border: 2px solid rgb(165, 106, 42);
+    text-align: center;
+    padding: 4px;
+}
+
+#login-show-btn-label {
+    display: inline;
+}
+
+.ui-field-contain, fieldset.ui-field-contain {
+    border-width: 0;
+}
+
+#main-list {
+    margin: 0;
+}
+
+#list-options {
+    padding: 0.4em 0;
+}
+
+.col-headers:hover {
+    color: darkgrey;
+}
+
+.col-headers {
+    color: lightgrey;
+    margin-bottom: 14px;
+}
+
+.list-filter-selected {
+    color: black;
+}
+
+.list-sort-selected {
+    color: black;
+}
+
+.list-filter {
+    text-align: center;
+    color: inherit;
+}
+
+.list-sort {
+    text-align: right;
+    color: inherit;
+    padding-right: 5px;
+}
+
+#new-addresses-list > li {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+
+#place-cat-search > li {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+
+.thumbs-img {
+    padding-left: 50px;
+    padding-right: 50px;
+}
+
+.cuisine-lookup {
+    margin-top: 18px;
+}
+
+.cuisine-lookup li {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+</style>
+</head>
+<body>
+<ul data-role="listview" data-divider-theme="b" data-inset="true">
+    <li data-theme="c" data-role="none">
+        <a href="#" id="new-item-li" data-transition="slide">
+            Add New...
+        </a>
+    </li>
+    {% for place in results.local.points %}
+        <li data-theme='c' data-icon='false'>
+            <a href='#new-detail'
+               data-transition='slide'
+               data-shout-is-map="{{ place.is_map }}"
+               data-title="{{ place.title }}"
+               data-shout-key="{{ place.key }}"
+               data-address="{{ place.address }}"
+               data-category="{{ place.category.title }}"
+               data-lat="{{ place.lat }}"
+               data-lng="{{ place.lng }}">
+                <div class="list-item-container">
+
+                    <div class="list-item-text-container">
+                        <div class="list-item-title">
+                            {{ place.title }}
+                        </div>
+                        <div class="list-item-category">
+                            {{ place.category }}
+                        </div>
+
+                    </div>
+                </div>
+            </a>
+        </li>
+    {% endfor %}
+</ul>
+
+
+</body>
+</html>

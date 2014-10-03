@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <style>
+        #map_canvas {
+            width: 500px;
+            height: 400px;
+        }
+    </style>
+    <script src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
+    <script src="/static/js/jquery-1.10.2.min.js"></script>
+    <script>
+        $(function () {
+            var mapCanvas = document.getElementById('map_canvas');
+            var myLatlng = new google.maps.LatLng({{ lat }}, {{ lng }});
+            var mapOptions = {
+                center: myLatlng,
+                zoom: 15,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+            var map = new google.maps.Map(map_canvas, mapOptions);
+            var marker = new google.maps.Marker({
+                position: myLatlng,
+                map: map,
+                title: 'Location'
+            });
+        });
+    </script>
+</head>
+<body>
+<form action="/addItem" method="post">
+    Title:
+    <input type="text" name="title">
+    <select name="category">
+        <option>Select one...</option>
+        {% for cat in categories %}
+            <option value="{{ cat.slug }}">{{ cat.title }}</option>
+        {% endfor %}
+    </select>
+</form>
+<div id="map_canvas"></div>
+</body>
+</html>

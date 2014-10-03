@@ -1,0 +1,18 @@
+<ul id='new-addresses-list' data-role='listview' data-inset='true'>
+    {{ if items|empty}}
+    <li data-theme='c' data-icon='false'>
+        Nothing found
+    </li>
+    {{/if }}
+    {{ if items|notempty}}
+    {{ items }}
+    <li data-theme='c' data-icon='false'>
+        <a class='found-address' href='#new-detail'
+           data-title='{{ place_name }}' data-address='{{ address }}' data-lat='{{ lat }}' data-lng='{{ lng }}' data-key='{{ key }}'>
+        <div class='search-title'>{{ place_name }}</div>
+            <div class='search-address'>{{ address }}</div>
+        </a>
+    </li>
+    {{/items}}
+    {{/if}}
+</ul>

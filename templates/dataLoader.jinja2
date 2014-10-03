@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shout Data Loader</title>
+</head>
+<body>
+<h1>Results</h1>
+{% if message %}
+    <p style="color:red">{{ message }}</p>
+{% endif %}
+{% for line in results %}
+    <p>{{ line }}</p>
+{% endfor %}
+</body>
+</html>

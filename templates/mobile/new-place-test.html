@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+</head>
+<body>
+<ul data-role="listview" data-divider-theme="b" data-inset="true">
+    {% for place in results.local.points %}
+        <li data-theme="c" data-role="none">
+            <a href="#" data-transition="slide">
+                {{ place.title }}
+            </a>
+        </li>
+    {% endfor %}
+</ul>
+</body>
+</html>

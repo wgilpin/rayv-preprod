@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile</title>
+</head>
+<body>
+<table border="1">
+    <tr>
+        <td>Function</td>
+        <td>Calls</td>
+        <td>Average</td>
+        <td>Max</td>
+        <td>Total</td>
+    </tr>
+    {% for fn in prof_data %}
+        <tr>
+            <td>{{ fn.name }}</td>
+            <td>{{ fn.count }}</td>
+            <td>{{ fn.avg }}</td>
+            <td>{{ fn.max }}</td>
+            <td>{{ fn.total }}</td>
+        </tr>
+    {% endfor %}
+</table>
+<br>
+<a href="/profile_reset">Reset</a>
+{% for err in errors %}
+<p style="color:red;">{{ err }}</p>
+{% endfor %}
+</body>
+</html>

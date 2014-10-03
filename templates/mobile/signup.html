@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>Shout</title>
+
+    <link href="/static/codiqa.ext.min.css" rel="stylesheet">
+    <link href="/static/css/jqm-neue.css" rel="stylesheet">
+    <link href="/static/css/shout.css" rel="stylesheet">
+    <script src="/static/js/jquery-1.9.1.min.js"></script>
+    <script src="/static/js/jquery.mobile-1.3.1.min.js"></script>
+    <script src="/static/js/codiqa.ext.min.js"></script>
+    <script src="/static/js/shout.js"></script>
+</head>
+<body>
+<div data-role="page" data-control-title="Register" id="page7">
+    <div data-role="content">
+        <h3>
+            Register for a free account
+        </h3>
+
+        <form action="/register" method="POST">
+            <div data-controltype="htmlblock">
+                <span style="color:red">
+                    {{ message }}
+                </span>
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="textinput4">
+                    First Name
+                </label>
+                <input name="name" id="textinput4" placeholder="" value="" type="text"
+                       data-mini="true">
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="textinput5">
+                    Last Name
+                </label>
+                <input name="lastname" id="textinput5" placeholder="" value="" type="text"
+                       data-mini="true">
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="textinput6">
+                    Email Address
+                </label>
+                <input name="email" id="textinput6" placeholder="" value="" type="text"
+                       data-mini="true">
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="textinput10">
+                    Enter a password
+                </label>
+                <input name="password" id="textinput10" placeholder="" value="" type="text"
+                       data-mini="true">
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="textinput8">
+                    Re-type the password
+                </label>
+                <input name="password" id="textinput8" placeholder="" value="" type="text"
+                       data-mini="true">
+            </div>
+            <input type="submit" data-theme="a" value="Submit">
+        </form>
+    </div>
+</div>
+</body>
+</html>

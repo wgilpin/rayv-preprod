@@ -1,0 +1,50 @@
+import webapp2
+import admin
+from auth_logic import SignupHandler, VerificationHandler, SetPasswordHandler, LoginHandler, LogoutHandler, \
+  ForgotPasswordHandler, AuthenticatedHandler
+import auth_logic
+import dataloader
+import migrate
+import profiler
+import views
+
+__author__ = 'Will'
+
+urls = [
+  webapp2.Route('/', views.MainHandler, name='home'),
+  webapp2.Route('/signup', SignupHandler),
+  webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>',
+                handler=VerificationHandler, name='verification'),
+  webapp2.Route('/password', SetPasswordHandler),
+  webapp2.Route('/login', views.login, name='login'),
+  webapp2.Route('/forgot', ForgotPasswordHandler, name='forgot'),
+  webapp2.Route('/authenticated', AuthenticatedHandler, name='authenticated'),
+  webapp2.Route('/getItems_Ajax', views.getItems_Ajax, name='getItems_Ajax'),
+  webapp2.Route('/getMapList_Ajax', views.getMapList_Ajax),
+  webapp2.Route('/getAddresses_ajax', views.getAddresses_ajax),
+  webapp2.Route('/register', views.register, name='register'),
+  webapp2.Route('/item/del/<key:\S+>', views.deleteItem),
+  webapp2.Route('/item/<key:\S+>', views.updateItem),
+  webapp2.Route('/item', views.newOrUpdateItem, name='newOrUpdateItem'),
+  webapp2.Route('/updateItem', views.updateItem),
+  webapp2.Route('/load', views.loadTestData, name='load'),
+  webapp2.Route('/full_load', views.wipeAndLoadTestData),
+  webapp2.Route('/geoLookup', views.geoLookup),
+  webapp2.Route('/getItem/<key:\S+>', views.getItem_ajax),
+  webapp2.Route('/getVotes/<key:\S+>', views.getItemVotes_ajax),
+  webapp2.Route('/addVote_Ajax', views.addVote_ajax),
+  webapp2.Route('/img', views.ImageHandler),
+  webapp2.Route('/thumb', views.ThumbHandler),
+  webapp2.Route('/imageSave_Ajax', views.imageEdit_Ajax),
+  webapp2.Route('/search', views.search),
+  webapp2.Route('/logout', views.logout),
+  webapp2.Route('/migrate_datastore', migrate.migrate),
+  webapp2.Route('/user_profile', views.user_profile),
+  webapp2.Route('/profile', profiler.Report),
+  webapp2.Route('/profile_reset', profiler.profile_reset),
+  webapp2.Route('/getBook', views.getBook),
+  webapp2.Route('/getFullUserRecord', views.getFullUserRecord),
+  webapp2.Route('/ping', views.ping),
+  webapp2.Route('/admin', admin.Main),
+
+]

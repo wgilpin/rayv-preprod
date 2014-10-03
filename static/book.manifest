@@ -1,0 +1,63 @@
+CACHE MANIFEST
+# Cache manifest version 0.0.22
+ static/css/codiqa.ext.css
+ static/css/codiqa.ext.min.css
+ static/css/jqm-neue.css
+ static/css/jquery.mobile.icons.min.css
+ static/css/jquery.mobile.structure-1.3.2.min.css
+ static/css/jquery.mobile.theme-1.3.2.min.css
+ static/css/jquery.mobile-1.3.2.min.css
+ static/css/shout.css
+ static/css/images/ajax-loader.gif
+ static/css/images/splash.png
+ static/css/images/no-image.png
+ static/css/images/thumbdown.png
+ static/css/images/thumbdownred.png
+ static/css/images/thumbup.png
+ static/css/images/thumbupgreen.png
+ static/css/images/star.png
+ static/css/images/1.png
+ static/css/images/2.png
+ static/css/images/3.png
+ static/css/images/4.png
+ static/css/images/5.png
+ static/css/images/6.png
+ static/css/images/6.png
+ static/css/images/blue_dot.png
+ static/css/images/icons-18-black.png
+ static/css/images/icons-36-black.png
+ static/css/images/icons-18-white.png
+ static/css/images/icons-36-white.png
+ static/css/images/marker-btn.png
+ static/css/images/phone.png
+ static/js/templates/add-search-nearby-template.htt
+ static/js/templates/item-votes-list.htt
+ static/js/templates/list-item-template.htt
+ static/js/binaryajax.js
+ static/js/black-book.js
+ static/js/canvasResize.jquery.json
+ static/js/canvasResize.js
+ static/js/codiqa.ext.js
+ static/js/codiqa.ext.min.js
+ static/js/exif.js
+ static/js/jquery.canvasResize.js
+ static/js/jquery.exif.js
+ static/js/jquery.mobile-1.3.2.min.js
+ static/js/jquery.mobile-1.3.2.min.map
+ static/js/jquery-1.11.1.min.js
+ static/js/jquery-1.11.1.min.map
+ static/js/markup.min.js
+ static/js/shout-login.js
+ static/js/shout-reset.js
+ static/js/zepto.min.js
+ index.html
+
+NETWORK:
+# All URLs that start with the following lines
+# are whitelisted.
+*
+
+CACHE:
+# Additional items to cache.
+
+FALLBACK:

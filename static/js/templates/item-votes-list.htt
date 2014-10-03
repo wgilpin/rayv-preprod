@@ -1,0 +1,16 @@
+<div id="item-votes-list">
+    <table>
+        {{ votes }}
+            <tr>
+
+                <td style="border-bottom: 1px lightgray; width:20%; color:{% if vote.vote > 0 %}green{% else %}red{% endif %}">
+                    &ensp;<img width="16" height="16" src="/static/css/images/{{ thumb }}">
+                    &emsp;
+                </td>
+                <td style="border-bottom: 1px lightgray;">
+                    {{ userName }}: {{ comment }}
+                </td>
+            </tr>
+        {{/votes}}
+    </table>
+</div>

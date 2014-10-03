@@ -1,0 +1,13 @@
+<script id="list-item-template" type="text/template">
+    <li data-theme='c' data-icon='false'>"
+        <div style='position:relative; width: {{ pt.voteRatio }}%; height:36px; background-color: lightpink; color:lightgrey;'>
+            .
+        </div>
+        " +
+        <a style='position:absolute; top:0; width:95%;'
+           onclick="javascript:loadMapItemForEdit(\'{{ pt.key }}\');"
+           href='\#item-page' data-transition='slide'>
+        {{ pt.place_name }} [{{ pt.distance}}]
+        </a>
+    </li>
+</script>

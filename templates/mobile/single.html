@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>Shout</title>
+
+    <link href="/static/codiqa.ext.min.css" rel="stylesheet">
+    <link href="/static/css/jqm-neue.css" rel="stylesheet">
+    <link href="/static/css/shout.css" rel="stylesheet">
+    <script src="/static/js/jquery-1.9.1.min.js"></script>
+    <script src="/static/js/jquery.mobile-1.3.1.min.js"></script>
+    <script src="/static/js/codiqa.ext.min.js"></script>
+    <script src="/static/js/shout.js"></script>
+</head>
+<body>
+<div data-role="page" data-control-title="Item" id="page8">
+    <div id="title" data-theme="b" data-role="header">
+        <h3 id="item-title">
+            Item
+        </h3>
+    </div>
+    <div data-role="content">
+        <div style="width: 288px; height: 200px; position: relative; background-color: #fbfbfb; border: 1px solid #b8b8b8;"
+             data-controltype="image" id="img">
+            <img src="https://codiqa.com/static/images/v2/image.png" alt="image"
+                 style="position: absolute; top: 50%; left: 50%; margin-left: -16px; margin-top: -18px">
+        </div>
+        <div id="item-descr" data-controltype="textblock">
+            <p>
+                <b>
+                    Item Description
+                </b>
+            </p>
+        </div>
+        <a data-role="button" data-theme="b" href="#page8" data-icon="ios-pack-color-search"
+           data-iconpos="left" data-iconsize="26">
+            See on Map
+        </a>
+
+        <div id="descr" data-controltype="textblock">
+            <b>
+                Enter content here...
+            </b>
+        </div>
+        <div class="ui-grid-a">
+            <div class="ui-block-a">
+                <div data-controltype="textblock">
+                    <p style="text-align: center;" data-mce-style="text-align: center;">
+                        <span style="font-size: x-large;">
+                            <b>
+                                ﻿﻿
+                                <span style="color: rgb(0, 128, 0);" data-mce-style="color: #008000;">
+                                    Votes Yes
+                                </span>
+                            </b>
+                        </span>
+                    </p>
+                </div>
+            </div>
+            <div class="ui-block-b">
+                <div id="yesvotes" data-controltype="textblock">
+                    <p style="text-align: center;" data-mce-style="text-align: center;">
+                        <span style="font-size: x-large;">
+                            <b>
+                                0
+                            </b>
+                        </span>
+                    </p>
+                </div>
+            </div>
+            <div class="ui-block-a">
+                <div data-controltype="textblock">
+                    <p style="text-align: center;" data-mce-style="text-align: center;">
+                        <span style="color: rgb(255, 0, 0); font-size: x-large;">
+                            <b>
+                                Votes No﻿
+                            </b>
+                        </span>
+                    </p>
+                </div>
+            </div>
+            <div class="ui-block-b">
+                <div id="novotes" data-controltype="textblock">
+                    <p style="text-align: center;">
+                        <span style="font-size: x-large;">
+                            <b>
+                                0
+                                <span id="_mce_caret" data-mce-bogus="true">
+                                    ﻿
+                                </span>
+                            </b>
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div data-role="tabbar" data-iconpos="top" data-theme="a">
+        <ul>
+            <li>
+                <a href="#page1" data-transition="fade" data-theme="" data-icon="home">
+                    Home
+                </a>
+            </li>
+            <li>
+                <a href="#page3" data-transition="fade" data-theme="" data-icon="star">
+                    Map
+                </a>
+            </li>
+            <li>
+                <a href="#page4" data-transition="fade" data-theme="" data-icon="grid">
+                    List
+                </a>
+            </li>
+            <li>
+                <a href="#page5" data-transition="fade" data-theme="" data-icon="check">
+                    New
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>

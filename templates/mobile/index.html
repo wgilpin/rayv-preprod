@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html manifest="xbook.manifest">
+<head>
+    <meta charset="utf-8">
+    <title>Black Book</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+
+    <link href="/static/css/codiqa.ext.min.css" rel="stylesheet">
+    <link href="/static/css/jquery.mobile.theme-1.3.2.min.css" rel="stylesheet">
+    <link href="/static/css/jquery-mobile.css" rel="stylesheet">
+    <link href="/static/css/jquery.mobile.structure-1.3.2.min.css" rel="stylesheet">
+    <link href="/static/css/shout.css" rel="stylesheet">
+
+    <script src="/static/js/jquery-1.11.1.min.js"></script>
+    <script src="/static/js/jquery.mobile-1.3.2.min.js"></script>
+    <script src="/static/js/codiqa.ext.min.js"></script>
+    <script type="text/javascript"
+            xsrc="https://maps.googleapis.com/maps/api/js?key=AIzaSyChXHZvWxK8AppO5uN8ciNENv1GZTXTBns">
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+    <script src="/static/js/exif.js"></script>
+    <script src="/static/js/markup.min.js"></script>
+    <script src="/static/js/binaryajax.js"></script>
+    <script src="/static/js/canvasResize.js"></script>
+    <script src="/static/js/black-book.js"></script>
+</head>
+<body>
+
+<div data-role="page" data-control-title="main" id="list-page">
+    <div data-theme="a" data-role="header">
+        <input type="search" id="main-search" class="search-header" value="" data-mini="true" data-inline="true"/>
+
+        <a id="refresh-btn" data-role="button" href="#list-page" data-icon="refresh"
+           data-iconpos="notext" class="ui-btn-right">
+        </a>
+
+    </div>
+    <div data-role="content">
+        <div id="splash" data-controltype="htmlblock" class="splash">
+            <img id="splash" src="/static/images/rayvcircle.gif">
+        </div>
+        <div id="list-loading" data-controltype="htmlblock" class="float-high">
+            <div style="width: 46px; height:46px;margin-left: auto ;margin-right: auto ;">
+                <img src="/static/images/ajax-loader.gif">
+            </div>
+        </div>
+        <div id="filter-radio" data-role="fieldcontain" data-controltype="radiobuttons">
+            <fieldset data-role="controlgroup" data-type="horizontal" data-mini="true">
+                <input id="radio1" name="" value="mine" type="radio">
+                <label for="radio1">
+                    Mine
+                </label>
+                <input id="radio2" name="" value="all" type="radio">
+                <label for="radio2">
+                    All
+                </label>
+                <input id="radio3" name="" value="untried" type="radio">
+                <label for="radio3">
+                    Untried
+                </label>
+            </fieldset>
+        </div>
+        <ul id="main-list" data-role="listview" data-divider-theme="b" data-inset="true">
+            <li data-theme="c">
+                <a href="#list-page" data-transition="slide">
+                    Loading...
+                </a>
+            </li>
+        </ul>
+        <div data-controltype="htmlblock">
+            <span id="loading">
+                Javascript Not Loaded
+            </span>
+        </div>
+    </div>
+    <div data-role="tabbar" data-iconpos="top" data-theme="a" class="custom-navbar">
+        <ul>
+            <li>
+                <a href="#list-page" data-transition="fade" data-theme="" data-icon="grid">
+                </a>
+            </li>
+            <li>
+                <a href="#new-place" data-transition="fade" data-theme="" data-icon="plus">
+                </a>
+            </li>
+            <li>
+                <a href="#map-page" data-transition="fade" data-theme="" data-icon="home">
+                </a>
+            </li>
+            <li>
+                <a href="#settings-page" data-transition="fade" data-theme="" data-icon="gear">
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div data-role="page" data-control-title="Login" id="login-page">
+    <div data-theme="a" data-role="header">
+        <h3>
+            Login
+        </h3>
+    </div>
+    <div data-role="content">
+        <div data-controltype="htmlblock">
+              <span class="message">
+                  {{ message2 }}
+              </span>
+        </div>
+        <form action="/login" method="POST" data-ajax="false">
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="usr">
+                    User Name
+                </label>
+                <input name="username" id="usr" placeholder="" value="" type="text">
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="pwd">
+                    Password
+                </label>
+                <input name="password" id="pwd" placeholder="" value="" type="password">
+            </div>
+            <div data-role="fieldcontain" data-controltype="toggleswitch">
+                <label for="login-show-btn">
+                    Show password
+                </label>
+                <select name="toggleswitch1" id="login-show-btn" data-theme="a" data-role="slider"
+                        data-mini="true">
+                    <option value="off">
+                        Off
+                    </option>
+                    <option value="on">
+                        On
+                    </option>
+                </select>
+            </div>
+            <input type="submit" data-theme="a" value="Submit">
+        </form>
+        <div data-controltype="htmlblock">
+              <span class="message">
+                  {{ message }}
+              </span>
+        </div>
+        <a id="forgot-btn" data-role="button" href="#forgot-pwd" data-icon="info"
+           data-iconpos="left">
+            Forgot Password
+        </a>
+
+        <div data-controltype="textblock">
+            <p style="text-align: center;">
+                <b>
+                    Or
+                </b>
+            </p>
+        </div>
+        <a data-role="button" data-theme="a" href="#/register">
+            Register Free Account
+        </a>
+
+        <div>
+            <a href="www.bbc.co.uk" data-transition="fade">
+                Click to find out more
+            </a>
+        </div>
+    </div>
+</div>
+<div data-role="page" data-control-title="Map" id="map-page">
+    <div data-role="content">
+        <div data-role="fieldcontain" data-controltype="textinput" class="hidden">
+            <input name="" id="map-search" placeholder="Local Search" value="" type="text"
+                   data-mini="true">
+        </div>
+        <div id="map-search-btn-box" data-controltype="htmlblock">
+            <button data-theme="c" id="map-search-btn">
+                Search
+            </button>
+        </div>
+        <div id="map-list-loading" data-controltype="htmlblock" class="float-high">
+            <div style="width: 46px; height:46px;margin-left: auto ;margin-right: auto ;">
+                <img src="/static/images/ajax-loader.gif">
+            </div>
+        </div>
+        <div id="map-div" data-controltype="htmlblock">
+        </div>
+        <div id="map-below" data-controltype="htmlblock">
+        </div>
+        <ul id="map-list" data-role="listview" data-divider-theme="b" data-inset="true">
+            <li data-theme="c">
+                <a href="#page1" data-transition="slide">
+                    Loading...
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div data-role="tabbar" data-iconpos="top" data-theme="a">
+        <ul>
+            <li>
+                <a href="#list-page" data-transition="fade" data-theme="" data-icon="grid">
+                </a>
+            </li>
+            <li>
+                <a href="#new-place" data-transition="fade" data-theme="" data-icon="plus">
+                </a>
+            </li>
+            <li>
+                <a href="#map-page" data-transition="fade" data-theme="" data-icon="home">
+                </a>
+            </li>
+            <li>
+                <a href="#settings-page" data-transition="fade" data-theme="" data-icon="gear">
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div data-role="page" data-control-title="New Place" id="new-place">
+    <div data-theme="a" data-role="header">
+        <a data-role="button" data-theme="a" href="#list-page" data-icon="arrow-l"
+           data-iconpos="left" class="ui-btn-left">
+            Cancel
+        </a>
+
+        <h3>
+            Add
+        </h3>
+    </div>
+    <div data-role="content" id="new-top-controls">
+        <div class="square-control">
+            <input name="new-title" id="new-place-name-box" placeholder="Place Name"
+               value="" type="text" class="new-mini-input">
+            <a href="" data-ajax=false id="new-search-name-btn" data-role="button" data-inline="true" data-theme="f" class="new-mini-btn" data-icon="search"></a>
+        </div>
+        <div class="square-control">
+
+            <fieldset data-role="controlgroup">
+                <input type="radio" name="new-search-radio" id="new-search-radio-me" value="me" checked="checked">
+                <label id="new-search-label-me" for="new-search-radio-me">Near Me</label>
+                <input type="radio" name="new-search-radio" id="new-search-radio-place" value="place">
+                <label id="new-search-label-place" for="new-search-radio-place">Near A Place</label>
+                <input name="new-near" id="new-place-near" placeholder="Near Address"
+                       value="" type="text">
+                <a data-ajax=false id="new-search-place-btn" data-role="button" data-inline="true" data-theme="f" class="new-mini-btn" data-icon="search"></a>
+
+            </fieldset>
+        </div>
+        <div class="square-control">
+        <a href="#create-new-address" data-role="button" id="new-item-li">Enter Address Manually</a>
+        </div>
+    </div>
+    <div id="new-place-list-loading" data-controltype="htmlblock" class="float-high">
+        <div style="width: 46px; height:46px;margin-left: auto ;margin-right: auto ;">
+            <img src="/static/images/ajax-loader.gif">
+        </div>
+    </div>
+    <div id="new-place-list" data-controltype="htmlblock">
+    </div>
+</div>
+<div data-role="page" data-control-title="Find Place" id="new-page">
+    <div data-theme="a" data-role="header">
+        <a id="new-cancel" data-role="button" data-theme="a" href="#new-place"
+           data-icon="arrow-l" data-iconpos="left" class="ui-btn-left">
+            Back
+        </a>
+
+        <h3 id="new-shout-page-title">
+            Find Place
+        </h3>
+    </div>
+    <div data-role="content">
+        <div data-role="fieldcontain" data-controltype="textinput">
+            <label for="new-name">
+                Name of Establishment
+            </label>
+            <input name="" id="new-name" placeholder="Name" value="" type="text" data-mini="true">
+        </div>
+        <a id="new-address-my-locn-btn" data-role="button" href="#new-page">
+            Search Near Me
+        </a>
+        <hr style="height:3px; background-color:#ccc; border:0; margin-top:12px; margin-bottom:12px;">
+        <div data-controltype="textblock">
+            <p style="text-align: center;" data-mce-style="text-align: center;">
+                <b style="font-size: large;">
+                    Or
+                </b>
+            </p>
+        </div>
+        <hr style="height:3px; background-color:#ccc; border:0; margin-top:12px; margin-bottom:12px;">
+        <div data-role="fieldcontain" data-controltype="textinput">
+            <label for="new-address">
+                Search near location
+            </label>
+            <input name="" id="new-address" placeholder="Address" value="" type="text"
+                   data-mini="true">
+        </div>
+        <a id="new-address-next-btn" data-role="button" data-theme="e" href="#new-page"
+           data-icon="arrow-r" data-iconpos="right">
+            Search Near That Location
+        </a>
+
+        <div id="search-location-loading" data-controltype="htmlblock">
+            <div style="width: 46px; height:46px;margin-left: auto ;margin-right: auto ;">
+                <img src="/static/images/ajax-loader.gif">
+            </div>
+        </div>
+        <hr style="height:3px; background-color:#ccc; border:0; margin-top:12px; margin-bottom:12px;">
+        <ul id="new-addresses-list" data-role="listview" data-divider-theme="b"
+            data-inset="true">
+            <li data-role="list-divider" role="heading">
+                Addresses
+            </li>
+            <li data-theme="c">
+                <a href="#list-page" data-transition="slide">
+                    None Found
+                </a>
+            </li>
+        </ul>
+        <div id="create-new-address-box" data-controltype="htmlblock">
+            <span class="bold hidden" id="find-place-none">
+                <br>
+                None Found
+                <br>
+                <br>
+            </span>
+        </div>
+    </div>
+</div>
+<div data-role="page" data-control-title="NewAddresses" id="new-address-list-page">
+    <div data-theme="a" data-role="header" data-position="fixed">
+        <a data-role="button" data-rel="back" href="#new-address-list-page" data-icon="arrow-l"
+           data-iconpos="left" class="ui-btn-left">
+            Back
+        </a>
+
+        <h3>
+            Address
+        </h3>
+    </div>
+    <div data-role="content">
+        <div data-role="fieldcontain" data-controltype="textinput">
+            <input name="" id="manual-address-lookup" placeholder="Address" value=""
+                   type="text">
+        </div>
+        <a id="enter-new-addr-btn" data-role="button" data-theme="b" href="#new-address-list-page">
+            Lookup a New Address
+        </a>
+
+        <div data-controltype="textblock">
+            <p style="text-align: center;" data-mce-style="text-align: center;">
+                <b>
+                    or pick one
+                </b>
+            </p>
+        </div>
+        <ul id="new-addresses-list" data-role="listview" data-divider-theme="b"
+            data-inset="true">
+            <li data-role="list-divider" role="heading">
+                Addresses
+            </li>
+            <li data-theme="c">
+                <a href="#list-page" data-transition="slide">
+                    Loading...
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div data-role="page" data-control-title="New Address Create" id="create-new-address">
+    <div data-theme="a" data-role="header">
+        <a data-role="button" href="#new-page" data-icon="arrow-l" data-iconpos="left"
+           class="ui-btn-left">
+            Back
+        </a>
+
+        <h3>
+            Create New
+        </h3>
+    </div>
+    <div data-role="content">
+        <div data-role="fieldcontain" data-controltype="textinput">
+            <input name="" id="create-name" placeholder="Name of Establishment" value=""
+                   type="text">
+        </div>
+        <h4>
+            Drag map to mark a location
+        </h4>
+
+        <div class="ui-grid-a">
+            <div class="ui-block-a">
+                <div id="dragged-address" data-controltype="textblock" class="hidden">
+                    <p>
+                        <b>
+                            Address will be shown here
+                        </b>
+                    </p>
+                </div>
+            </div>
+            <div class="ui-block-b">
+                <a id="create-new-save-btn" data-role="button" data-theme="b" href="#new-detail">
+                    Save
+                </a>
+            </div>
+        </div>
+        <div id="find-on-map-div" data-controltype="htmlblock">
+        </div>
+        <hr style="height:3px; background-color:#ccc; border:0; margin-top:12px; margin-bottom:12px;">
+    </div>
+</div>
+<div data-role="page" data-control-title="New Detail" id="new-detail">
+    <div data-theme="a" data-role="header">
+        <a data-role="button" data-rel="back" data-theme="a" href="#new-place"
+           data-icon="arrow-l" data-iconpos="left" class="ui-btn-left">
+            Back
+        </a>
+
+        <h3>
+            Shout
+        </h3>
+    </div>
+    <div data-role="content">
+        <form id="new-shout-form" action="/newItem" method="POST" data-ajax="false"
+              enctype="multipart/form-data">
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <input name="" id="new-detail-name" placeholder="Place Name" value=""
+                       type="text">
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <input name="" id="new-detail-comment" placeholder="Comment" value=""
+                       type="text">
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <input name="" id="new-detail-address" placeholder="Address" value=""
+                       type="text">
+            </div>
+            <div id="new-detail-img-table" data-controltype="htmlblock">
+                <table class="wide-table">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <div id="new-preview-box" class="hidden">
+                                <div style="" data-controltype="image" id="new-img">
+                                    <img height="150" src=""
+                                         alt="image" style=" margin-left: -16px; margin-top: -18px">
+                                </div>
+                                <div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="one-third-td">
+                            <button id="new-rotr">
+                                <img src="/static/images/rotate.png">
+                            </button>
+                            <button type="button" id="new-item-camera-img">
+                                <img src="/static/images/86-camera.png">
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="cat-lookup" data-controltype="htmlblock" class="cuisine-lookup">
+                <select id="new-category">
+                    <option value="None">
+                        Select Cuisine ...
+                    </option>
+                    {% for cat in cats %}
+                        <option value="{{ cat.title }}">
+                            {{ cat.title }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div data-role="fieldcontain" data-controltype="camerainput">
+                <input type="file" name="new-photo" id="image-input" accept="image/*"
+                       capture="camera">
+            </div>
+            <div data-controltype="htmlblock">
+                <div id="new-detail-vote" data-role="navbar">
+                    <ul>
+                        <li>
+                            <a href="#" id="new-item-like" data-icon="check">
+                                Like
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" id="new-item-dislike" data-icon="delete">
+                                Dislike
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" id="new-item-untried" data-icon="star">
+                                Untried
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <a id="new-item-save" data-role="button" data-theme="b" href="#new-detail">
+                Save
+            </a>
+            <a id="new-item-delete" data-role="button" data-theme="a" href="#new-detail">
+                Delete Item
+            </a>
+        </form>
+    </div>
+</div>
+<div data-role="page" data-control-title="Register" id="register-page">
+    <div data-theme="a" data-role="header">
+        <a data-role="button" href="#register-page" data-icon="arrow-l" data-iconpos="left"
+           class="ui-btn-left">
+            Back
+        </a>
+
+        <h3>
+            Register Free
+        </h3>
+    </div>
+    <div data-role="content">
+        <form action="/register" method="POST">
+            <div data-controltype="htmlblock">
+                  <span style="color:red">
+                      {{ message }}
+                  </span>
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="textinput4">
+                    First Name
+                </label>
+                <input name="name" id="textinput4" placeholder="" value="" type="text"
+                       data-mini="true">
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="textinput5">
+                    Last Name
+                </label>
+                <input name="lastname" id="textinput5" placeholder="" value="" type="text"
+                       data-mini="true">
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="textinput6">
+                    Email Address
+                </label>
+                <input name="email" id="textinput6" placeholder="" value="" type="text"
+                       data-mini="true">
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="textinput10">
+                    Enter a password
+                </label>
+                <input name="password" id="textinput10" placeholder="" value="" type="text"
+                       data-mini="true">
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="textinput8">
+                    Re-type the password
+                </label>
+                <input name="password" id="textinput8" placeholder="" value="" type="text"
+                       data-mini="true">
+            </div>
+            <input type="submit" data-theme="a" value="Submit">
+        </form>
+    </div>
+</div>
+<div data-role="page" data-control-title="Settings" id="settings-page">
+    <div data-role="content">
+        <h2>Profile</h2>
+
+        <div class="form-group">
+            <label for="screen_name">Nickname</label>
+            <input class="form-control" name="screen_name" id="settings-screen-name" placeholder="Nickname (for friends)">
+        </div>
+        <button id="settings-save-profile" type="button" class="btn">Save Profile</button>
+        <hr>
+        <form action="/logout" data-ajax="false">
+            <input type="submit" value="Log Out">
+        </form>
+    </div>
+    <div data-role="tabbar" data-iconpos="top" data-theme="a">
+        <ul>
+            <li>
+                <a href="#list-page" data-transition="fade" data-theme="" data-icon="grid">
+                </a>
+            </li>
+            <li>
+                <a href="#new-place" data-transition="fade" data-theme="" data-icon="plus">
+                </a>
+            </li>
+            <li>
+                <a href="#map-page" data-transition="fade" data-theme="" data-icon="home">
+                </a>
+            </li>
+            <li>
+                <a href="#settings-page" data-transition="fade" data-theme="" data-icon="gear">
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div data-role="page" data-control-title="Image" id="image-page">
+    <div data-theme="a" data-role="header">
+        <a data-role="button" data-rel="back" href="#image-page" data-icon="arrow-l"
+           data-iconpos="left" class="ui-btn-left">
+            Back
+        </a>
+
+        <h3 id="image-header">
+            Photo
+        </h3>
+    </div>
+    <div data-role="content">
+        <div id="image-img" data-controltype="htmlblock">
+            <img width="100%" height="100%">
+        </div>
+    </div>
+</div>
+<div data-role="page" data-control-title="need-geo" id="need-geo">
+    <div data-theme="a" data-role="header">
+        <a data-role="button" data-rel="back" href="#need-geo" data-icon="arrow-l"
+           data-iconpos="left" class="ui-btn-left">
+            Back
+        </a>
+        <h4>
+            Location Services
+        </h4>
+    </div>
+    <div data-role="content">
+        <iframe data-controltype="youtube" id="youtube1" type="text/html" width="288px"
+                height="400px" src="https://www.youtube.com/embed/z2PvZcGajBc" frameborder="0">
+        </iframe>
+    </div>
+</div>
+<div data-role="page" data-control-title="Forgot" id="forgot-pwd">
+    <div data-theme="a" data-role="header">
+        <a data-role="button" data-rel="back" href="#forgot-pwd" data-icon="arrow-l"
+           data-iconpos="left" class="ui-btn-left">
+            Back
+        </a>
+
+        <h3>
+            Password
+        </h3>
+    </div>
+    <div data-role="content">
+        <h3>
+            To reset you password enter your logon name / email below
+        </h3>
+
+        <form action="/forgot" method="POST" data-ajax="false">
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="textinput11">
+                    Logon
+                </label>
+                <input name="username" id="textinput11" placeholder="" value="" type="text">
+            </div>
+            <input type="submit" data-theme="a" value="Go">
+        </form>
+    </div>
+    <div data-role="tabbar" data-iconpos="top" data-theme="a">
+        <ul>
+            <li>
+                <a href="#list-page" data-transition="fade" data-theme="" data-icon="bars">
+                </a>
+            </li>
+            <li>
+                <a href="#new-place" data-transition="fade" data-theme="" data-icon="plus">
+                </a>
+            </li>
+            <li>
+                <a href="#friends-page" data-transition="fade" data-theme="" data-icon="home">
+                </a>
+            </li>
+            <li>
+                <a href="#settings-page" data-transition="fade" data-theme="" data-icon="gear">
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div data-role="page" data-control-title="Reset" id="reset-pwd-page">
+    <div data-theme="a" data-role="header">
+        <h3>
+            Reset Password
+        </h3>
+    </div>
+    <div data-role="content">
+        <form id="reset-form" action="/password" method="POST">
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="textinput13">
+                    New Password
+                </label>
+                <input name="password" id="textinput13" placeholder="" value="" type="text">
+            </div>
+            <div data-role="fieldcontain" data-controltype="textinput">
+                <label for="textinput14">
+                    Retype New Password
+                </label>
+                <input name="confirm_password" id="textinput14" placeholder="" value=""
+                       type="text">
+            </div>
+            <input id="reset-submit" type="submit" data-theme="a" value="Submit">
+            <input type="hidden" name="t" value="">
+        </form>
+    </div>
+</div>
+<div data-role="page" data-control-title="Friends" id="friends-page">
+    <div data-theme="a" data-role="header">
+        <h3>
+            Friends
+        </h3>
+    </div>
+    <div data-role="content">
+        <h3>
+            Just for this bit of testing, let's all be friends
+        </h3>
+
+        <h2>
+            Under Construction
+        </h2>
+    </div>
+    <div data-role="tabbar" data-iconpos="top" data-theme="a">
+        <ul>
+            <li>
+                <a href="#list-page" data-transition="fade" data-theme="" data-icon="bars">
+                </a>
+            </li>
+            <li>
+                <a href="#new-place" data-transition="fade" data-theme="" data-icon="plus">
+                </a>
+            </li>
+            <li>
+                <a href="#friends-page" data-transition="fade" data-theme="" data-icon="home">
+                </a>
+            </li>
+            <li>
+                <a href="#settings-page" data-transition="fade" data-theme="" data-icon="gear">
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div data-role="page" data-control-title="FriendDetail" id="page16">
+    <div data-theme="a" data-role="header">
+        <h3>
+            Simon's Details
+        </h3>
+    </div>
+    <div data-role="content">
+        <a data-role="button" data-theme="e" href="#page16" data-icon="delete"
+           data-iconpos="left">
+            Unfriend
+        </a>
+        <ul data-role="listview" data-divider-theme="b" data-inset="true">
+            <li data-role="list-divider" role="heading">
+                Divider
+            </li>
+            <li data-theme="c">
+                <a href="" data-transition="slide">
+                    Button
+                </a>
+            </li>
+            <li data-theme="c">
+                <a href="#list-page" data-transition="slide">
+                    Button
+                </a>
+            </li>
+            <li data-theme="c">
+                <a href="#list-page" data-transition="slide">
+                    Button
+                </a>
+            </li>
+            <li data-theme="c">
+                <a href="#list-page" data-transition="slide">
+                    Place....
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div data-role="tabbar" data-iconpos="top" data-theme="a">
+        <ul>
+            <li>
+                <a href="#list-page" data-transition="fade" data-theme="" data-icon="bars">
+                </a>
+            </li>
+            <li>
+                <a href="#new-place" data-transition="fade" data-theme="" data-icon="plus">
+                </a>
+            </li>
+            <li>
+                <a href="#friends-page" data-transition="fade" data-theme="" data-icon="home">
+                </a>
+            </li>
+            <li>
+                <a href="#settings-page" data-transition="fade" data-theme="" data-icon="gear">
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div data-role="page" data-control-title="AddFriends" id="page17">
+    <div data-theme="a" data-role="header">
+        <h3>
+            Add Friends
+        </h3>
+    </div>
+    <div data-role="content">
+        <a data-role="button" href="#page17">
+            Add Now
+        </a>
+        <a data-role="button" href="#page17">
+            Email
+        </a>
+        <a data-role="button" href="#page17">
+            Facebook
+        </a>
+    </div>
+    <div data-role="tabbar" data-iconpos="top" data-theme="a">
+        <ul>
+            <li>
+                <a href="#list-page" data-transition="fade" data-theme="" data-icon="bars">
+                </a>
+            </li>
+            <li>
+                <a href="#new-place" data-transition="fade" data-theme="" data-icon="plus">
+                </a>
+            </li>
+            <li>
+                <a href="#friends-page" data-transition="fade" data-theme="" data-icon="home">
+                </a>
+            </li>
+            <li>
+                <a href="#settings-page" data-transition="fade" data-theme="" data-icon="gear">
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div data-role="page" data-control-title="Item" id="item-page">
+    <div data-theme="a" data-role="header" data-position="fixed">
+        <a id="item-edit" data-role="button" data-theme="c" href="#new-detail"
+           data-icon="edit" data-iconpos="right" class="ui-btn-right">
+            Edit
+        </a>
+        <a data-role="button" href="#list-page" data-icon="arrow-l" data-iconpos="left"
+           class="ui-btn-left">
+            Back
+        </a>
+
+        <h3 id="item-title">
+            Header
+        </h3>
+    </div>
+    <div data-role="content">
+        <div data-controltype="htmlblock">
+            <div data-controltype="image" id="item-img">
+                <img src="" alt="image" style=" margin-left: -16px; margin-top: -18px">
+
+                <div style="clear:both">
+                </div>
+            </div>
+            <a id="item-phone-link" href="">
+                <img src="/static/images/phone.png">
+            </a>
+            <a id="item-see-map" href="#">
+                <img id="map-btn" src="/static/images/marker-btn.png">
+            </a>
+        </div>
+        <div class="ui-grid-b">
+            <div class="ui-block-a">
+                <div data-controltype="htmlblock">
+                    <br>
+
+                    <div id="item-distance">
+                        0yds
+                    </div>
+                </div>
+            </div>
+            <div class="ui-block-b">
+            </div>
+            <div class="ui-block-c">
+            </div>
+        </div>
+        <div data-controltype="htmlblock">
+            <div id="item-address">
+                Address..
+            </div>
+        </div>
+        <div id="item-category" data-controltype="htmlblock">
+            <br>
+
+            <div id="item-category">
+                Cuisine..
+            </div>
+            <br>
+        </div>
+        <div data-controltype="htmlblock">
+            <div id="item-page-votes" data-role="navbar">
+                <ul>
+                    <li>
+                        <a href="#" id="item-like" data-icon="check">
+                            Like
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="item-dislike" data-icon="delete">
+                            Dislike
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="item-untried" data-icon="star">
+                            Untried
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div data-role="collapsible-set">
+            <div id="item-comment-btn" data-role="collapsible" data-collapsed="false">
+                <h3>
+                    Comments
+                </h3>
+
+                <div data-role="fieldcontain" data-controltype="textarea">
+                    <textarea name="myVoteComment" id="item-descr" placeholder="Comment" data-mini="true"></textarea>
+                </div>
+                <div data-controltype="htmlblock">
+                    <div id="item-comments">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a id="item-save" data-role="button" data-theme="b" href="#item-page">
+            Save
+        </a>
+
+        <div id="item-votes-list-container" data-controltype="htmlblock">
+        </div>
+        <div data-role="fieldcontain" data-controltype="fileinput" class="hidden">
+            <input type="file" name="" id="file-input" accept="*.png;*.jpg;*.jpeg;*.gif">
+        </div>
+    </div>
+</div>
+<div data-role="page" data-control-title="AddFriendNow" id="page18">
+    <div data-theme="a" data-role="header">
+        <h3>
+            Header
+        </h3>
+    </div>
+    <div data-role="content">
+        <div data-controltype="textblock">
+            <p>
+                <b>
+                    Give your friend this number
+                </b>
+            </p>
+
+            <p>
+                  <span style="font-size: xx-large;">
+                      <b>
+                          827346
+                      </b>
+                  </span>
+            </p>
+
+            <p>
+                  <span style="font-size: xx-large;">
+                      <b>
+                          <br>
+                      </b>
+                  </span>
+            </p>
+
+            <p>
+                  <span style="font-size: medium;">
+                      <b>
+                          or type their number here
+                      </b>
+                  </span>
+            </p>
+        </div>
+        <div data-role="fieldcontain" data-controltype="textinput">
+            <input name="" id="textinput15" placeholder="" value="" type="text">
+        </div>
+        <input type="submit" value="Connect">
+    </div>
+    <div data-role="tabbar" data-iconpos="top" data-theme="a">
+        <ul>
+            <li>
+                <a href="#list-page" data-transition="fade" data-theme="" data-icon="bars">
+                </a>
+            </li>
+            <li>
+                <a href="#new-place" data-transition="fade" data-theme="" data-icon="plus">
+                </a>
+            </li>
+            <li>
+                <a href="#friends-page" data-transition="fade" data-theme="" data-icon="home">
+                </a>
+            </li>
+            <li>
+                <a href="#settings-page" data-transition="fade" data-theme="" data-icon="gear">
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div data-role="page" data-control-title="NewFriendWelcome" id="new-friend-welcome">
+    <div data-role="content">
+        <div data-controltype="textblock">
+            <p>
+                <b>
+                    Bravo
+                </b>
+            </p>
+
+            <p>
+                <b>
+                    <br>
+                </b>
+            </p>
+
+            <p>
+                <b>
+                    Now connected to Simon
+                </b>
+            </p>
+
+            <p>
+                <b>
+                    <br>
+                </b>
+            </p>
+        </div>
+        <a data-role="button" href="#new-friend-welcome">
+            See their list
+        </a>
+    </div>
+    <div data-role="tabbar" data-iconpos="top" data-theme="a">
+        <ul>
+            <li>
+                <a href="#list-page" data-transition="fade" data-theme="" data-icon="bars">
+                </a>
+            </li>
+            <li>
+                <a href="#new-place" data-transition="fade" data-theme="" data-icon="plus">
+                </a>
+            </li>
+            <li>
+                <a href="#friends-page" data-transition="fade" data-theme="" data-icon="home">
+                </a>
+            </li>
+            <li>
+                <a href="#settings-page" data-transition="fade" data-theme="" data-icon="gear">
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,44 @@
+<ul data-role="listview" data-divider-theme="b" data-inset="true">
+    {% for place in results.local.points %}
+        <li data-theme='c' data-icon='false'>
+            <a href='#new-detail'
+               data-transition='slide'
+               data-shout-is-map="{{ place.is_map }}"
+               data-title="{{ place.place_name }}"
+               data-shout-key="{{ place.key }}"
+               data-address="{{ place.address }}"
+               data-category="{{ place.category.title }}"
+               data-lat="{{ place.lat }}"
+               data-lng="{{ place.lng }}">
+                <div class="list-item-container">
+                    <div class="item-img-container">
+                        <img class="item-pic"
+                             src="{{ place.thumbnail }}">
+
+                    </div>
+                    <div class="list-item-text-container list-item-container-spacer">
+                        {% if place.vote %}
+                            <img
+                                    class="list-item-thumb"
+                                    width="26"
+                                    height="26"
+                                    src="/static/css/images/{{ place.thumb }}">
+                        {% endif %}
+                        <div class="list-item-title">
+                            {{ place.place_name }}
+                        </div>
+                        <div class="list-item-category">
+                            {% if place.category %}{{ place.category }}{% else %}&emsp;{% endif %}
+                        </div>
+                        <div class="list-item-dist">
+                            {{ place.distance }}
+                        </div>
+
+                    </div>
+                </div>
+            </a>
+        </li>
+    {% endfor %}
+</ul>
+
+
