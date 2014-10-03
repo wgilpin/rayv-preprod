@@ -3,6 +3,7 @@ import urllib
 import urllib2
 import datetime
 from google.appengine.api import images, memcache
+from google.appengine.api.app_identity import app_identity
 from google.appengine.api.mail import EmailMessage
 from google.appengine.ext import db
 from webapp2_extras import auth
@@ -553,7 +554,7 @@ def getPlaceDetailFromGoogle(item):
     return {"photo": None, "telephone": None}
 
 
-def update_item_internal(self):
+def update_item_internal(self, user_id):
   # is it an edit or a new?
   it = Item.get_unique_place(self.request)
   try:
@@ -620,12 +621,12 @@ def update_item_internal(self):
   # refresh cache
   memcache_touch_place(it)
   try:
-    old_votes = it.votes.filter("voter =", self.user_id)
+    old_votes = it.votes.filter("voter =", user_id)
     for v in old_votes:
       v.delete()
     vote = Vote()
     vote.item = it
-    vote.voter = self.user_id
+    vote.voter = user_id
     vote.comment = self.request.get('myComment')
     if self.request.get("untried") == 'true':
       vote.untried = True
@@ -642,16 +643,28 @@ def update_item_internal(self):
   # todo: why?
   it.put()  # again
   # mark user as dirty
-  memcache_touch_user(self.user_id)
+  memcache_touch_user(user_id)
 
 class updateItemAPI(BaseHandler):
   def post(self):
     #https://cloud.google.com/appengine/docs/python/appidentity/#Python_Asserting_identity_to_other_App_Engine_apps
+    if app_identity.get_application_id() != settings.API_TARGET_APP_ID:
+      self.abort(403)
     app_id = self.request.headers.get('X-Appengine-Inbound-Appid', None)
     logging.info('updateItemAPI: from app %s'%app_id)
     if app_id in settings.ALLOWED_APP_IDS:
-      update_item_internal(self)
-      self.response.out.write("OK")
+      seed_user = None
+      for u in User.all():
+        if 'pegah' in u.auth_ids:
+          seed_user = u.key().id()
+          break
+      if seed_user:
+        logging.debug("updateItemAPI user:"+str(seed_user))
+        update_item_internal(self, seed_user)
+        self.response.out.write("OK")
+      else:
+        logging.error("updateItemAPI - couldn't get seed user")
+        self.abort(500)
     else:
       self.abort(403)
 
@@ -659,7 +672,7 @@ class updateItemAPI(BaseHandler):
 class newOrUpdateItem(BaseHandler):
   def post(self):
     if logged_in():
-      update_item_internal(self)
+      update_item_internal(self, self.user_id)
 
       self.response.out.write("OK")
     else:

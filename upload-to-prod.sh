@@ -1,4 +1,4 @@
-cd ~/PycharmProjects/rayv-prod
+cd ~/PycharmProjects/rayv-app
 
 find . -name '*.py' -print0 | xargs -0 rm
 find . -name '*.html' -print0 | xargs -0 rm
@@ -11,6 +11,5 @@ rm book.manifest
 
 cp -rp ~/PycharmProjects/rayv-preprod/*.py .
 cp -rp ~/PycharmProjects/rayv-preprod/static/* ./static
-cp -r ~/PycharmProjects/rayv-preprod/templates/*.html ./templates
-cp -r ~/PycharmProjects/rayv-preprod/templates/*.htt ./templates
-cp book.manifest .
+cp -r ~/PycharmProjects/rayv-preprod/templates/* ./templates
+cp ~/PycharmProjects/rayv-preprod/book.manifest .

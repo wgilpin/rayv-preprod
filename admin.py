@@ -2,6 +2,7 @@ import json
 import logging
 from auth_logic import BaseHandler
 from webapp2_extras import auth
+from auth_model import User
 from models import Item, itemKeyToJSONPoint
 import urllib
 from google.appengine.api import urlfetch
@@ -35,15 +36,27 @@ class SyncToProd(BaseHandler):
   def post(self):
     if administrator():
       try:
-        url = 'https://rayv-app.appspot.com/admin/put_place_api'
-        place_list = json.loads(self.request.params['list'])
-        for place in place_list:
-          form_fields = itemKeyToJSONPoint(place)
-          form_data = urllib.urlencode(form_fields)
-          result = urlfetch.fetch(url=url,
-              payload=form_data,
-              method=urlfetch.POST,
-              headers={'Content-Type': 'application/x-www-form-urlencoded'})
+        seed_user = None
+        for u in User.all():
+          if 'pegah' in u.auth_ids:
+            seed_user = u.key().id()
+            break
+        if seed_user:
+          url = 'https://shout-about.appspot.com/admin/put_place_api'
+          place_list = json.loads(self.request.params['list'])
+          for place in place_list:
+            it = Item.get(place)
+            form_fields = itemKeyToJSONPoint(place)
+            vote = it.votes.filter("voter =", seed_user).get().comment
+            form_fields['myComment'] = vote.comment
+            form_fields['voteScore'] = vote.vote
+            form_data = urllib.urlencode(form_fields)
+            result = urlfetch.fetch(url=url,
+                payload=form_data,
+                method=urlfetch.POST,
+                headers={'Content-Type': 'application/x-www-form-urlencoded'})
+        else:
+          self.response.out.write('No Seed User')
       except Exception, e:
         logging.error('admin.SyncToProd '+str(e))
     logging.info("Sync Done to Prod")
