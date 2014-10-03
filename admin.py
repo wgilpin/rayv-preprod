@@ -42,7 +42,7 @@ class SyncToProd(BaseHandler):
             seed_user = u.key().id()
             break
         if seed_user:
-          url = 'https://shout-about.appspot.com/admin/put_place_api'
+          url = 'https://rayv-app.appspot.com/admin/put_place_api'
           place_list = json.loads(self.request.params['list'])
           for place in place_list:
             it = Item.get(place)
