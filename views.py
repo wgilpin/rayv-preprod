@@ -664,6 +664,10 @@ class updateItemAPI(BaseHandler):
           break
       if seed_user:
         logging.debug("updateItemAPI user:"+str(seed_user))
+        params = ""
+        for k in self.request.params:
+          params += '"%s": "%s"'%(k, self.request.params[k])
+        logging.debug("updateItemAPI params: "+params)
         update_item_internal(self, seed_user)
         self.response.out.write("OK")
       else:

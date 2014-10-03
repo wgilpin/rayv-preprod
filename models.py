@@ -223,8 +223,14 @@ class Item(db.Model):
     if it:
       return it
     place_name = request.get('new-title')
-    lat = float(request.get('latitude'))
-    lng = float(request.get('longitude'))
+    if 'latitude' in request.params:
+      lat = float(request.get('latitude'))
+    else:
+      lat = float(request.get('lat'))
+    if 'longitude' in request.params:
+      lng = float(request.get('longitude'))
+    else:
+      lng = float(request.get('lngllow lat ot lati'))
     geo_code = geohash.encode(lat, lng, precision=6)
     local_results = Item.all().filter("geo_hash >", geo_code).filter("geo_hash <", geo_code + "{")
     lower_name = place_name.lower()
