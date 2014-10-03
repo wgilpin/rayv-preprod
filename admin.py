@@ -1,6 +1,10 @@
+import json
+import logging
 from auth_logic import BaseHandler
 from webapp2_extras import auth
-from models import Item
+from models import Item, itemKeyToJSONPoint
+import urllib
+from google.appengine.api import urlfetch
 
 __author__ = 'Will'
 
@@ -26,3 +30,21 @@ class Main(BaseHandler):
       self.render_template("admin-main.html", con)
     else:
       self.abort(403)
+
+class SyncToProd(BaseHandler):
+  def post(self):
+    if administrator():
+      try:
+        url = 'https://rayv-app.appspot.com/put_place_api'
+        place_list = json.loads(self.request.params['list'])
+        for place in place_list:
+          form_fields = itemKeyToJSONPoint(place)
+          form_data = urllib.urlencode(form_fields)
+          result = urlfetch.fetch(url=url,
+              payload=form_data,
+              method=urlfetch.POST,
+              headers={'Content-Type': 'application/x-www-form-urlencoded'})
+      except Exception, e:
+        logging.error('admin.SyncToProd '+str(e))
+    logging.log("Sync Done to Prod")
+    self.response.out.write("OK")

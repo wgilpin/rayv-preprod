@@ -553,102 +553,113 @@ def getPlaceDetailFromGoogle(item):
     return {"photo": None, "telephone": None}
 
 
+def update_item_internal(self):
+  # is it an edit or a new?
+  it = Item.get_unique_place(self.request)
+  try:
+    raw_file = self.request.get('new-photo')
+    rot = self.request.get("rotation")
+    if len(raw_file) > 0:
+      if it.photo:  # the item has an image already?
+        img = it.photo  # - yes: use it
+        img.thumb = None  # but reset the thumb as it's invalid now
+      else:
+        img = DBImage()  # - no: create it
+
+      if rot and (rot <> u'0'):  # is a rotation requested?
+        angle = int(rot) * 90
+        raw_file = images.rotate(raw_file, angle)
+      # exif = raw_file.get_original_metadata()
+      img.picture = db.Blob(raw_file)
+      img.owner = self.user_id
+      img.put()
+    else:
+      img = None  # no image supplied
+      if rot and (rot != u'0'):  # is a rotation requested?
+        old_img = it.photo
+        if old_img and old_img.picture:  # if so, does the item have a pic already?
+          angle = int(rot) * 90  # rotate & save in place
+          rotated_pic = images.rotate(old_img.picture, angle)
+          old_img.picture = db.Blob(rotated_pic)
+          old_img.thumb = None
+          old_img.put()
+  except Exception, E:
+    logging.exception("newOrUpdateItem Image Resize: " + str(E))
+    img = None
+
+  # it.place_name = self.request.get('new-title') set in get_unique_place
+  it.address = self.request.get('address')
+  it.owner = self.user_id
+  if img:
+    it.photo = img
+  else:
+    if not it.photo:
+      # load one from google
+      img = DBImage()
+      detail = getPlaceDetailFromGoogle(it)
+      remoteURL = detail['photo']
+      main_url = remoteURL % 250
+      data = urllib2.urlopen(main_url)
+      img.picture = db.Blob(data.read())
+      img.remoteURL = None
+      thumb_url = remoteURL % 65
+      thumb_data = urllib2.urlopen(thumb_url)
+      img.thumb = db.Blob(thumb_data.read())
+      img.put()
+      it.telephone = detail['telephone'] if 'telephone' in detail else None
+      it.photo = img
+
+  # category
+  posted_cat = self.request.get("new-item-category")
+  try:
+    cat = Category.get_by_key_name(posted_cat)
+  except:
+    cat = None
+  it.category = cat
+  it.put()
+  # refresh cache
+  memcache_touch_place(it)
+  try:
+    old_votes = it.votes.filter("voter =", self.user_id)
+    for v in old_votes:
+      v.delete()
+    vote = Vote()
+    vote.item = it
+    vote.voter = self.user_id
+    vote.comment = self.request.get('myComment')
+    if self.request.get("untried") == 'true':
+      vote.untried = True
+      vote.vote = 0
+    else:
+      vote_str = self.request.get("voteScore")
+      vote.vote = 1 if vote_str == "1" or vote_str == "like" else -1
+    vote.put()
+  except Exception, e:
+    logging.error("newOrUpdateItem votes exception")
+    logging.error("newOrUpdateItem votes exception " + str(e))
+
+
+  # todo: why?
+  it.put()  # again
+  # mark user as dirty
+  memcache_touch_user(self.user_id)
+
+class updateItemAPI(BaseHandler):
+  def post(self):
+    #https://cloud.google.com/appengine/docs/python/appidentity/#Python_Asserting_identity_to_other_App_Engine_apps
+    app_id = self.request.headers.get('X-Appengine-Inbound-Appid', None)
+    logging.log('updateItemAPI: from app %s'%app_id)
+    if app_id in settings.ALLOWED_APP_IDS:
+      update_item_internal(self)
+      self.response.out.write("OK")
+    else:
+      self.abort(403)
+
+
 class newOrUpdateItem(BaseHandler):
   def post(self):
     if logged_in():
-      # is it an edit or a new?
-      it = Item.get_unique_place(self.request)
-      try:
-        raw_file = self.request.get('new-photo')
-        rot = self.request.get("rotation")
-        if len(raw_file) > 0:
-          if it.photo:  # the item has an image already?
-            img = it.photo  # - yes: use it
-            img.thumb = None  # but reset the thumb as it's invalid now
-          else:
-            img = DBImage()  # - no: create it
-
-          if rot and (rot <> u'0'):  # is a rotation requested?
-            angle = int(rot) * 90
-            raw_file = images.rotate(raw_file, angle)
-          # exif = raw_file.get_original_metadata()
-          img.picture = db.Blob(raw_file)
-          img.owner = self.user_id
-          img.put()
-        else:
-          img = None  # no image supplied
-          if rot and (rot != u'0'):  # is a rotation requested?
-            old_img = it.photo
-            if old_img and old_img.picture:  # if so, does the item have a pic already?
-              angle = int(rot) * 90  # rotate & save in place
-              rotated_pic = images.rotate(old_img.picture, angle)
-              old_img.picture = db.Blob(rotated_pic)
-              old_img.thumb = None
-              old_img.put()
-      except Exception, E:
-        logging.exception("newOrUpdateItem Image Resize: " + str(E))
-        img = None
-
-      # it.place_name = self.request.get('new-title') set in get_unique_place
-      it.address = self.request.get('address')
-
-      it.owner = self.user_id
-      if img:
-        it.photo = img
-      else:
-        if not it.photo:
-          # load one from google
-          img = DBImage()
-          detail = getPlaceDetailFromGoogle(it)
-          remoteURL = detail['photo']
-          main_url = remoteURL % 250
-          data = urllib2.urlopen(main_url)
-          img.picture = db.Blob(data.read())
-          img.remoteURL = None
-          thumb_url = remoteURL % 65
-          thumb_data = urllib2.urlopen(thumb_url)
-          img.thumb = db.Blob(thumb_data.read())
-          img.put()
-          it.telephone = detail['telephone'] if 'telephone' in detail else None
-          it.photo = img
-
-      # category
-      posted_cat = self.request.get("new-item-category")
-      try:
-        cat = Category.get_by_key_name(posted_cat)
-      except:
-        cat = None
-
-      it.category = cat
-      it.put()
-      # refresh cache
-      memcache_touch_place(it)
-      try:
-        old_votes = it.votes.filter("voter =", self.user_id)
-        for v in old_votes:
-          v.delete()
-        vote = Vote()
-        vote.item = it
-        vote.voter = self.user_id
-        vote.comment = self.request.get('myComment')
-        if self.request.get("untried") == 'true':
-          vote.untried = True
-          vote.vote = 0
-        else:
-          vote_str = self.request.get("voteScore")
-          vote.vote = 1 if vote_str == "1" or vote_str == "like" else -1
-        vote.put()
-      except Exception, e:
-        logging.error("newOrUpdateItem votes exception")
-        logging.error("newOrUpdateItem votes exception " + str(e))
-
-
-      # todo: why?
-      it.put()  # again
-
-
-      # mark user as dirty
-      memcache_touch_user(self.user_id)
+      update_item_internal(self)
 
       self.response.out.write("OK")
     else:
