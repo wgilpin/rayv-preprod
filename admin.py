@@ -48,6 +48,7 @@ class SyncToProd(BaseHandler):
           place_list = json.loads(self.request.params['list'])
           for place in place_list:
             it = Item.get(place)
+            logging.info("SyncToProd sending "+it.place_name)
             form_fields = itemKeyToJSONPoint(place)
             vote = it.votes.filter("voter =", seed_user).get()
             form_fields['myComment'] = vote.comment
