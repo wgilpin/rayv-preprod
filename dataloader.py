@@ -5,7 +5,7 @@ import time
 from webapp2_extras import auth
 import auth_logic
 from auth_model import User
-from geo import geoCodeLatLng, geoCodeAddress, getPlaceDetailFromGoogle
+from geo import geoCodeLatLng, geoCodeAddress, getPlaceDetailFromGoogle, LatLng
 from models import Category, Item, Vote, DBImage
 import geohash
 from os.path import isfile
@@ -142,7 +142,8 @@ def load_one_item(owner):
       cat = Category(key_name=item_test_data[ITEM_CATEGORY]).put()
     new_it.category = cat
     new_it.place_name = item_test_data[ITEM_NAME]
-    lat_long = geoCodeAddress(item_test_data[1])
+    home = LatLng(lat=51.57, lng=-0.13)
+    lat_long = geoCodeAddress(item_test_data[1], home)
     new_it.lat = lat_long['lat']
     new_it.lng = lat_long['lng']
     new_it.address = item_test_data[ITEM_ADDRESS]
@@ -217,6 +218,7 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
 
     print "category ok"
     if not section or section == "item":
+      home = LatLng(lat=51.57, lng=-0.13)
       for idx, item in enumerate(items_data_list):
         if Max:
           if idx >= Max:
@@ -230,7 +232,7 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
           new_it = Item()
           new_it.category = Category.get_by_key_name(item[2])
           new_it.place_name = item[0]
-          lat_long = fakeGeoCode() if useFakeGeoCoder else geoCodeAddress(item[1])
+          lat_long = fakeGeoCode() if useFakeGeoCoder else geoCodeAddress(item[1], home)
           new_it.lat = lat_long['lat']
           new_it.lng = lat_long['lng']
           new_it.address = item[1]

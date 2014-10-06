@@ -79,9 +79,9 @@ def geoCodeLatLng(lat, lng):
     addr = None
   return addr
 
-def geoCodeAddress(address):
-  url = "https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor=false&key=%s" % \
-        (urllib2.quote(address), config['google_api_key'])
+def geoCodeAddress(address, search_centre):
+  url = "https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor=false&key=%s&bounds=%d,%d|%d,%d" % \
+        (urllib2.quote(address), config['google_api_key', ])
   response = urllib2.urlopen(url)
   jsonGeoCode = response.read()
   geoCode = json.loads(jsonGeoCode)

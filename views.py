@@ -307,8 +307,8 @@ class getAddresses_ajax(BaseHandler):
     near_me = self.request.get("near_me")
     if near_me == u'0':
       # near the address
-      url = "https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor=false&key=%s" % \
-            (urllib2.quote(address), settings.config['google_api_key'])
+      url = "https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor=false&key=%s&bounds=%f,%f|%f,%f" % \
+            (urllib2.quote(address), settings.config['google_api_key'],lat-0.3,lng-0.3,lat+0.3,lng+0.3)
       response = urllib2.urlopen(url)
       jsonResult = response.read()
       addressResult = json.loads(jsonResult)
@@ -623,7 +623,8 @@ class geoLookup(BaseHandler):
 
   def post(self):
     address = self.request.get('address')
-    pos = geoCodeAddress(address)
+    posn = LatLng(lat=self.request.params['lat'], lng=self.request.params['lng'])
+    pos = geoCodeAddress(address, posn)
     if pos:
       params = {
         "lat": pos['lat'],
