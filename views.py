@@ -486,16 +486,17 @@ def update_item_internal(self, user_id):
       img = DBImage()
       detail = getPlaceDetailFromGoogle(it)
       remoteURL = detail['photo']
-      main_url = remoteURL % 250
-      data = urllib2.urlopen(main_url)
-      img.picture = db.Blob(data.read())
-      img.remoteURL = None
-      thumb_url = remoteURL % 65
-      thumb_data = urllib2.urlopen(thumb_url)
-      img.thumb = db.Blob(thumb_data.read())
-      img.put()
+      if remoteURL:
+        main_url = remoteURL % 250
+        data = urllib2.urlopen(main_url)
+        img.picture = db.Blob(data.read())
+        img.remoteURL = None
+        thumb_url = remoteURL % 65
+        thumb_data = urllib2.urlopen(thumb_url)
+        img.thumb = db.Blob(thumb_data.read())
+        img.put()
+        it.photo = img
       it.telephone = detail['telephone'] if 'telephone' in detail else None
-      it.photo = img
 
   # category
   if "new-item-category" in self.request.params:

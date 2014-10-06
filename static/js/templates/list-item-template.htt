@@ -4,13 +4,13 @@
             data-key='{{ pt.key }}'
             href='#item-page' data-transition='slide'>
         <div class="list-item-container">
-            <div class="item-img-container">
+            <div id='div_left'>
                 <img class="item-pic"
                      src="{{ pt.thumbnail }}">
 
             </div>
-            <div class="list-item-text-container list-item-container-spacer">
-                    {{if pt.vote|more>0}}
+            <div id='div_right'>
+                  {{if pt.vote|more>0}}
                     <div class="item-up item-votes">
                     {{/if }}
                     {{if pt.vote|less>0}}
@@ -24,7 +24,9 @@
                     <div class="item-down-votes">{{ pt.down }}</div>
                     {{/if }}
                 </div>
-                <div class="list-item-title">
+            </div>
+            <div id='div_middle'>
+                <div class="list-item-title truncate">
                     {{ pt.place_name }}
                 </div>
                 <div class="list-item-category">
@@ -37,8 +39,7 @@
                          src="/static/images/{{ icon }}.png">
                     {{/if}}
                 </div>
-
-                    </div>
-                </div>
+            </div>
+        </div>
     </a>
 </li>

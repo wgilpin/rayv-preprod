@@ -42,10 +42,30 @@
 .list-item-category {
     width: 100%;
     font-size: small;
-    color: darkorange;
+    color: #3a3782;
     xtext-align: center;
     padding-top: 2px;
     padding-bottom: 2px;
+}
+
+.truncate {
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#div_left{
+    float:left;
+    width:71px;
+}
+#div_middle {
+    overflow: hidden;
+    padding-left: 2px;
+}
+#div_right {
+    float:right;
+    width:65px;
 }
 
 .list-item-bar-container {
