@@ -703,8 +703,8 @@ div {
 
 .item-up-votes {
     position: relative;
-    top: -12px;
-    right: 45px;
+    top: 15px;
+    left: 27px;
 }
 
 .item-down-votes {
