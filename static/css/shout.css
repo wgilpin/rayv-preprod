@@ -709,8 +709,8 @@ div {
 
 .item-down-votes {
     position: relative;
-    top: -37px;
-    right: 45px;
+    top: -36px;
+    left: -30px;
 }
 
 .ui-content {
