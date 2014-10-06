@@ -1,26 +1,23 @@
 from operator import itemgetter
-import urllib
 import urllib2
 import datetime
 from google.appengine.api import images, memcache
-from google.appengine.api.app_identity import app_identity
 from google.appengine.api.mail import EmailMessage
 from google.appengine.ext import db
 from webapp2_extras import auth
-from google.appengine.ext.webapp import template
-from auth_logic import BaseHandler
 import json
-import os.path
-from auth_model import memcache_get_user_dict, memcache_touch_user, UserProfile, \
-  memcache_put_user_dict, memcache_touch_place, User
+from auth_model import UserProfile, User
+from caching import memcache_get_user_dict, memcache_touch_user, memcache_put_user_dict, memcache_touch_place
 from dataloader import load_data
-from models import Item, DBImage, itemToJSONPoint, Vote, LatLng, Category, findDbPlacesNearLoc, \
-  itemKeyToJSONPoint, approx_distance
+from geo import getPlaceDetailFromGoogle, geoCodeAddress
+from models import Item, DBImage, Vote, Category
+from geo import itemToJSONPoint, LatLng, findDbPlacesNearLoc, itemKeyToJSONPoint, approx_distance
 from profiler import profile_in, profile_out
 import settings
 import logging
 from webapp2_extras.auth import InvalidAuthIdError
 from webapp2_extras.auth import InvalidPasswordError
+from base_handler import BaseHandler
 
 __author__ = 'Will'
 
@@ -147,9 +144,8 @@ def get_user_votes(friend, current_user):
       entry[str(user_vote.item.key())] = vote_detail
     profile_out("get_user_votes")
     return entry
-  except Exception, e:
-    logging.error("get_user_votes Exception")
-    logging.error("get_user_votes Exception " + str(e))
+  except Exception:
+    logging.error("get_user_votes Exception", exc_info=True)
 
 
 def serialize_user_details(user_id, places, current_user):
@@ -345,67 +341,9 @@ def handle_error(request, response, exception):
   response.set_status(exception.code)
 
 
-def is_mobile(request):
-  if 'm' in request.params:
-    return True
-  if settings.config["mobile"]:
-    return True
-  if request.user_agent.find("iPhone") > -1:
-    return True
-  if request.user_agent.find("iPod") > -1:
-    return True
-  if request.user_agent.find("Android") > -1:
-    return True
-  if request.user_agent.find("BlackBerry") > -1:
-    return True
-  return False
 
 
-def global_context(request, con):
-  return con
 
-
-def get_template_file(template_file, handler, con=None):
-  try:
-    logging.debug("get_template_file: "+template_file)
-    if con and 'mobile' in con:
-      if not con['Mobile']:
-        try_file = settings.config["templates_dir"] + template_file
-        if os.path.exists(try_file):
-          logging.debug("template path 1: "+template_file)
-          return template_file
-        logging.debug("template path 1 pass")
-    tablet = False
-    if is_mobile(handler.request):
-      try_file = settings.config["templates_dir"] + 'mobile/' + template_file
-      if os.path.exists(try_file):
-        logging.debug("template path 2: "+'mobile/' + template_file)
-        return "mobile/" + template_file
-      logging.debug("template path 2 pass "+try_file)
-    else:
-      if "t" in handler.request.params:
-        tablet = True
-      if handler.request.user_agent.find("iPad") > -1:
-        tablet = True
-      if tablet:
-        # tablets get the desktop page, unless a tablet one exists
-        for tmp in settings.config["template_dirs"]:
-          if os.path.exists(tmp + "/tablet/t_" + template):
-            logging.debug("template path 3: "+'mobile/' + template_file)
-            return "tablet/t_" + template_file
-        logging.debug("template path 3 pass")
-      else:
-        for tmp in settings.config["template_dirs"]:
-          try_file = settings.config["templates_dir"] + tmp + '/' + template_file
-          if os.path.exists(try_file):
-            logging.debug("template path 4: "+tmp + '/' + template_file)
-            return tmp + '/' + template_file
-        logging.debug("template path 4 pass")
-    return template_file
-  except Exception, E:
-    logging.exception("get_template_file " + str(E))
-    logging.debug("template path 5: "+template_file)
-    return template_file
 
 
 class MainHandler(BaseHandler):
@@ -465,8 +403,8 @@ class updateItem(BaseHandler):
       it = None
       try:
         it = Item.get_item(self.request.get('key'))
-      except Exception, E:
-        logging.exception("updateItem " + str(E))
+      except Exception:
+        logging.exception("updateItem ", exc_info=True)
         # not found
         self.error(400)
       # it.descr = self.request.get('descr')
@@ -477,7 +415,7 @@ class updateItem(BaseHandler):
         if cat:
           it.category = cat
       except:
-        logging.exception("Category not found %s" % posted_cat)
+        logging.exception("Category not found %s" % posted_cat, exc_info=True)
 
       it.put()
       old_votes = it.votes.filter("voter =", self.user_id)
@@ -501,57 +439,6 @@ class updateItem(BaseHandler):
 
     else:
       self.display_message("Unable to save item")
-
-
-def getPlaceDetailFromGoogle(item):
-  params = {'radius': 150,
-            'types': "food|restaurant",
-            'location': '%f,%f' % (item.lat, item.lng),
-            'name': item.place_name,
-            'sensor': False,
-            'key': settings.config['google_api_key']}
-  url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" + urllib.urlencode(params)
-  response = urllib2.urlopen(url)
-  json_result = response.read()
-  address_result = json.loads(json_result)
-  photo_ref = None
-  place_id = None
-  if address_result['status'] == "OK":
-    for r in address_result['results']:
-      photos_done = False
-      place_done = False
-      if not photos_done and ("photos" in r):
-        photo_ref = r['photos'][0]['photo_reference']
-        photos_done = True
-      if "place_id" in r:
-        place_id = r['place_id']
-        place_done = True
-      if photos_done and place_done:
-        break
-    if photo_ref:
-      url = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=%%d&photoreference=%s&key=%s" % (
-        photo_ref, settings.config['google_api_key'])
-      res = {'photo': url}
-    else:
-      res = {'photo': None}
-      logging.info("getPlaceDetailFromGoogle  NO URL %s: %s" % (item.place_name, address_result['status']))
-    if place_id:
-      params = {'placeid': place_id,
-                'key': settings.config['google_api_key']}
-      detail_url = "https://maps.googleapis.com/maps/api/place/details/json?" + urllib.urlencode(params)
-      response = urllib2.urlopen(detail_url)
-      json_result = response.read()
-      detail_result = json.loads(json_result)
-      if "formatted_phone_number" in detail_result['result']:
-        res['telephone'] = detail_result['result']["formatted_phone_number"]
-      else:
-        logging.info("getPlaceDetailFromGoogle - No number for %s" % item.place_name)
-    else:
-      logging.info("getPlaceDetailFromGoogle - No place_id for %s" % item.place_name)
-    return res
-  else:
-    logging.error("getPlaceDetailFromGoogle %s: %s" % (item.place_name, address_result['status']))
-    return {"photo": None, "telephone": None}
 
 
 def update_item_internal(self, user_id):
@@ -584,8 +471,8 @@ def update_item_internal(self, user_id):
           old_img.picture = db.Blob(rotated_pic)
           old_img.thumb = None
           old_img.put()
-  except Exception, E:
-    logging.exception("newOrUpdateItem Image Resize: " + str(E))
+  except Exception:
+    logging.exception("newOrUpdateItem Image Resize: ", exc_info=True)
     img = None
 
   # it.place_name = self.request.get('new-title') set in get_unique_place
@@ -640,9 +527,8 @@ def update_item_internal(self, user_id):
       vote_str = self.request.get("voteScore")
       vote.vote = 1 if vote_str == "1" or vote_str == "like" else -1
     vote.put()
-  except Exception, e:
-    logging.error("newOrUpdateItem votes exception")
-    logging.error("newOrUpdateItem votes exception " + str(e))
+  except Exception:
+    logging.error("newOrUpdateItem votes exception", exc_info=True)
 
 
   # todo: why?
@@ -724,32 +610,9 @@ class loadPlace(BaseHandler):
     pass
 
 
-def geoCodeAddress(address):
-  url = "https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor=false&key=%s" % \
-        (urllib2.quote(address), settings.config['google_api_key'])
-  response = urllib2.urlopen(url)
-  jsonGeoCode = response.read()
-  geoCode = json.loads(jsonGeoCode)
-  if geoCode['status'] == "OK":
-    pos = geoCode['results'][0]['geometry']['location']
-  else:
-    pos = None
-    logging.error("geoCodeAddress", {"message": "Bad geoCode"})
-  return pos
 
 
-def geoCodeLatLng(lat, lng):
-  url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=%s,%s&sensor=false&key=%s" % \
-        (lat, lng, settings.config['google_api_key'])
-  response = urllib2.urlopen(url)
-  serverResponse = response.read()
-  geoCode = json.loads(serverResponse)
-  if geoCode['status'] == "OK":
-    addr = geoCode['results'][0]['formatted_address']
-  else:
-    logging.warning("geoCodeLatLng: Failed to geocode %s,%s" % (lat, lng))
-    addr = None
-  return addr
+
 
 
 class geoLookup(BaseHandler):
@@ -793,8 +656,8 @@ class getItem_ajax(BaseHandler):
         res["mine"] = False
         res["descr"], res["vote"] = it.vote_from(self.user_id)
       json.dump(res, self.response.out)
-    except Exception, e:
-      logging.error("getItem_ajax Exception")
+    except Exception:
+      logging.error("getItem_ajax Exception", exc_info=True)
       self.error(500)
 
 
@@ -874,12 +737,9 @@ class login(BaseHandler):
     except (InvalidAuthIdError, InvalidPasswordError) as e:
       logging.info('Login failed for userId %s because of %s', username, type(e))
       return self.render_template("login.html", {"message": "Login Failed"})
-    except Exception, e:
-      logging.exception('Login failed because of unexpected error %s', type(e))
+    except Exception:
+      logging.exception('Login failed because of unexpected error %s', exc_info=True)
       return self.render_template("login.html", {"message": "Server Error"})
-    except:
-      logging.exception('Login failed for unknown reasons')
-      return self.render_template("login.html", {"message": "Bad Server Error"})
 
   def get(self):
     logging.debug("Login GET")
@@ -969,8 +829,8 @@ class deleteItem(BaseHandler):
             vote.delete()
         memcache_touch_user(self.user_id)
         self.response.write('OK')
-      except Exception, E:
-        logging.error("deleteItem", E)
+      except Exception:
+        logging.error("deleteItem", exc_info=True)
         self.abort(500)
     else:
       self.abort(401)

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from webapp2_extras import auth
-import views
+
 
 __author__ = 'Will'
 
@@ -15,9 +15,7 @@ config = {
   'templates_dir': "templates/",
   'template_dirs': ["/", "/mobile"],
   'online': True,
-  'template_filename_function': views.get_template_file,
   'mobile': False,
-  'how_old_is_new': timedelta(days=1),
   'ALLOWED_INCLUDE_ROOTS': "/templates",
   'google_api_key': 'AIzaSyDiTThta8R7EFuFo8cGfPHxIGYoFkc77Bw',
   'all_are_friends': True
@@ -28,3 +26,5 @@ auth.default_config['token_max_age'] = 86400 * 7 * 8  # 8 weeks login auth token
 ALLOWED_APP_IDS = ('shout-about', 'rayv-prod')
 
 API_TARGET_APP_ID = 'rayv-app'
+
+FAKE_ATTR = 'True'

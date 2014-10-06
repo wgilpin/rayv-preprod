@@ -77,8 +77,8 @@ def profile_out(function):
                 logging.info("profiler")
             else:
                 logging.error("Profiler Mismatch")
-        except Exception, e:
-            logging.error("Profiler error " + e)
+        except Exception:
+            logging.error("Profiler error ", exc_info=True)
 
 
 class Report(BaseHandler):

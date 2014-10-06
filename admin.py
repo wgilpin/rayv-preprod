@@ -3,7 +3,8 @@ import logging
 from auth_logic import BaseHandler
 from webapp2_extras import auth
 from auth_model import User
-from models import Item, itemKeyToJSONPoint
+from geo import itemKeyToJSONPoint
+from models import Item
 import urllib
 from google.appengine.api import urlfetch
 
@@ -51,8 +52,12 @@ class SyncToProd(BaseHandler):
             logging.info("SyncToProd sending "+it.place_name)
             form_fields = itemKeyToJSONPoint(place)
             vote = it.votes.filter("voter =", seed_user).get()
-            form_fields['myComment'] = vote.comment
-            form_fields['voteScore'] = vote.vote
+            if vote:
+              form_fields['myComment'] = vote.comment
+              form_fields['voteScore'] = vote.vote
+            else:
+              form_fields['voteScore'] = 1
+              form_fields['myComment'] = ""
             form_data = urllib.urlencode(form_fields)
             result = urlfetch.fetch(url=url,
                 payload=form_data,
@@ -60,7 +65,7 @@ class SyncToProd(BaseHandler):
                 headers={'Content-Type': 'application/x-www-form-urlencoded'})
         else:
           self.response.out.write('No Seed User')
-      except Exception, e:
-        logging.error('admin.SyncToProd '+str(e))
+      except Exception:
+        logging.error('admin.SyncToProd', exc_info=True)
     logging.info("Sync Done to Prod")
     self.response.out.write("OK")
