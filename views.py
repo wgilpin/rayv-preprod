@@ -269,9 +269,14 @@ def get_google_db_places(lat, lng, name, radius):
         address = r['formatted_address']
       else:
         address = r['vicinity']
+      if 'postal_code' in r:
+        post_code = r['postal_code'].split(' ')[0]
+      else:
+        post_code = ''
       distance = approx_distance(r['geometry']['location'], origin)
       detail = {'place_name': r['name'],
                 'address': address,
+                'post_code': post_code,
                 'distance_map_float': distance,
                 "lat": r['geometry']['location']['lat'],
                 "lng": r['geometry']['location']['lng']}
