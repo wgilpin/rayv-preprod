@@ -1,5 +1,6 @@
 import urllib2
 from google.appengine.ext import db
+from google.appengine.ext.db import ReferencePropertyResolveError
 from auth_logic import BaseHandler
 import geohash
 from models import Item, Vote, DBImage
@@ -195,6 +196,18 @@ class migrate(BaseHandler):
             self.response.out.write("FAIL %s-%s<br>" % (it.place_name, str(e)))
             pass
         self.response.out.write("11 - images got from google into db OK")
+      elif self.request.get("no") == "12":
+        # remove orphan votes
+        votes = Vote.all()
+        for v in votes:
+          try:
+            it = v.item.place_name
+          except ReferencePropertyResolveError:
+            db.delete(v)
+            self.response.out.write('Delete 1')
+          except Exception:
+            self.response.out.write("FAIL ", exc_info=True)
+        self.response.out.write("12 - votes clean - MEMCACHE")
       else:
         self.response.out.write("No Migration")
     else:

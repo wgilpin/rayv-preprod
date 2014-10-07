@@ -1,20 +1,27 @@
 from unittest import TestCase
-from geo import approx_distance, LatLng
+from dataloader import load_one_user, load_one_item
+from geo import approx_distance, LatLng, geoCodeLatLng
 
 __author__ = 'Will'
 
 
 class TestGeo(TestCase):
+  item = None
+  user = None
+
+  def load_user_and_item(self):
+    self.user = load_one_user(0)[1]
+    assert self.user
+    self.item = load_one_item(self.user)
+    assert self.item
+
   def test_getPlaceDetailFromGoogle(self):
     self.fail()
 
   def test_geoCodeLatLng(self):
     # lat, lng):
-    self.fail()
-
-  def test_geo_distance(self):
-    #point, origin):
-    self.fail()
+    addr = geoCodeLatLng(51.574841, -0.121519)
+    assert addr.find('Crouch Hill') > -1
 
   def test_findDbPlacesNearLoc(self):
     #my_location, search_text=None, filter=None, uid=None, position=None, exclude_user_id=None,place_names=None, ignore_votes=False):

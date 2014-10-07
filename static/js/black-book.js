@@ -1,77 +1,84 @@
-var currentItem = {
-    address: "",
-    lat: 0.0,
-    lng: 0.0,
-    place_name: "",
-    descr: "",
-    category: "",
-    key: "",
-    vote: 0,
-    mine: "",
-    img: null,
-    rotation: 0,
-    isFromMap: false,
-    loadFromKey: function (key) {
+var rayv = rayv||{};
+rayv.currentItem = rayv.currentItem||{};
+(function(){
+    this.address = "";
+    this.lat = 0.0;
+    this.lng = 0.0;
+    this.place_name = "";
+    this.descr = "";
+    this.category = "";
+    this.key = "";
+    this.vote = 0;
+    this.mine = "";
+    this.img = null;
+    this.rotation = 0;
+    this.telephone = null;
+    this.isFromMap = false;
+    this.distance = null;
+    var untried = null;
+    this.loadFromKey = function (key) {
         if (!key) {
             key = this.key;
         }
         if (key) {
-            this._innerLoad(UserData.places[key], false);
+            _innerLoad(rayv.UserData.places[key], false);
         }
-    },
-    _innerLoad: function (data, is_json) {
+    };
+    var _innerLoad = function (data, is_json) {
         var obj = is_json ? jQuery.parseJSON(data) : data;
-        this.address = obj.address;
-        console.assert(this.address != null);
-        console.assert(this.address != "null");
-        this.place_name = obj.place_name;
-        this.category = obj.category;
+        rayv.currentItem.address = obj.address;
+        console.assert(rayv.currentItem.address != null);
+        console.assert(rayv.currentItem.address != "null");
+        rayv.currentItem.place_name = obj.place_name;
+        rayv.currentItem.category = obj.category;
         console.log("_innerLoad: " + obj.category);
-        this.descr = obj.descr;
-        this.telephone = obj.telephone;
-        this.lat = obj.lat;
-        this.lng = obj.lng;
-        this.key = obj.key;
-        this.mine = obj.mine;
-        this.img = obj.img;
-        this.vote = obj.vote;
-        this.distance = obj.distance;
-        this.rotation = 0;
-        this.isFromMap = false;
-        this.untried = obj.untried;
-    },
-    clear: function () {
-        this.address = "";
-        this.place_name = "";
-        this.category = "";
-        this.descr = "";
-        this.lat = "";
-        this.lng = "";
-        this.key = null;
-        this.mine = "";
-        this.img = "";
-        this.vote = "";
-        this.distance = "";
-        this.rotation = "";
-        this.isFromMap = true;
+        rayv.currentItem.descr = obj.descr;
+        rayv.currentItem.telephone = obj.telephone;
+        rayv.currentItem.lat = obj.lat;
+        rayv.currentItem.lng = obj.lng;
+        rayv.currentItem.key = obj.key;
+        rayv.currentItem.mine = obj.mine;
+        rayv.currentItem.img = obj.img;
+        rayv.currentItem.vote = obj.vote;
+        rayv.currentItem.distance = obj.distance;
+        rayv.currentItem.rotation = 0;
+        rayv.currentItem.isFromMap = false;
+        untried = obj.untried;
+    };
+    this.clear = function () {
+        rayv.currentItem.address = "";
+        rayv.currentItem.place_name = "";
+        rayv.currentItem.category = "";
+        rayv.currentItem.descr = "";
+        rayv.currentItem.lat = "";
+        rayv.currentItem.lng = "";
+        rayv.currentItem.key = null;
+        rayv.currentItem.mine = "";
+        rayv.currentItem.img = "";
+        rayv.currentItem.vote = "";
+        rayv.currentItem.distance = "";
+        rayv.currentItem.rotation = "";
+        rayv.currentItem.isFromMap = true;
     }
-};
+}).apply(rayv.currentItem);
 
 //todo: put this in local storage
-var UserData = {
-    my_id: 0,
-    places: {},
-    friends: {},
-    updatePlaceCache: function (obj) {
+rayv.UserData = rayv.UserData||{};
+(function(){
+    var my_id =0;
+    this.places ={};
+    this.myBook = {};
+    var friends ={};
+    var updatePlaceCache =function (obj) {
         // only adds - no deletion here (as we don't ref count)
         for (var place_idx in obj.places) {
-            if (!(obj.places[place_idx].key in this.places)) {
+            if (!(obj.places[place_idx].key in rayv.UserData.places)) {
                 // dict indexed by place key
-                this.places[obj.places[place_idx].key] = obj.places[place_idx]
+                rayv.UserData.places[obj.places[place_idx].key] = obj.places[place_idx]
             }
         }
-    },
-    load: function (callback) {
+    };
+    this.load =function (callback) {
         //get All user data from the server
         var request = {};
         if (!BB.splash) {
@@ -82,19 +89,19 @@ var UserData = {
             function (data) {
                 //populate the list
                 var obj = $.parseJSON(data);
-                UserData.my_id = obj.id;
+                my_id = obj.id;
                 // first one is me
-                UserData.myBook = obj.friendsData[0];
-                delete UserData.places;
-                UserData.places = {};
-                UserData.updatePlaceCache(obj);
-                delete UserData.friends;
-                UserData.friends = {};
+                rayv.UserData.myBook = obj.friendsData[0];
+                delete rayv.UserData.places;
+                rayv.UserData.places = {};
+                updatePlaceCache(obj);
+                delete rayv.UserData.friends;
+                rayv.UserData.friends = {};
                 var skippedFirstAsThatOneIsMe = false;
                 for (var frIdx in obj.friendsData) {
                     if (skippedFirstAsThatOneIsMe) {
                         // dictionary indexed by user id
-                        UserData.friends[obj.friendsData[frIdx].id] = obj.friendsData[frIdx];
+                        friends[obj.friendsData[frIdx].id] = obj.friendsData[frIdx];
                     }
                     else {
                         skippedFirstAsThatOneIsMe = true;
@@ -102,12 +109,12 @@ var UserData = {
                 }
                 callback();
             });
-    },
-    getThumbs: function (listULId) {
+    };
+    this.getThumbs =function (listULId) {
         //load, cache & display the thumbs for the current list, async
         $(listULId).find("li").each(function () {
             var key = $(this).find('a').data('key');                    // get the data-key from the <a>
-            var place = UserData.places[key];                            // lookup the place for that key
+            var place = rayv.UserData.places[key];                            // lookup the place for that key
             if (place.imageData) {                                     // if no cached image
                 $(this).find(".item-img-container").html(place.imageData);            // replace the existing image with cached one
             }
@@ -127,9 +134,9 @@ var UserData = {
                 }
             }
         });
-    },
+    };
 
-    get_most_relevant_comment: function (key) {
+    this.get_most_relevant_comment =function (key) {
         // my comment, else a friend's
         if (this.myBook.votes[key]) {
             return this.myBook.votes[key].comment
@@ -141,17 +148,17 @@ var UserData = {
             }
         }
         return "";
-    },
+    };
 
-    get_my_comment: function (key) {
-        // my comment,
+    this.get_my_comment = function (key) {
+        // my comment;
         if (this.myBook.votes[key]) {
             return this.myBook.votes[key].comment
         }
-        return "";
-    },
+        return '';
+    };
 
-    get_votes_for_item: function (key) {
+    this.get_votes_for_item =function (key) {
         var result = [];
         for (var frIdx in this.friends) {
             var vote = {name: this.friends[frIdx].name};
@@ -162,7 +169,7 @@ var UserData = {
         }
         return result;
     }
-};
+}).apply(rayv.UserData);
 
 var BB = {
         isOnline: true,
@@ -256,11 +263,11 @@ var BB = {
                 if ("dirty_list" in obj) {
                     for (var frIdx in obj.dirty_list.friends) {
                         //these friends are dirty
-                        UserData.friends[obj.dirty_list.friends[frIdx].id] = obj.dirty_list.friends[frIdx];
+                        rayv.UserData.friends[obj.dirty_list.friends[frIdx].id] = obj.dirty_list.friends[frIdx];
                     }
                     for (var plIdx in obj.dirty_list.places) {
                         //these places are dirty
-                        UserData.places[obj.dirty_list.places[plIdx].key] = obj.dirty_list.places[plIdx];
+                        rayv.UserData.places[obj.dirty_list.places[plIdx].key] = obj.dirty_list.places[plIdx];
                     }
                 }
 
@@ -307,16 +314,16 @@ var BB = {
 
         updateCurrentItemInCache: function () {
             //we have changed the current item, update the cache
-            if (currentItem.key in UserData.places) {
-                UserData.places[currentItem.key].address = currentItem.address;
-                UserData.places[currentItem.key].category = currentItem.category;
-                if ((UserData.places[currentItem.key].img != currentItem.img) ||
-                    (UserData.places[currentItem.key].vote != currentItem.vote)) {
+            if (rayv.currentItem.key in rayv.UserData.places) {
+                rayv.UserData.places[rayv.currentItem.key].address = rayv.currentItem.address;
+                rayv.UserData.places[rayv.currentItem.key].category = rayv.currentItem.category;
+                if ((rayv.UserData.places[rayv.currentItem.key].img != rayv.currentItem.img) ||
+                    (rayv.UserData.places[rayv.currentItem.key].vote != rayv.currentItem.vote)) {
                     console.log("Can't update in cache - reload");
                     return false;
                 }
-                UserData.myBook.votes[currentItem.key].vote = currentItem.vote == 'dislike' ? -1 : 1;
-                UserData.myBook.votes[currentItem.key].comment = currentItem.descr;
+                rayv.UserData.myBook.votes[rayv.currentItem.key].vote = rayv.currentItem.vote == 'dislike' ? -1 : 1;
+                rayv.UserData.myBook.votes[rayv.currentItem.key].comment = rayv.currentItem.descr;
                 console.log("Updated in cache ");
                 return true;
             }
@@ -330,8 +337,9 @@ var BB = {
             BB.geocoder.geocode({'latLng': BB.creatorMap.getCenter()}, function (results, status) {
                 if (status == google.maps.GeocoderStatus.OK) {
                     if (results[1]) {
-                        $("#dragged-address").text(results[0].formatted_address);
-                        $("#dragged-address").show();
+                        var el = $("#dragged-address")
+                        el.text(results[0].formatted_address);
+                        el.show();
                     }
                 } else {
                     console.log("Geocoder failed due to: " + status);
@@ -347,23 +355,23 @@ var BB = {
                 if (f) {
                     fd.append("new-photo", f);
                 }
-                fd.append("new-item-category", currentItem.category);
-                fd.append("new-title", currentItem.place_name);
-                fd.append("address", currentItem.address);
-                fd.append("myComment", currentItem.descr);
-                fd.append("latitude", currentItem.lat);
-                fd.append("longitude", currentItem.lng);
-                fd.append("voteScore", currentItem.vote);
-                fd.append("untried", 'untried' in currentItem ? currentItem.untried : false);
-                fd.append("rotation", currentItem.rotation);
-                fd.append("key", currentItem.key);
+                fd.append("new-item-category", rayv.currentItem.category);
+                fd.append("new-title", rayv.currentItem.place_name);
+                fd.append("address", rayv.currentItem.address);
+                fd.append("myComment", rayv.currentItem.descr);
+                fd.append("latitude", rayv.currentItem.lat);
+                fd.append("longitude", rayv.currentItem.lng);
+                fd.append("voteScore", rayv.currentItem.vote);
+                fd.append("untried", 'untried' in rayv.currentItem ? rayv.currentItem.untried : false);
+                fd.append("rotation", rayv.currentItem.rotation);
+                fd.append("key", rayv.currentItem.key);
                 return fd;
             }
 
             function saveMultiPart() {
                 var _URL;
                 console.log("With file");
-                currentItem.img = true; // to trigger a reload, make it different
+                rayv.currentItem.img = true; // to trigger a reload, make it different
                 // if a file is present
                 //     resize it
                 //     multipart form with image upload
@@ -427,7 +435,7 @@ var BB = {
                         }
                     }
                 });
-                console.log("AJAX saveCurrentItem");
+                console.log("AJAX saverayv.currentItem");
             }
 
             if (file) {
@@ -440,8 +448,8 @@ var BB = {
 
         SaveItemAtPos: function (position) {
             console.log("SaveItemAtPos");
-            currentItem.lat = position.coords.latitude;
-            currentItem.lng = position.coords.longitude;
+            rayv.currentItem.lat = position.coords.latitude;
+            rayv.currentItem.lng = position.coords.longitude;
             this.saveCurrentItem();
         },
 
@@ -464,13 +472,13 @@ var BB = {
 
 //todo: is this the right name?
         loadMapItemForEdit: function (place_name, lat, lng) {
-            $('#new-item-votes li').removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
+            $('#new-item-votes').find('li').removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
             $('#new-item-like').addClass('ui-btn-active');
-            $("#new-category>option").removeAttr('selected');
+            $("#new-category").children("option").removeAttr('selected');
             $("#new-title-hdg").text(place_name);
             $("input[name=new-title]").val(place_name);
             $("#new-text").val("");
-            currentItem.isFromMap = true;
+            rayv.currentItem.isFromMap = true;
             var pos = {"coords": ""};
             pos.coords = {"latitude": lat, "longitude": lng};
             this.SaveItemAtPos(pos)
@@ -495,14 +503,14 @@ var BB = {
                 this.clearMapMarkers();
             }
             var placeList = [];
-            for (var it in UserData.myBook.votes) {
-                if ((BB.filter != 'untried') || (BB.filter == 'untried' && UserData.myBook.votes[it].untried))
+            for (var it in rayv.UserData.myBook.votes) {
+                if ((BB.filter != 'untried') || (BB.filter == 'untried' && rayv.UserData.myBook.votes[it].untried))
                     placeList.push(it);
             }
             if (BB.filter == "all") {
                 //add the other lists
-                for (var friend in UserData.friends) {
-                    for (it in UserData.friends[friend].votes) {
+                for (var friend in rayv.UserData.friends) {
+                    for (it in rayv.UserData.friends[friend].votes) {
                         if (placeList.indexOf(it) == -1) {
                             placeList.push(it)
                         }
@@ -511,7 +519,7 @@ var BB = {
             }
             var detailList = [];
             for (var geoPtIdx in placeList) {
-                var geoPt = UserData.places[placeList[geoPtIdx]];
+                var geoPt = rayv.UserData.places[placeList[geoPtIdx]];
                 detailList.push(geoPt);
             }
 
@@ -588,7 +596,7 @@ var BB = {
                         google.maps.event.addListener(marker, 'click',
                             function () {
                                 if (this.key) {
-                                    currentItem.loadFromKey(this.key);
+                                    rayv.currentItem.loadFromKey(this.key);
                                     BB.showAnotherItemOnMap();
                                 }
                             }
@@ -602,7 +610,7 @@ var BB = {
                 $(UIlist).find("A").on("click", BB.ItemLoadPage);
                 //FLIGHT
                 // Get cached thumbs
-                UserData.getThumbs(UIlist);
+                rayv.UserData.getThumbs(UIlist);
                 try {
                     $(UIlist).find('div[data-role=collapsible]').collapsible();
                     try {
@@ -682,8 +690,8 @@ var BB = {
             var map_centre = {"latitude": BB.theMap.getCenter().lat(),
                 "longitude": BB.theMap.getCenter().lng() };
             console.log("distances from Map: " + map_centre.latitude + ", " + map_centre.longitude);
-            for (var pt in UserData.places) {
-                var place = UserData.places[pt];
+            for (var pt in rayv.UserData.places) {
+                var place = rayv.UserData.places[pt];
                 var dist = BB.approx_distance(place, BB.lastGPSPosition);
                 place.distance = BB.pretty_dist(dist);
                 place.dist_float = dist;
@@ -723,40 +731,43 @@ var BB = {
                 $("#new-detail-name").val(text);
                 $("input[name=new-title]").val(text);
                 $("#new-name").val(text);
-                currentItem.place_name = text;
-                currentItem.address = $(this).data("address");
-                currentItem.descr = "";
+                rayv.currentItem.place_name = text;
+                rayv.currentItem.address = $(this).data("address");
+                rayv.currentItem.descr = "";
 
-                currentItem.category = $(this).data("category");
-                $("#new-detail-address").val(currentItem.address);
+                rayv.currentItem.category = $(this).data("category");
+                $("#new-detail-address").val(rayv.currentItem.address);
                 $("#new-detail-comment").val("");   // no comment as it's not in db
-                $("#cat-lookup input").val(currentItem.category);
-                currentItem.key = $(this).data("shoutKey");
-                currentItem.lat = $(this).data("lat");
-                currentItem.lng = $(this).data("lng");
-                currentItem.isFromMap = true;
+                $("#cat-lookup").find("input").val(rayv.currentItem.category);
+                rayv.currentItem.key = $(this).data("shoutKey");
+                console.log("key set new_places_list_click");
+                rayv.currentItem.lat = $(this).data("lat");
+                rayv.currentItem.lng = $(this).data("lng");
+                rayv.currentItem.isFromMap = true;
 
             }
             else {
                 //new place from scratch
-                var place = $("#new-place-name-box").val();
+                var place = $("#new-place-name-box");
                 if (place.length < 2) {
                     alert("You need to enter a name");
                     event.preventDefault();
                     return false;
                 }
                 else {
-                    currentItem.isFromMap = false;
-                    $("#new-title-hdg").text($("#new-place-name-box").val());
-                    currentItem.place_name = $("#new-place-name-box").val();
-                    $("input[name=new-title]").val(currentItem.place_name);
-                    currentItem.key = "";
+                    rayv.currentItem.isFromMap = false;
+                    $("#new-title-hdg").text(place);
+                    rayv.currentItem.place_name = place;
+                    $("input[name=new-title]").val(rayv.currentItem.place_name);
+                    rayv.currentItem.key = "";
+                    console.log("key set new_places_list_click 2");
                     //TODO: What does it mean when the lat and long is zero?
 
                     //todo: what's the address?
-                    currentItem.address = "";
-                    $("#new-category>option").removeAttr('selected');
-                    $("#new-category>option:contains('" + $("#selectmenu2").val() + "')").attr("selected", true);
+                    rayv.currentItem.address = "";
+                    var el = $("#new-category").find("option");
+                    el.removeAttr('selected');
+                    $("#new-category").children("option:contains('" + $("#selectmenu2").val() + "')").attr("selected", true);
                     $("#new-name").val(place);
                 }
                 $.mobile.changePage("#new-detail");
@@ -767,9 +778,10 @@ var BB = {
         loadPlacesListSuccessHandler: function (data) {
             console.log("loadPlacesListSuccessHandler");
             BB.navBarEnable();
-            $("#new-place-list").html(data);
-            $("#new-place-list").trigger("create");
-            $("#new-place-list ul a").on("click", BB.new_places_list_click);
+            var el = $("#new-place-list");
+            el.html(data);
+            el.trigger("create");
+            el.find("ul").find("a").on("click", BB.new_places_list_click);
             $("#new-place-list-loading").hide();
         },
 
@@ -809,26 +821,26 @@ var BB = {
             //called from new-detail-page
             console.log("new_item_save_click");
 
-            //currentItem.descr = $("#new-detail-comment").val();
-            currentItem.category = $("#new-category").val();
-            if (currentItem.category === "None" || currentItem.category == null || currentItem.category.length == 0) {
+            //rayv.currentItem.descr = $("#new-detail-comment").val();
+            rayv.currentItem.category = $("#new-category").val();
+            if (rayv.currentItem.category === "None" || rayv.currentItem.category == null || rayv.currentItem.category.length == 0) {
                 alert("You must pick a type of cuisine");
                 return;
             }
-            currentItem.address = $("#new-detail-address").val();
-            currentItem.place_name = $("#new-detail-name").val();
-            currentItem.descr = $("#new-detail-comment").val();
-            currentItem.vote = 1;
-            currentItem.untried = false;
+            rayv.currentItem.address = $("#new-detail-address").val();
+            rayv.currentItem.place_name = $("#new-detail-name").val();
+            rayv.currentItem.descr = $("#new-detail-comment").val();
+            rayv.currentItem.vote = 1;
+            rayv.currentItem.untried = false;
             var hasVote = false;
             if ($('#new-item-dislike').hasClass('ui-btn-active')) {
-                currentItem.vote = -1;
-                currentItem.untried = false;
+                rayv.currentItem.vote = -1;
+                rayv.currentItem.untried = false;
                 hasVote = true;
             }
             if ($('#new-item-untried').hasClass('ui-btn-active')) {
-                currentItem.untried = true;
-                currentItem.vote = 0;
+                rayv.currentItem.untried = true;
+                rayv.currentItem.vote = 0;
                 hasVote = true;
             }
             if ($('#new-item-like').hasClass('ui-btn-active')) {
@@ -838,17 +850,16 @@ var BB = {
                 alert('Please vote!');
                 return;
             }
-            if (currentItem.key == "") {
+            if (rayv.currentItem.key == "") {
                 //from map or db, use supplied pos
                 var pos = {"coords": 0};
-                pos.coords = {"latitude": currentItem.lat,
-                    "longitude": currentItem.lng};
+                pos.coords = {"latitude": rayv.currentItem.lat,
+                    "longitude": rayv.currentItem.lng};
                 BB.SaveItemAtPos(pos);
             }
             else {
                 BB.saveCurrentItem();
             }
-            return;
         },
 
         googleFormatPosition: function (pos) {
@@ -879,11 +890,11 @@ var BB = {
         },
         loadVotesInner: function () {
             var votes = [];
-            for (var frIdx in UserData.friends) {
-                for (var voteIdx in UserData.friends[frIdx].votes) {
-                    var vote = UserData.friends[frIdx].votes[voteIdx];
-                    if (vote == currentItem.key) {
-                        vote.userName = UserData.friends[frIdx].name;
+            for (var frIdx in rayv.UserData.friends) {
+                for (var voteIdx in rayv.UserData.friends[frIdx].votes) {
+                    var vote = rayv.UserData.friends[frIdx].votes[voteIdx];
+                    if (vote == rayv.currentItem.key) {
+                        vote.userName = rayv.UserData.friends[frIdx].name;
                         votes.push(vote)
                     }
                 }
@@ -898,15 +909,15 @@ var BB = {
 
         updateitem: function () {
             console.log("updateitem");
-            currentItem.descr = $("#item-descr").val();
-            currentItem.vote = 1;
-            currentItem.untried = false;
+            rayv.currentItem.descr = $("#item-descr").val();
+            rayv.currentItem.vote = 1;
+            rayv.currentItem.untried = false;
             if ($('#item-dislike').hasClass('ui-btn-active')) {
-                currentItem.vote = -1;
+                rayv.currentItem.vote = -1;
             }
             else if ($('#item-untried').hasClass('ui-btn-active')) {
-                currentItem.untried = true;
-                currentItem.vote = 0;
+                rayv.currentItem.untried = true;
+                rayv.currentItem.vote = 0;
             }
             BB.saveCurrentItem();
         },
@@ -918,13 +929,14 @@ var BB = {
             // hide all items
             // now show those containing our text
             var search_for = $("#new-place-name-box").val();
+            var el = $("#new-place-list").children("ul");
             if (search_for.length > 0) {
-                $("#new-place-list>ul>li").hide();
-                $("#new-place-list>ul>li:" + "contains('Add New')").show();
-                $('#new-place-list>ul>li:contains("' + search_for + '")').show();
+                el.children("li").hide();
+                el.children("li:" + "contains('Add New')").show();
+                el.children('li:contains("' + search_for + '")').show();
             }
             else {
-                $("#new-place-list>ul>li").show();
+                el.children('li').show();
             }
         },
 
@@ -936,11 +948,11 @@ var BB = {
             // now show those containing our text
             var search_for = $("#main-search").val();
             if (search_for.length > 0) {
-                $("#main-list>li").hide();
-                $('#main-list>li:contains("' + search_for + '")').show();
+                $("#main-list").children("li").hide();
+                $('#main-list").children("li:contains("' + search_for + '")').show();
             }
             else {
-                $("#main-list>li").show();
+                $("#main-list").children("li").show();
             }
         },
 
@@ -951,51 +963,53 @@ var BB = {
             // copy over the vals from the item page
             //todo: check for new Item path
             console.log("cat: " + $("#item-category").val());
-            currentItem.loadFromKey();
-            if (currentItem.key in UserData.myBook.votes) {
+            rayv.currentItem.loadFromKey();
+            if (rayv.currentItem.key in rayv.UserData.myBook.votes) {
                 $("#new-item-delete").show();
             }
             else {
                 $("#new-item-delete").hide();
             }
-            $("#new-detail-name").val(currentItem.place_name);
-            $("#new-detail-address").val(currentItem.address);
-            $("#new-category>option").removeAttr('selected');
+            $("#new-detail-name").val(rayv.currentItem.place_name);
+            $("#new-detail-address").val(rayv.currentItem.address);
+            $("#new-category").children("option").removeAttr('selected');
+            var el = $("#new-category");
             try {
-                $("#new-category>option:contains('" + currentItem.category + "')").attr("selected", true);
-                $("#new-category").val(currentItem.category);
-                $("#new-category").selectmenu("refresh", true);
+                $("#new-category").children("option:contains('" + rayv.currentItem.category + "')").attr("selected", true);
+                el.val(rayv.currentItem.category);
+                el.selectmenu("refresh", true);
             }
             catch (e) {
-                $("#new-category").val("");
+                el.val('');
             }
-            $("#new-detail-comment").val(UserData.get_most_relevant_comment(currentItem.key));
+            $("#new-detail-comment").val(rayv.UserData.get_most_relevant_comment(rayv.currentItem.key));
 
             //set the likes radio
-            if (currentItem.untried) {
+            if (rayv.currentItem.untried) {
                 $('#new-item-votes li').removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
                 $('#new-item-untried').addClass('ui-btn-active');
             }
             else {
-                if (currentItem.vote >= 0) {
-                    $('#new-item-votes li').removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
+                if (rayv.currentItem.vote >= 0) {
+                    $('#new-item-votes').find('li').removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
                     $('#new-item-like').addClass('ui-btn-active');
                 }
                 else {
-                    $('#new-item-votes li').removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
+                    $('#new-item-votes').find('li').removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
                     $('#new-item-dislike').addClass('ui-btn-active');
                 }
             }
-            $("#new-preview-box>div>img").removeClass("rotr").removeClass("rotu").removeClass("rotl");
+            $("#new-preview-box").children("div").children("img").removeClass("rotr").removeClass("rotu").removeClass("rotl");
             BB.imageRotation = 0;
-            if (currentItem.img) {
+            if (rayv.currentItem.img) {
                 console.log("Show item image");
                 $("#new-preview-box").show();
-                $("#new-img>img").attr("src", currentItem.img);
-                $("#new-img>img").attr("style", "");
+                var el = $("#new-img").children("img");
+                el.attr("src", rayv.currentItem.img);
+                el.attr("style", "");
             }
             else {
-                $("#new-preview-box").hide();
+                el.hide();
             }
         },
 
@@ -1010,13 +1024,14 @@ var BB = {
 
 // map-search key press event
         map_search_key: function (e) {
-            if ($("#map-search").val().length == 0) {
+            var el = $("#map-search");
+            if (el.val().length == 0) {
                 $("#googlemapsjs1").show();
                 $("#map-search-btn-box").hide();
             } else
                 $("#map-search-btn-box").show();
             // if it's return do the search
-            if (e.which == 13 || (e.which == 8 && $("#map-search").val().length == 0 )) {
+            if (e.which == 13 || (e.which == 8 && el.val().length == 0 )) {
                 console.log("map_search_key: 13");
                 $("#googlemapsjs1").hide();
                 //hide keyboard
@@ -1032,14 +1047,14 @@ var BB = {
 
         showItemOnMap: function () {
             //show the map page, centered on the current item
-            BB.lastMapPosition.latitude = currentItem.lat;
-            BB.lastMapPosition.longitude = currentItem.lng;
+            BB.lastMapPosition.latitude = rayv.currentItem.lat;
+            BB.lastMapPosition.longitude = rayv.currentItem.lng;
             //BB.clearMapMarkers();
-            /*var pos = new google.maps.LatLng(currentItem.lat, currentItem.lng);
+            /*var pos = new google.maps.LatLng(rayv.currentItem.lat, rayv.currentItem.lng);
              BB.marker = new google.maps.Marker({
              position: pos,
              map: BB.theMap,
-             title: currentItem.place_name
+             title: rayv.currentItem.place_name
              });
              BB.marker.setMap(BB.theMap);*/
             google.maps.event.trigger(BB.theMap, 'resize');
@@ -1049,8 +1064,8 @@ var BB = {
         },
         showAnotherItemOnMap: function () {
             // centered on the current item
-            BB.lastMapPosition.latitude = currentItem.lat;
-            BB.lastMapPosition.longitude = currentItem.lng;
+            BB.lastMapPosition.latitude = rayv.currentItem.lat;
+            BB.lastMapPosition.longitude = rayv.currentItem.lng;
             BB.populateMainList("");
             BB.lastMapPosition.isSet = true;
             BB.lastMapPosition.zoomIn = false;
@@ -1070,27 +1085,28 @@ var BB = {
         imageRotate: function (e) {
             e.preventDefault();
             BB.imageRotation = (BB.imageRotation + 1) % 4;
+            var img = $("#new-preview-box").children("div").children("img");
             switch (BB.imageRotation) {
                 case 0:
                     //original
-                    $("#new-preview-box>div>img").removeClass("rotr").removeClass("rotu").removeClass("rotl");
-                    currentItem.rotation = 0;
+                    img.removeClass("rotr").removeClass("rotu").removeClass("rotl");
+                    rayv.currentItem.rotation = 0;
                     break;
                 case 1:
                     //right
-                    $("#new-preview-box>div>img").removeClass("rotl").removeClass("rotu").addClass("rotr");
-                    currentItem.rotation = 1;
+                    img.removeClass("rotl").removeClass("rotu").addClass("rotr");
+                    rayv.currentItem.rotation = 1;
                     break;
                 case 2:
                     // invert
-                    $("#new-preview-box>div>img").removeClass("rotl").removeClass("rotr").addClass("rotu");
-                    currentItem.rotation = -2;
+                    img.removeClass("rotl").removeClass("rotr").addClass("rotu");
+                    rayv.currentItem.rotation = -2;
                     break;
 
                 case 3:
                     //left
-                    $("#new-preview-box>div>img").removeClass("rotr").removeClass("rotu").addClass("rotl");
-                    currentItem.rotation = -1;
+                    img.removeClass("rotr").removeClass("rotu").addClass("rotl");
+                    rayv.currentItem.rotation = -1;
                     break;
 
             }
@@ -1098,8 +1114,8 @@ var BB = {
 
 
         imageSaveClick: function () {
-            $("input[name=image-id]").val(currentItem.key);
-            if ($("#image-img>img").hasClass("rotl"))
+            $("input[name=image-id]").val(rayv.currentItem.key);
+            if ($("#image-img").children("img").hasClass("rotl"))
                 $("input[name=image-rotate]").val(-1);
             else
                 $("input[name=image-rotate]").val(1);
@@ -1203,7 +1219,7 @@ var BB = {
                     console.log("PAGE new place - no reload")
                 }
                 else {
-                    this.loadLocalPlaces(null, false);
+                    rayv.UserData.loadLocalPlaces(null, false);
                     $("input[name=new-title]").val("");
                 }
             }
@@ -1212,14 +1228,15 @@ var BB = {
         },
 
         pageToImage: function () {
-            $("#image-img>img").attr("src", currentItem.img);
+            $("#image-img>img").attr("src", rayv.currentItem.img);
             //$("#image-img>img").attr("style", "");
-            $("#image-header").text(currentItem.place_name);
+            $("#image-header").text(rayv.currentItem.place_name);
         },
 
         ItemLoadPage: function () {
             console.log('ItemLoadPage');
-            currentItem.key = $(this).data('key');
+            rayv.currentItem.key = $(this).data('key');
+            console.log("key set ItemLoadPage");
             $.mobile.changePage("#item-page")
         },
 
@@ -1257,7 +1274,7 @@ var BB = {
         },
 
         clearItemPage: function () {
-            $("#item-img>img").attr("src", "");
+            $("#item-img").children("img").attr("src", "");
             $("#item-title").html("Loading");
             $("#item-address").html("");
 
@@ -1283,21 +1300,22 @@ var BB = {
                 if (previousPage == "image-page")
                     $("#item-img").show();
                 $("#item-img").show();
-                currentItem.loadFromKey();
-                $("#item-title").html(currentItem.place_name);
-                $("#item-address").html(currentItem.address);
+                rayv.currentItem.loadFromKey();
+                $("#item-title").html(rayv.currentItem.place_name);
+                $("#item-address").html(rayv.currentItem.address);
 
-                $("#item-category").html(currentItem.category);
-                if (currentItem.telephone) {
-                    $("#item-phone-link").attr('href', 'tel:' + currentItem.telephone);
-                    $("#item-phone-link").show();
+                $("#item-category").html(rayv.currentItem.category);
+                if (rayv.currentItem.telephone) {
+                    var phone = $("#item-phone-link");
+                    phone.attr('href', 'tel:' + rayv.currentItem.telephone);
+                    phone.show();
                 }
                 else {
                     $("#item-phone-link").hide();
                 }
 
-                $("#item-title-2").html(currentItem.place_name);
-                var comment = UserData.get_my_comment(currentItem.key);
+                $("#item-title-2").html(rayv.currentItem.place_name);
+                var comment = rayv.UserData.get_my_comment(rayv.currentItem.key);
                 var comment_header = comment;
 
                 if (comment.length == 0) {
@@ -1312,7 +1330,7 @@ var BB = {
                 $("#item-descr").val(comment);
 
                 $("#item-comments").html();
-                var votes = UserData.get_votes_for_item(currentItem.key);
+                var votes = rayv.UserData.get_votes_for_item(rayv.currentItem.key);
                 var html = "";
                 for (var vote in votes) {
                     if (votes[vote].vote.comment.length > 0) {
@@ -1321,25 +1339,25 @@ var BB = {
                 }
                 $("#item-comments").html(html);
 
-                $("#item-distance").html(currentItem.distance);
+                $("#item-distance").html(rayv.currentItem.distance);
 
                 //set the likes radio
                 $('#item-page-votes li a').removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
-                if (currentItem.untried) {
+                if (rayv.currentItem.untried) {
                     $('#item-untried').addClass('ui-btn-active');
                 }
                 else {
-                    if (currentItem.vote > 0) {
+                    if (rayv.currentItem.vote > 0) {
                         $('#item-like').addClass('ui-btn-active');
                     }
                     else {
                         $('#item-dislike').addClass('ui-btn-active');
                     }
                 }
-                if (currentItem.img) {
+                if (rayv.currentItem.img) {
                     console.log("Show item image");
                     $("#item-img").show();
-                    $("#item-img>img").attr("src", currentItem.img);
+                    $("#item-img>img").attr("src", rayv.currentItem.img);
                     $("#item-img>img").attr("style", "");
                 }
                 else {
@@ -1347,7 +1365,7 @@ var BB = {
                     $("#item-img>img").attr("src", '/static/images/no-image.png');
                     $("#item-img>img").attr("style", "");
                 }
-                if (currentItem.key in UserData.myBook.votes) {
+                if (rayv.currentItem.key in rayv.UserData.myBook.votes) {
                     $("#item-delete").show();
                 }
                 else {
@@ -1356,10 +1374,10 @@ var BB = {
                 $('#item-votes-inner').trigger('collapse').trigger('updatelayout');
                 $("#vote-cursor").val("");
                 $("#item-votes").html("");
-                this.loadVotes()
+                BB.loadVotes()
             }
 
-            if (currentItem.key) {
+            if (rayv.currentItem.key) {
                 if (BB.friend_comment_template == null) {
                     //load from file
                     $.get(
@@ -1380,7 +1398,7 @@ var BB = {
             BB.map_search_key({"which": 13});
         },
 
-        clickColumnHeader: function (event) {
+        clickColumnHeader: function () {
             // click a column header on the list page
             BB.filter = BB.get_list_column_filter();
             BB.populateMainList("", 0, 0);
@@ -1411,11 +1429,11 @@ var BB = {
             $('#new-item-like').addClass('ui-btn-active');
             $("#new-preview-box").hide();
 
-            currentItem.address = $(this).data('address');
-            currentItem.key = $(this).data('key');
-            currentItem.lat = $(this).data('lat');
-            currentItem.lng = $(this).data('lng');
-            currentItem.place_name = properTitle;
+            rayv.currentItem.address = $(this).data('address');
+            rayv.currentItem.key = $(this).data('key');
+            rayv.currentItem.lat = $(this).data('lat');
+            rayv.currentItem.lng = $(this).data('lng');
+            rayv.currentItem.place_name = properTitle;
         },
 
         process_template: function (data, callback) {
@@ -1449,7 +1467,7 @@ var BB = {
 
                     $("#new-place-list").html(UIlist).listview().trigger('create').trigger('updatelayout');
                     $(".found-address").on("click", BB.item_create);
-                    $("#manual-address-lookup").val(currentItem.address);
+                    $("#manual-address-lookup").val(rayv.currentItem.address);
                 }
                 catch (e) {
                     console.error("lookupAddressList");
@@ -1475,7 +1493,7 @@ var BB = {
             }
 
             console.log("AJAX lookupAddressList");
-            addr = currentItem.address;
+            addr = rayv.currentItem.address;
             var request = {};
             request.lat = this.lastGPSPosition.latitude;
             request.lng = this.lastGPSPosition.longitude;
@@ -1500,18 +1518,18 @@ var BB = {
         },
 
         lookupMyAddress: function (event) {
-            currentItem.address = "";
+            rayv.currentItem.address = "";
             BB.lookupAddressList(event);
         },
 
         lookupManualAddress: function (event) {
-            currentItem.address = $("#new-place-near").val();
+            rayv.currentItem.address = $("#new-place-near").val();
             BB.lookupAddressList(event);
         },
 
         add_search_name: function () {
             //lookup a place by name in the add page
-            name = $("#new-place-name-box").val();
+            rayv.currentItem.place_name = $("#new-place-name-box").val();
         },
 
         take_photo_click: function () {
@@ -1545,11 +1563,11 @@ var BB = {
         },
 
         do_create_new_address: function () {
-            currentItem.clear();
-            currentItem.place_name = $("#create-name").val();
-            currentItem.address = $("#dragged-address").text();
-            currentItem.lat = BB.creatorMap.getCenter().lat();
-            currentItem.lng = BB.creatorMap.getCenter().lng();
+            rayv.currentItem.clear();
+            rayv.currentItem.place_name = $("#create-name").val();
+            rayv.currentItem.address = $("#dragged-address").text();
+            rayv.currentItem.lat = BB.creatorMap.getCenter().lat();
+            rayv.currentItem.lng = BB.creatorMap.getCenter().lng();
             BB.item_load_for_edit();
             $.mobile.changePage("#new-detail");
         },
@@ -1583,14 +1601,14 @@ var BB = {
         itemDelete: function () {
             //delete the current item
             //is it in my list?
-            if (currentItem.key in UserData.myBook.votes) {
+            if (rayv.currentItem.key in rayv.UserData.myBook.votes) {
                 if (confirm("Remove place from your list?")) {
                     $.ajax(
-                        {url: '/item/del/' + currentItem.key,
+                        {url: '/item/del/' + rayv.currentItem.key,
                             type: 'post',
                             success: function () {
                                 $.mobile.changePage("#list-page");
-                                UserData.load(BB.populateMainList);
+                                rayv.UserData.load(BB.populateMainList);
                             }})
                 }
             }
@@ -1748,7 +1766,7 @@ var BB = {
         },
 
         loadUserData: function () {
-            UserData.load(
+            rayv.UserData.load(
                 function () {
                     BB.populateMainList("");
                 });
@@ -1779,7 +1797,7 @@ $(function () {
                     BB.pageToImage(event);
                     break;
                 case "new-detail":
-                    if (currentItem.key) {
+                    if (rayv.currentItem.key) {
                         BB.item_load_for_edit();
                     }
                     break;
