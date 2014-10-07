@@ -68,6 +68,7 @@ rayv.UserData = rayv.UserData||{};
     var my_id =0;
     this.places ={};
     this.myBook = {};
+    this.friends = {}
     var friends ={};
     var updatePlaceCache =function (obj) {
         // only adds - no deletion here (as we don't ref count)
