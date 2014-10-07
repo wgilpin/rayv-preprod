@@ -1219,7 +1219,7 @@ var BB = {
                     console.log("PAGE new place - no reload")
                 }
                 else {
-                    rayv.UserData.loadLocalPlaces(null, false);
+                    BB.loadLocalPlaces(null, false);
                     $("input[name=new-title]").val("");
                 }
             }
