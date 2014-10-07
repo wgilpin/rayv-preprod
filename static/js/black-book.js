@@ -69,7 +69,6 @@ rayv.UserData = rayv.UserData||{};
     this.places ={};
     this.myBook = {};
     this.friends = {}
-    var friends ={};
     var updatePlaceCache =function (obj) {
         // only adds - no deletion here (as we don't ref count)
         for (var place_idx in obj.places) {
@@ -102,7 +101,7 @@ rayv.UserData = rayv.UserData||{};
                 for (var frIdx in obj.friendsData) {
                     if (skippedFirstAsThatOneIsMe) {
                         // dictionary indexed by user id
-                        friends[obj.friendsData[frIdx].id] = obj.friendsData[frIdx];
+                        rayv.UserData.friends[obj.friendsData[frIdx].id] = obj.friendsData[frIdx];
                     }
                     else {
                         skippedFirstAsThatOneIsMe = true;
