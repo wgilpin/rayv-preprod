@@ -1,9 +1,8 @@
 import os
 import webapp2
-from auth_model import User
+os.environ['DJANGO_SETTINGS_MODULE'] = os.path.dirname(__file__)
 from caching import memcache_get_user_dict
 
-os.environ['DJANGO_SETTINGS_MODULE'] = os.path.dirname(__file__)
 
 from dataloader import load_data, load_one_item, load_one_user, items_data_list, ITEM_NAME, ITEM_ADDRESS
 from unittest import TestCase

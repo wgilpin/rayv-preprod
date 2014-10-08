@@ -1,3 +1,5 @@
+import os
+os.environ['DJANGO_SETTINGS_MODULE'] = os.path.dirname(__file__)
 from unittest import TestCase
 from dataloader import load_one_user, load_one_item
 from geo import approx_distance, LatLng, geoCodeLatLng
