@@ -340,8 +340,10 @@ var BB = {
                         var el = $("#dragged-address")
                         el.text(results[0].formatted_address);
                         el.show();
+                        $("#create-new-save-btn").removeClass("ui-disabled")
                     }
                 } else {
+                    $("#create-new-save-btn").addClass("ui-disabled")
                     console.log("Geocoder failed due to: " + status);
                 }
             });
@@ -973,14 +975,17 @@ var BB = {
             $("#new-detail-name").val(rayv.currentItem.place_name);
             $("#new-detail-address").val(rayv.currentItem.address);
             $("#new-category").children("option").removeAttr('selected');
-            var el = $("#new-category");
-            try {
-                $("#new-category").children("option:contains('" + rayv.currentItem.category + "')").attr("selected", true);
-                el.val(rayv.currentItem.category);
-                el.selectmenu("refresh", true);
-            }
-            catch (e) {
-                el.val('');
+            $("#new-category").children('option:contains("Select Cuisine")').attr("selected", true);
+            if (rayv.currentItem.category.length > 0){
+                var el = $("#new-category");
+                try {
+                    $("#new-category").children("option:contains('" + rayv.currentItem.category + "')").attr("selected", true);
+                    el.val(rayv.currentItem.category);
+                    el.selectmenu("refresh", true);
+                }
+                catch (e) {
+                    el.val('');
+                }
             }
             $("#new-detail-comment").val(rayv.UserData.get_most_relevant_comment(rayv.currentItem.key));
 
@@ -1254,6 +1259,7 @@ var BB = {
             });
             //lookup nearest address
             BB.codeLatLng();
+
         },
         pageToCreateAddress: function () {
             //init map
@@ -1271,6 +1277,7 @@ var BB = {
             }
             $("#create-name").val($("#new-name").val());
             $("#dragged-address").hide();
+            $("#create-new-save-btn").addClass("ui-disabled")
         },
 
         clearItemPage: function () {
@@ -1563,13 +1570,20 @@ var BB = {
         },
 
         do_create_new_address: function () {
-            rayv.currentItem.clear();
-            rayv.currentItem.place_name = $("#create-name").val();
-            rayv.currentItem.address = $("#dragged-address").text();
-            rayv.currentItem.lat = BB.creatorMap.getCenter().lat();
-            rayv.currentItem.lng = BB.creatorMap.getCenter().lng();
-            BB.item_load_for_edit();
-            $.mobile.changePage("#new-detail");
+            var addr = $("#dragged-address").text();
+            if (addr.length > 0){
+                rayv.currentItem.clear();
+                rayv.currentItem.place_name = $("#create-name").val();
+                rayv.currentItem.address = addr;
+                rayv.currentItem.lat = BB.creatorMap.getCenter().lat();
+                rayv.currentItem.lng = BB.creatorMap.getCenter().lng();
+                BB.item_load_for_edit();
+                $.mobile.changePage("#new-detail");
+            }else
+            {
+                $("#create-new-save-btn").addClass("ui-disabled")
+            }
+
         },
 
 //FLIGHT
