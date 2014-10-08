@@ -157,12 +157,13 @@
     padding-left: 0;
 }
 
-#new-place-near, #new-place-name-box {
+#new-place-near, #new-place-name-box, #new-item-li {
     width: 90% !important;
     color: #000;
     float: left;
     background-color: #fff;
     float: left;
+    border: 0;
 }
 
 .square-control fieldset {
@@ -216,7 +217,7 @@
 }
 
 .new-mini-btn .ui-btn-up-b {
-    background-color: #c3c3c3 !important;
+    background-color: #fff !important;
 }
 
 .new-mini-input {
