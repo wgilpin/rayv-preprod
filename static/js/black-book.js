@@ -208,6 +208,19 @@ var BB = {
             enableHighAccuracy: true,
             maximumAge: 30000 //30 seconds
         },
+        detail_saving: false,
+        hide_waiting: function(){
+            $('.waiting').hide();
+            BB.detail_saving = false;
+            console.log('hide_waiting timeout');
+        },
+        show_waiting: function(selector){
+            //show the ajax spinner & set time to turn off
+            var timer = window.setTimeout(BB.hide_waiting, 20000);
+            $(selector).show();
+            BB.detail_saving = true;
+            return timer;
+        },
         map_center: function () {
             var last = BB.googleFormatPosition(BB.lastGPSPosition);
             BB.theMap.setCenter(last);
@@ -399,6 +412,7 @@ var BB = {
                             xhr.addEventListener("load", function () {
                                 // clear the form as per #86
                                 $('#new-shout-form')[0].reset();
+                                BB.hide_waiting();
                                 $.mobile.changePage("#list-page");
                                 if (BB.updateCurrentItemInCache()) {
                                     BB.populateMainList("");
@@ -822,18 +836,6 @@ var BB = {
             // save a new item
             //called from new-detail-page
             console.log("new_item_save_click");
-
-            //rayv.currentItem.descr = $("#new-detail-comment").val();
-            rayv.currentItem.category = $("#new-category").val();
-            if (rayv.currentItem.category === "None" || rayv.currentItem.category == null || rayv.currentItem.category.length == 0) {
-                alert("You must pick a type of cuisine");
-                return;
-            }
-            rayv.currentItem.address = $("#new-detail-address").val();
-            rayv.currentItem.place_name = $("#new-detail-name").val();
-            rayv.currentItem.descr = $("#new-detail-comment").val();
-            rayv.currentItem.vote = 1;
-            rayv.currentItem.untried = false;
             var hasVote = false;
             if ($('#new-item-dislike').hasClass('ui-btn-active')) {
                 rayv.currentItem.vote = -1;
@@ -852,6 +854,22 @@ var BB = {
                 alert('Please vote!');
                 return;
             }
+            if (BB.detail_saving)
+                return;
+            BB.show_waiting("#details-save-waiting");
+
+            //rayv.currentItem.descr = $("#new-detail-comment").val();
+            rayv.currentItem.category = $("#new-category").val();
+            if (rayv.currentItem.category === "None" || rayv.currentItem.category == null || rayv.currentItem.category.length == 0) {
+                alert("You must pick a type of cuisine");
+                return;
+            }
+            rayv.currentItem.address = $("#new-detail-address").val();
+            rayv.currentItem.place_name = $("#new-detail-name").val();
+            rayv.currentItem.descr = $("#new-detail-comment").val();
+            rayv.currentItem.vote = 1;
+            rayv.currentItem.untried = false;
+
             if (rayv.currentItem.key == "") {
                 //from map or db, use supplied pos
                 var pos = {"coords": 0};
@@ -1811,6 +1829,7 @@ $(function () {
                     BB.pageToImage(event);
                     break;
                 case "new-detail":
+                    BB.hide_waiting();
                     if (rayv.currentItem.key) {
                         BB.item_load_for_edit();
                     }

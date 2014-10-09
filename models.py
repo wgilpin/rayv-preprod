@@ -2,6 +2,7 @@ import logging
 from google.appengine.api import images, memcache
 from google.appengine.api.images import CORRECT_ORIENTATION
 from google.appengine.ext import db
+from google.appengine.ext.db import BadKeyError
 from auth_model import User
 import geohash
 from settings import config
@@ -281,6 +282,8 @@ class Item(db.Model):
         if not memcache.set(key, item):
           logging.error("could not memcache Item " + key)
       return item
+    except BadKeyError:
+      logging.log('get_item key not found '+key)
     except Exception, e:
       logging.error("get_item", exc_info=True)
       return None
