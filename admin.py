@@ -1,12 +1,15 @@
 import json
 import logging
+import urllib2
+from google.appengine.ext import db
 from auth_logic import BaseHandler
 from webapp2_extras import auth
 from auth_model import User
 from geo import itemKeyToJSONPoint
-from models import Item
+from models import Item, DBImage
 import urllib
 from google.appengine.api import urlfetch
+from geo import getPlaceDetailFromGoogle
 
 __author__ = 'Will'
 
@@ -33,6 +36,7 @@ class Main(BaseHandler):
     else:
       self.abort(403)
 
+
 class SyncToProd(BaseHandler):
   def post(self):
     if administrator():
@@ -49,7 +53,7 @@ class SyncToProd(BaseHandler):
           place_list = json.loads(self.request.params['list'])
           for place in place_list:
             it = Item.get(place)
-            logging.info("SyncToProd sending "+it.place_name)
+            logging.info("SyncToProd sending " + it.place_name)
             form_fields = itemKeyToJSONPoint(place)
             vote = it.votes.filter("voter =", seed_user).get()
             if vote:
@@ -60,12 +64,38 @@ class SyncToProd(BaseHandler):
               form_fields['myComment'] = ""
             form_data = urllib.urlencode(form_fields)
             result = urlfetch.fetch(url=url,
-                payload=form_data,
-                method=urlfetch.POST,
-                headers={'Content-Type': 'application/x-www-form-urlencoded'})
+                                    payload=form_data,
+                                    method=urlfetch.POST,
+                                    headers={'Content-Type': 'application/x-www-form-urlencoded'})
         else:
           self.response.out.write('No Seed User')
       except Exception:
         logging.error('admin.SyncToProd', exc_info=True)
     logging.info("Sync Done to Prod")
     self.response.out.write("OK")
+
+
+class updatePhotoFromGoogle(BaseHandler):
+  def post(self):
+    if administrator():
+      try:
+        logging.info("updatePhotoFromGoogle")
+        place_list = json.loads(self.request.params['list'])
+        for place in place_list:
+          it = Item.get(place)
+          if not it.photo:
+            it.photo = DBImage()
+          detail = getPlaceDetailFromGoogle(it)
+          remoteURL = detail['photo']
+          if remoteURL:
+            main_url = remoteURL % 250
+            data = urllib2.urlopen(main_url)
+            it.photo.picture = db.Blob(data.read())
+            it.photo.remoteURL = None
+            thumb_url = remoteURL % 65
+            thumb_data = urllib2.urlopen(thumb_url)
+            it.photo.thumb = db.Blob(thumb_data.read())
+            it.photo.put()
+      except:
+        logging.error('updatePhotoFromGoogle', exc_info=True)
+

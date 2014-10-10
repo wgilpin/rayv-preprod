@@ -47,6 +47,7 @@ urls = [
   webapp2.Route('/ping', views.ping),
   webapp2.Route('/admin', admin.Main),
   webapp2.Route('/admin/sync_to_prod', admin.SyncToProd),
-  webapp2.Route('/admin/put_place_api', views.updateItemAPI),
+  webapp2.Route('/admin/update_photos', admin.updatePhotoFromGoogle),
+  webapp2.Route('/admin/put_place_api', views.updateItemFromAnotherAppAPI),
 
 ]

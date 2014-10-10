@@ -20,6 +20,23 @@ Admin.send = function(){
     });
 }
 
+Admin.updatePhotos = function(){
+    var send_list = []
+    $("input:checked").each(function(){
+        send_list.push('"'+$(this).data('key')+'"');
+    })
+    $.ajax({
+        url:'/admin/update_photos',
+        method:'POST',
+        data:{'list': '['+send_list.join()+']'},
+        success:function(){
+            alert('Done')
+        },
+        dataType: "json"
+    });
+}
+
 $(function(){
-    $("#admin-send").click(Admin.send)
+    $("#admin-send").click(Admin.send);
+    $("#admin-photos").click(Admin.updatePhotos);
 })

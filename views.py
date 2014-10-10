@@ -542,16 +542,16 @@ def update_item_internal(self, user_id):
   # mark user as dirty
   memcache_touch_user(user_id)
 
-class updateItemAPI(BaseHandler):
+class updateItemFromAnotherAppAPI(BaseHandler):
   def post(self):
     #https://cloud.google.com/appengine/docs/python/appidentity/#Python_Asserting_identity_to_other_App_Engine_apps
-    logging.debug("updateItemAPI")
+    logging.debug("updateItemFromAnotherAppAPI")
     #TODO: Security
     #if app_identity.get_application_id() != settings.API_TARGET_APP_ID:
-    #  logging.debug("updateItemAPI 403: %s != %s"%(app_identity.get_application_id(),settings.API_TARGET_APP_ID))
+    #  logging.debug("updateItemFromAnotherAppAPI 403: %s != %s"%(app_identity.get_application_id(),settings.API_TARGET_APP_ID))
     #  self.abort(403)
     #app_id = self.request.headers.get('X-Appengine-Inbound-Appid', None)
-    #logging.info('updateItemAPI: from app %s'%app_id)
+    #logging.info('updateItemFromAnotherAppAPI: from app %s'%app_id)
     #if app_id in settings.ALLOWED_APP_IDS:
     if True:
       seed_user = None
@@ -560,19 +560,19 @@ class updateItemAPI(BaseHandler):
           seed_user = u.key.id()
           break
       if seed_user:
-        logging.debug("updateItemAPI user:"+str(seed_user))
+        logging.debug("updateItemFromAnotherAppAPI user:"+str(seed_user))
         params = ""
         for k in self.request.params:
           params += '"%s": "%s"'%(k, self.request.params[k])
-        logging.debug("updateItemAPI params: "+params)
+        logging.debug("updateItemFromAnotherAppAPI params: "+params)
         update_item_internal(self, seed_user)
-        logging.debug("updateItemAPI Done ")
+        logging.debug("updateItemFromAnotherAppAPI Done ")
         self.response.out.write("OK")
       else:
-        logging.error("updateItemAPI - couldn't get seed user")
+        logging.error("updateItemFromAnotherAppAPI - couldn't get seed user")
         self.abort(500)
     else:
-      logging.debug("updateItemAPI not allowed")
+      logging.debug("updateItemFromAnotherAppAPI not allowed")
       self.abort(403)
 
 

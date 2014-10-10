@@ -230,6 +230,7 @@ class Item(db.Model):
     it.lat = lat
     it.lng = lng
     it.geo_hash = geohash.encode(lat, lng)
+    logging.info("get_unique_place - create item %s@[%f.4,%f.4]"%(it.place_name, it.lat, it.lng))
     return it
 
   def vote_from(self, user_id):
