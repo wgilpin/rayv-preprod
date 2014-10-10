@@ -10,19 +10,31 @@
 
             </div>
             <div id='div_right'>
-                  {{if pt.vote|more>0}}
+                {{if pt.vote|more>0}}
+                    {{if pt.down|equals>0}}
+                    <div class="item-up-2 item-votes">
+                    {{else}}
                     <div class="item-up item-votes">
-                    {{/if }}
-                    {{if pt.vote|less>0}}
+                    {{/if}}
+                {{/if }}
+                {{if pt.vote|less>0}}
+                    {{if pt.down|equals>0}}
+                    <div class="item-down-2 item-votes">
+                    {{else}}
                     <div class="item-down item-votes">
                     {{/if}}
-                    {{if pt.vote|equals>0 }}
+                {{/if}}
+                {{if pt.vote|equals>0 }}
+                    {{if pt.down|equals>0}}
+                    <div class="item-none-2 item-votes">
+                    {{else}}
                     <div class="item-none item-votes">
                     {{/if}}
-                    <div class="item-up-votes">{{ pt.up }}</div>
-                    {{if pt.down|more>0}}
+                {{/if}}
+                <div class="item-up-votes">{{ pt.up }}</div>
+                {{if pt.down|more>0}}
                     <div class="item-down-votes">{{ pt.down }}</div>
-                    {{/if }}
+                {{/if }}
                 </div>
             </div>
             <div id='div_middle'>

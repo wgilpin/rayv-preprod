@@ -746,13 +746,22 @@ div {
 .item-down {
     background: url('/static/images/no-entry-3.png') no-repeat;
 }
+.item-down-2 {
+    background: url('/static/images/no-entry-2.png') no-repeat;
+}
 
 .item-up {
     background: url('/static/images/heart-3.png') no-repeat;
 }
+.item-up-2 {
+    background: url('/static/images/heart-2.png') no-repeat;
+}
 
 .item-none {
     background: url('/static/images/star-3.png') no-repeat;
+}
+.item-none-2 {
+    background: url('/static/images/star-2.png') no-repeat;
 }
 
 .item-up-votes {
