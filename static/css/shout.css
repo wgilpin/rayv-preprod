@@ -728,7 +728,7 @@ div {
 }
 
 .item-up-votes, .item-down-votes {
-    font-size: x-large;
+    font-size: large;
 }
 
 .item-votes {
@@ -757,14 +757,14 @@ div {
 
 .item-up-votes {
     position: relative;
-    top: 15px;
+    top: 13px;
     left: 27px;
 }
 
 .item-down-votes {
     position: relative;
-    top: -36px;
-    left: -30px;
+    top: -38px;
+    left: -9px;
 }
 
 .ui-content {
