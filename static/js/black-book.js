@@ -1503,6 +1503,7 @@ var BB = {
 
             function lookupAddressListSuccessHandler(data) {
                 $("#search-location-loading").hide();
+                $("#new-place-list-loading").hide();
                 //$.mobile.changePage("#new-address-list-page");
                 $("#new-place ul").remove();
                 BB.process_template(jQuery.parseJSON(data), lookAddressList_inner)
@@ -1510,6 +1511,7 @@ var BB = {
 
             function lookupAddressListErrorHandler() {
                 $("#search-location-loading").hide();
+                $("#new-place-list-loading").hide();
                 console.log("no address found");
                 alert("Not Found");
                 $("#new-page ul").remove();
@@ -1751,6 +1753,7 @@ var BB = {
 
             $("#create-new-save-btn").on("click", this.do_create_new_address);
             $("#create-new-address-btn").on("click", this.show_create_new_address);
+            $("#new-item-li").on("click", this.show_create_new_address);
             $("#item-edit").on("click", BB.editItem);
             $("#new-rotr").on("click", this.imageRotate);
             $("#image-save").on("click", this.imageSaveClick);

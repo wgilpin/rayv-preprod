@@ -181,9 +181,32 @@
     border-radius: 0;
 }
 
-.wrapleft{
-   float: left;
-   width: 100%;
+.container2 {
+   height: auto;
+   overflow: hidden;
+}
+
+.right2 {
+    width: 47px;
+    float: right;
+    height: 40px;
+    background: lightgray;
+}
+
+.left-sq-btn {
+    line-height: 40px;
+    float: none; /* not needed, just for clarification */
+    background: #fff;
+    /* the next props are meant to keep this block independent from the other floated one */
+    width: auto;
+    overflow: hidden;
+    height: 40px;
+    text-align: center;
+}
+
+.wrap-left{
+   xfloat: left;
+   xwidth: 99%;
    background-color: #cfcfcf
 }
 .left-input-btn{
