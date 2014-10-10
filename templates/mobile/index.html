@@ -229,7 +229,7 @@
     <div data-role="content" id="new-top-controls">
         <div class="left-input">
             <input name="new-title" id="new-place-name-box" placeholder="Place Name"
-               value="" type="text" class="new-mini-input">
+                   value="" type="text" class="new-mini-input">
         </div>
         <div class="new-mini-btn" id="new-search-name-btn">
             <img class="new-mini-btn-img" src="/static/images/search.png">
@@ -241,15 +241,24 @@
                 <label id="new-search-label-me" for="new-search-radio-me">Near Me</label>
                 <input type="radio" name="new-search-radio" id="new-search-radio-place" value="place">
                 <label id="new-search-label-place" for="new-search-radio-place">Near A Place</label>
+                <div class="left-input">
                 <input name="new-near" id="new-place-near" placeholder="Near Address"
                        value="" type="text">
-                <a data-ajax=false id="new-search-place-btn" data-role="button" data-inline="true" data-theme="f" class="new-mini-btn" ></a>
-
+                </div>
+                <div class="new-mini-btn" id="new-search-place-btn">
+                    <img class="new-mini-btn-img" src="/static/images/search.png">
+                </div>
             </fieldset>
         </div>
-        <div class="square-control">
-        <a href="#create-new-address" data-role="button" id="new-item-li">Enter Address Manually</a>
-        <a href="" data-ajax=false id="create-new-address-btn" data-role="button" data-inline="true" data-theme="f" class="new-mini-btn" ></a>
+        <div class="wrap-left">
+
+
+        <div class="left-input-btn" id="new-item-li">
+            Enter Address Manually
+        </div>
+            </div>
+        <div class="right-mini-btn" id="create-new-address-btn">
+            <img class="new-mini-btn-img" src="/static/images/search.png">
         </div>
     </div>
     <div id="new-place-list-loading" data-controltype="htmlblock" class="float-high">
@@ -433,6 +442,7 @@
             <a id="new-item-save" data-role="button" data-theme="b" href="#new-detail">
                 Save
             </a>
+
             <div id="details-save-waiting" data-controltype="htmlblock" class="float-high waiting">
                 <div style="width: 46px; height:46px;margin-left: auto ;margin-right: auto ;">
                     <img src="/static/images/ajax-loader.gif">
@@ -507,7 +517,8 @@
 
         <div class="form-group">
             <label for="screen_name">Nickname</label>
-            <input class="form-control" name="screen_name" id="settings-screen-name" placeholder="Nickname (for friends)">
+            <input class="form-control" name="screen_name" id="settings-screen-name"
+                   placeholder="Nickname (for friends)">
         </div>
         <button id="settings-save-profile" type="button" class="btn">Save Profile</button>
         <hr>

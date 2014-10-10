@@ -49,23 +49,25 @@
 }
 
 .truncate {
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-#div_left{
-    float:left;
-    width:71px;
+#div_left {
+    float: left;
+    width: 71px;
 }
+
 #div_middle {
     overflow: hidden;
     padding-left: 2px;
 }
+
 #div_right {
-    float:right;
-    width:65px;
+    float: right;
+    width: 65px;
 }
 
 .list-item-bar-container {
@@ -148,16 +150,16 @@
 }
 
 /*#new-top-controls div, #new-item-li.ui-btn-corner-all {*/
-    /*margin: 0;*/
-    /*-webkit-border-radius: 0;*/
-    /*text-align: left;*/
+/*margin: 0;*/
+/*-webkit-border-radius: 0;*/
+/*text-align: left;*/
 /*}*/
 
 #new-top-controls div.ui-input-text {
     padding-left: 0;
 }
 
-#new-place-near, #new-place-name-box, #new-item-li {
+#new-place-near, #new-place-name-box {
     color: #000;
     background-color: #fff;
     float: left;
@@ -167,6 +169,7 @@
 .square-control fieldset {
     padding-bottom: 0;
     margin: 0;
+    border-radius: 0;
 }
 
 .square-control input {
@@ -178,10 +181,28 @@
     border-radius: 0;
 }
 
-.left-input div{
+.wrapleft{
+   float: left;
+   width: 100%;
+   background-color: #cfcfcf
+}
+.left-input-btn{
+   margin-right: 41px;
+   background-color: #fff;
+   height: 40px;
+}
+.right-mini-btn{
+   float: right;
+   width: 40px;
+   margin-left: -40px;
+   background-color: lightgray;
+   height: 40px;
+}
+.left-input div {
     margin-top: 0;
 }
-#new-top-controls .ui-input-text{
+
+#new-top-controls .ui-input-text {
     margin: 0;
 }
 
@@ -194,17 +215,19 @@
     border-radius: 0;
     background-color: lightgrey;
 }
+
 .new-mini-btn span {
     width: 20px;
-
 }
 
-.new-mini-btn-img
-{
+.new-mini-btn-img {
     left: 16px;
-top: 3px;
-position: relative;
+    top: 3px;
+    position: relative;
+}
 
+#create-new-address-btn {
+    float: right;
 }
 
 .new-mini-input {
