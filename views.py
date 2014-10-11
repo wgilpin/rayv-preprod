@@ -33,7 +33,15 @@ def logged_in():
     return False
 
 
-def map_and_db_search(exclude_user_id, filter_kind, include_maps_data, lat, lng, my_locn, text_to_search, user_id):
+def map_and_db_search(
+    exclude_user_id,
+    filter_kind,
+    include_maps_data,
+    lat,
+    lng,
+    my_locn,
+    text_to_search,
+    user_id):
   search_filter = {
     "kind": filter_kind,
     "userId": user_id,
@@ -96,7 +104,15 @@ def get_item_list(request, include_maps_data, user_id, exclude_user_id=None):
   # by default we apply no filter: return all results
   search_filter = None
   filter_kind = request.get("filter")
-  return map_and_db_search(exclude_user_id, filter_kind, include_maps_data, lat, lng, my_locn, text_to_search, user_id)
+  return map_and_db_search(
+    exclude_user_id,
+    filter_kind,
+    include_maps_data,
+    lat,
+    lng,
+    my_locn,
+    text_to_search,
+    user_id)
 
 
 class getItems_Ajax(BaseHandler):
@@ -118,7 +134,8 @@ class getItems_Ajax(BaseHandler):
 class getBook(BaseHandler):
   def get(self):
     if logged_in():
-      voter_id = self.request.get("voter") if "voter" in self.request.params else str(self.user_id)
+      voter_id = self.request.get("voter") if \
+        "voter" in self.request.params else str(self.user_id)
       vote_list = Vote.all().filter("voter =", voter_id)
       result = []
       for vote in vote_list:
@@ -152,7 +169,8 @@ def serialize_user_details(user_id, places, current_user):
   """ give the list of votes & places for a user
   @param user_id: int: which user
   @param places: dict: list of places indexed by key (BY VALUE)
-  @param current_user: int: current user - if same as user_id then we exclude untried
+  @param current_user: int: current user - if same as user_id then
+    we exclude untried
   @return:
   """
   try:
@@ -171,7 +189,8 @@ def serialize_user_details(user_id, places, current_user):
       for idx in to_be_removed:
         del votes[idx]
 
-    last_write = user_dict['p'].last_write if hasattr(user_dict['p'], 'last_write') else None
+    last_write = user_dict['p'].last_write if \
+      hasattr(user_dict['p'], 'last_write') else None
     result = {"votes": votes,
               "id": user_id,
               # todo is it first_name?
@@ -185,8 +204,7 @@ def serialize_user_details(user_id, places, current_user):
         places[place_key] = place_json
     return result
   except Exception, e:
-    logging.error("serialize_user_details Exception")
-    logging.error("serialize_user_details Exception " + str(e))
+    logging.error("serialize_user_details Exception", exc_info=True)
 
 
 class getFullUserRecord(BaseHandler):
@@ -198,8 +216,10 @@ class getFullUserRecord(BaseHandler):
       if user:
         # logged in
         # is it for a specific user?
-        for_1_user = long(self.request.get("forUser")) if "forUser" in self.request.params else None
-        # either the first lookup is for me, plus everyone, or it is for a specified user
+        for_1_user = long(self.request.get("forUser")) if \
+          "forUser" in self.request.params else None
+        # either the first lookup is for me, plus everyone,
+        # or it is for a specified user
         result = {"id": my_id}
         if for_1_user:
           first_user = for_1_user
@@ -217,10 +237,12 @@ class getFullUserRecord(BaseHandler):
             for userProf in UserProfile().all():
               if userProf.userId == my_id:
                 continue  # don't add myself again
-              friends_data.append(serialize_user_details(userProf.userId, places, my_id))
+              friends_data.append(serialize_user_details(
+                userProf.userId, places, my_id))
           else:
             for friend in prof.friends:
-              friends_data.append(serialize_user_details(friend, places, my_id))
+              friends_data.append(serialize_user_details(
+                friend, places, my_id))
           result["friendsData"] = friends_data
         result["places"] = places
         # encode using a custom encoder for datetime
@@ -248,14 +270,22 @@ class user_profile(BaseHandler):
 
 def json_serial(o):
   """JSON serializer for objects not serializable by default json code
-     http://stackoverflow.com/questions/11875770/how-to-overcome-datetime-datetime-not-json-serializable-in-python"""
+     http://stackoverflow.com/questions/11875770/how-to-overcome-
+            datetime-datetime-not-json-serializable-in-python"""
   if type(o) is datetime.date or type(o) is datetime.datetime:
     return o.isoformat()
 
 
 def get_google_db_places(lat, lng, name, radius):
-  url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?radius=%d&types=food|restaurant|bar|cafe|meal_delivery|meal_takeaway&location=%f,%f&name=%s&sensor=false&key=%s" % \
-        (radius, lat, lng, name, settings.config['google_api_key'] )
+  url = ("https://maps.googleapis.com/maps/api/place/nearbysearch/"
+        "json?radius=%d&types=%s&location=%f,%f&name=%s&sensor=false&key=%s")\
+        % \
+        (radius,
+         settings.config['place_types'],
+         lat,
+         lng,
+         name,
+         settings.config['google_api_key'] )
   response = urllib2.urlopen(url)
   jsonResult = response.read()
   addressResult = json.loads(jsonResult)
@@ -269,10 +299,7 @@ def get_google_db_places(lat, lng, name, radius):
         address = r['formatted_address']
       else:
         address = r['vicinity']
-      if 'postal_code' in r:
-        post_code = r['postal_code'].split(' ')[0]
-      else:
-        post_code = ''
+      post_code = r['postal_code'].split(' ')[0] if 'postal_code' in r else ''
       distance = approx_distance(r['geometry']['location'], origin)
       detail = {'place_name': r['name'],
                 'address': address,
@@ -285,7 +312,10 @@ def get_google_db_places(lat, lng, name, radius):
     results['items'] = addresses
     return results
   else:
-    logging.error("get_google_db_places near [%f,%f]: %s" % (lat, lng, addressResult['status']))
+    logging.error(
+      "get_google_db_places near [%f,%f]: %s" %
+        (lat, lng, addressResult['status']),
+      exc_info=True)
     return []
 
 
@@ -296,8 +326,10 @@ def check_for_dirty_data(user_id, results):
   dirty_friends = []
   dirty_places = {}
   for friend in prof.friends:
-    if (not my_last_check) or (memcache_get_user_dict(friend)['p'].last_write > my_last_check):
-      dirty_friends.append(serialize_user_details(friend, dirty_places, user_id))
+    if (not my_last_check) or \
+        (memcache_get_user_dict(friend)['p'].last_write > my_last_check):
+      dirty_friends.append(
+        serialize_user_details(friend, dirty_places, user_id))
   if len(dirty_friends) > 0:
     results['dirty_list'] = {"friends": dirty_friends,
                              "places": dirty_places}
@@ -312,15 +344,29 @@ class getAddresses_ajax(BaseHandler):
     near_me = self.request.get("near_me")
     if near_me == u'0':
       # near the address
-      url = "https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor=false&key=%s&bounds=%f,%f|%f,%f" % \
-            (urllib2.quote(address), settings.config['google_api_key'],lat-0.3,lng-0.3,lat+0.3,lng+0.3)
+      url = ("https://maps.googleapis.com/maps/api/geocode/json?address=%s"
+             "&sensor=false&key=%s&bounds=%f,%f|%f,%f") % \
+            (urllib2.quote(address),
+             settings.config['google_api_key'],
+             lat-0.3,
+             lng-0.3,
+             lat+0.3,
+             lng+0.3)
       response = urllib2.urlopen(url)
       jsonResult = response.read()
       addressResult = json.loads(jsonResult)
       if addressResult['status'] == "OK":
         lat = addressResult['results'][0]['geometry']['location']['lat']
         lng = addressResult['results'][0]['geometry']['location']['lng']
-    results = map_and_db_search(-1, '', True, lat, lng, LatLng(lat=lat, lng=lng), names[0], self.user_id)
+    results = map_and_db_search(
+      -1,
+      '',
+      True,
+      lat,
+      lng,
+      LatLng(lat=lat, lng=lng),
+      names[0],
+      self.user_id)
     if results:
       check_for_dirty_data(self.user_id, results)
       json.dump(results,
@@ -372,12 +418,17 @@ class register(BaseHandler):
     last_name = self.request.get('lastname')
 
     unique_properties = ['email_address']
-    user_data = self.user_model.create_user(email,
-                                            unique_properties,
-                                            email_address=email, name=name, password_raw=password,
-                                            last_name=last_name, verified=False)
+    user_data = self.user_model.create_user(
+      email,
+      unique_properties,
+      email_address=email,
+      name=name,
+      password_raw=password,
+      last_name=last_name,
+      verified=False)
     if not user_data[0]:  # user_data is a tuple
-      self.render_template('signup.html', {"message": "That userId is already registered", })
+      self.render_template(
+        'signup.html', {"message": "That userId is already registered", })
       return
 
     user = user_data[1]
@@ -470,7 +521,8 @@ def update_item_internal(self, user_id):
       img = None  # no image supplied
       if rot and (rot != u'0'):  # is a rotation requested?
         old_img = it.photo
-        if old_img and old_img.picture:  # if so, does the item have a pic already?
+        if old_img and old_img.picture:
+        # if so, does the item have a pic already?
           angle = int(rot) * 90  # rotate & save in place
           rotated_pic = images.rotate(old_img.picture, angle)
           old_img.picture = db.Blob(rotated_pic)
@@ -486,22 +538,24 @@ def update_item_internal(self, user_id):
   if img:
     it.photo = img
   else:
-    if not it.photo:
-      # load one from google
-      img = DBImage()
+    if not it.photo or not it.website:
       detail = getPlaceDetailFromGoogle(it)
-      remoteURL = detail['photo']
-      if remoteURL:
-        main_url = remoteURL % 250
-        data = urllib2.urlopen(main_url)
-        img.picture = db.Blob(data.read())
-        img.remoteURL = None
-        thumb_url = remoteURL % 65
-        thumb_data = urllib2.urlopen(thumb_url)
-        img.thumb = db.Blob(thumb_data.read())
-        img.put()
-        it.photo = img
+      if not it.photo:
+        # load one from google
+        img = DBImage()
+        remoteURL = detail['photo']
+        if remoteURL:
+          main_url = remoteURL % 250
+          data = urllib2.urlopen(main_url)
+          img.picture = db.Blob(data.read())
+          img.remoteURL = None
+          thumb_url = remoteURL % 65
+          thumb_data = urllib2.urlopen(thumb_url)
+          img.thumb = db.Blob(thumb_data.read())
+          img.put()
+          it.photo = img
       it.telephone = detail['telephone'] if 'telephone' in detail else None
+      it.website = detail['website'] if 'website' in detail else None
 
   # category
   if "new-item-category" in self.request.params:
@@ -544,11 +598,13 @@ def update_item_internal(self, user_id):
 
 class updateItemFromAnotherAppAPI(BaseHandler):
   def post(self):
-    #https://cloud.google.com/appengine/docs/python/appidentity/#Python_Asserting_identity_to_other_App_Engine_apps
+    #https://cloud.google.com/appengine/docs/python/
+    # appidentity/#Python_Asserting_identity_to_other_App_Engine_apps
     logging.debug("updateItemFromAnotherAppAPI")
     #TODO: Security
     #if app_identity.get_application_id() != settings.API_TARGET_APP_ID:
-    #  logging.debug("updateItemFromAnotherAppAPI 403: %s != %s"%(app_identity.get_application_id(),settings.API_TARGET_APP_ID))
+    #  logging.debug("updateItemFromAnotherAppAPI 403: %s != %s"%\
+    # (app_identity.get_application_id(),settings.API_TARGET_APP_ID))
     #  self.abort(403)
     #app_id = self.request.headers.get('X-Appengine-Inbound-Appid', None)
     #logging.info('updateItemFromAnotherAppAPI: from app %s'%app_id)
@@ -569,7 +625,8 @@ class updateItemFromAnotherAppAPI(BaseHandler):
         logging.debug("updateItemFromAnotherAppAPI Done ")
         self.response.out.write("OK")
       else:
-        logging.error("updateItemFromAnotherAppAPI - couldn't get seed user")
+        logging.error("updateItemFromAnotherAppAPI - couldn't get seed user",
+                      exc_info=True)
         self.abort(500)
     else:
       logging.debug("updateItemFromAnotherAppAPI not allowed")
@@ -595,7 +652,8 @@ class loadTestData(BaseHandler):
       results = load_data(section=section, useFakeGeoCoder=geoCode)
       self.render_template("dataLoader.html", {"results": results})
     except Exception, E:
-      self.render_template("dataLoader.html", {"results": results, "message": E})
+      self.render_template(
+        "dataLoader.html", {"results": results, "message": E})
 
 
 class wipeAndLoadTestData(BaseHandler):
@@ -603,9 +661,11 @@ class wipeAndLoadTestData(BaseHandler):
     results = None
     try:
       results = load_data(wipe=True)
-      self.render_template("dataLoader.html", {"results": results})
+      self.render_template(
+        "dataLoader.html", {"results": results})
     except Exception, E:
-      self.render_template("dataLoader.html", {"results": results, "message": E})
+      self.render_template(
+        "dataLoader.html", {"results": results, "message": E})
 
 
 class loadPlace(BaseHandler):
@@ -628,7 +688,9 @@ class geoLookup(BaseHandler):
 
   def post(self):
     address = self.request.get('address')
-    posn = LatLng(lat=self.request.params['lat'], lng=self.request.params['lng'])
+    posn = LatLng(
+      lat=self.request.params['lat'],
+      lng=self.request.params['lng'])
     pos = geoCodeAddress(address, posn)
     if pos:
       params = {
@@ -652,7 +714,9 @@ class getItem_ajax(BaseHandler):
              "lat": str(it.lat),
              "lng": str(it.lng),
              "key": str(it.key()),
-             "distance": it.distance_from(float(self.request.get("lat")), float(self.request.get("lng")))
+             "distance": it.distance_from(
+               float(self.request.get("lat")),
+               float(self.request.get("lng")))
       }
       if it.photo:
         res["img"] = str(it.key())
@@ -682,7 +746,9 @@ class getItemVotes_ajax(BaseHandler):
       next_cursor = votes.cursor()
       res["cursor"] = next_cursor
       more = len(results) >= 20
-      html = self.render_template_to_string("item-votes-list.htt", {"votes": results, "more": more})
+      html = self.render_template_to_string(
+        "item-votes-list.htt",
+        {"votes": results, "more": more})
       res["votesList"] = html
       res["more"] = more
       json.dump(res, self.response.out)
@@ -741,11 +807,14 @@ class login(BaseHandler):
                                      save_session=True)
       logging.debug("Login Done")
       return self.redirect("/")
-    except (InvalidAuthIdError, InvalidPasswordError) as e:
-      logging.info('Login failed for userId %s because of %s', username, type(e))
+    except (InvalidAuthIdError, InvalidPasswordError) :
+      logging.info(
+        'Login failed for userId %s because of %s',
+        username, exc_info=True)
       return self.render_template("login.html", {"message": "Login Failed"})
     except Exception:
-      logging.exception('Login failed because of unexpected error %s', exc_info=True)
+      logging.exception(
+        'Login failed because of unexpected error %s', exc_info=True)
       return self.render_template("login.html", {"message": "Server Error"})
 
   def get(self):
@@ -791,8 +860,11 @@ class addVote_ajax(BaseHandler):
 class getMapList_Ajax(BaseHandler):
   def get(self):
     if logged_in():
-      result = get_item_list(request=self.request, include_maps_data=True, user_id=self.user_id,
-                             exclude_user_id=self.user_id)
+      result = get_item_list(
+        request=self.request,
+        include_maps_data=True,
+        user_id=self.user_id,
+        exclude_user_id=self.user_id)
       r = self.render_template("new-place-list.htt", {"results": result})
       return r
     else:

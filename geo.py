@@ -17,12 +17,13 @@ __author__ = 'Will'
 
 def getPlaceDetailFromGoogle(item):
   params = {'radius': 150,
-            'types': "food|restaurant",
+            'types': config['place_types'],
             'location': '%f,%f' % (item.lat, item.lng),
             'name': item.place_name,
             'sensor': False,
             'key': config['google_api_key']}
-  url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" + urllib.urlencode(params)
+  url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" + \
+        urllib.urlencode(params)
   response = urllib2.urlopen(url)
   json_result = response.read()
   address_result = json.loads(json_result)
@@ -41,33 +42,47 @@ def getPlaceDetailFromGoogle(item):
       if photos_done and place_done:
         break
     if photo_ref:
-      url = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=%%d&photoreference=%s&key=%s" % (
+      url = "https://maps.googleapis.com/maps/api/place/photo?" \
+            "maxwidth=%%d&photoreference=%s&key=%s" % (
         photo_ref, config['google_api_key'])
       res = {'photo': url}
     else:
       res = {'photo': None}
-      logging.info("getPlaceDetailFromGoogle  NO URL %s: %s" % (item.place_name, address_result['status']))
+      logging.info("getPlaceDetailFromGoogle  NO URL %s: %s" %
+                   (item.place_name, address_result['status']))
     if place_id:
       params = {'placeid': place_id,
                 'key': config['google_api_key']}
-      detail_url = "https://maps.googleapis.com/maps/api/place/details/json?" + urllib.urlencode(params)
+      detail_url = "https://maps.googleapis.com/maps/api/place/details/json?" + \
+                   urllib.urlencode(params)
       response = urllib2.urlopen(detail_url)
       json_result = response.read()
       detail_result = json.loads(json_result)
       if "formatted_phone_number" in detail_result['result']:
         res['telephone'] = detail_result['result']["formatted_phone_number"]
       else:
-        logging.info("getPlaceDetailFromGoogle - No number for %s" % item.place_name)
+        logging.info("getPlaceDetailFromGoogle - No number for %s" %
+                     item.place_name)
+      if "website" in detail_result['result']:
+        res['website'] = detail_result['result']["website"]
+      else:
+        logging.info("getPlaceDetailFromGoogle - No website for %s" %
+                     item.place_name)
     else:
-      logging.info("getPlaceDetailFromGoogle - No place_id for %s" % item.place_name)
+      logging.info("getPlaceDetailFromGoogle - No place_id for %s" %
+                   item.place_name)
     return res
   else:
-    logging.error("getPlaceDetailFromGoogle %s: %s" % (item.place_name, address_result['status']))
+    logging.error(
+      "getPlaceDetailFromGoogle %s: %s" %
+        (item.place_name, address_result['status']),
+      exc_info=True)
     return {"photo": None, "telephone": None}
 
 
 def geoCodeLatLng(lat, lng):
-  url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=%s,%s&sensor=false&key=%s" % \
+  url = ("https://maps.googleapis.com/maps/api/geocode/json?latlng=%s,"
+         "%s&sensor=false&key=%s") % \
         (lat, lng, config['google_api_key'])
   response = urllib2.urlopen(url)
   serverResponse = response.read()
@@ -80,7 +95,8 @@ def geoCodeLatLng(lat, lng):
   return addr
 
 def geoCodeAddress(address, search_centre):
-  url = "https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor=false&key=%s" % \
+  url = ("https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor"
+         "=false&key=%s") % \
         (urllib2.quote(address), config['google_api_key' ])
   response = urllib2.urlopen(url)
   jsonGeoCode = response.read()
@@ -89,7 +105,7 @@ def geoCodeAddress(address, search_centre):
     pos = geoCode['results'][0]['geometry']['location']
   else:
     pos = None
-    logging.error("geoCodeAddress", {"message": "Bad geoCode"})
+    logging.error("geoCodeAddress", {"message": "Bad geoCode"}, exc_info=True)
   return pos
 
 
@@ -124,12 +140,20 @@ def geo_distance(point, origin):
 
 
 
-def findDbPlacesNearLoc(my_location, search_text=None, filter=None, uid=None, position=None, exclude_user_id=None,
-                        place_names=None, ignore_votes=False):
+def findDbPlacesNearLoc(my_location,
+                        search_text=None,
+                        filter=None, uid=None,
+                        position=None,
+                        exclude_user_id=None,
+                        place_names=None,
+                        ignore_votes=False):
   try:
     for geo_precision in range(6, 3, -1):
-      geo_code = geohash.encode(my_location.lat, my_location.lng, precision=geo_precision)
-      initial_results = Item.all(keys_only=True).filter("geo_hash >", geo_code).filter("geo_hash <", geo_code + "{")
+      geo_code = geohash.encode(
+        my_location.lat, my_location.lng, precision=geo_precision)
+      initial_results = Item.all(keys_only=True).\
+        filter("geo_hash >", geo_code).\
+        filter("geo_hash <", geo_code + "{")
       if initial_results.count() > 10:
         break
     search_results = []
@@ -138,7 +162,8 @@ def findDbPlacesNearLoc(my_location, search_text=None, filter=None, uid=None, po
     if filter:
       if filter["kind"] == "mine":
         my_id = filter["userId"]
-        initial_results = Item.all(keys_only=True).filter("owner =", my_id)  # TODO: owner does not make it mine - votes
+        initial_results = Item.all(keys_only=True).\
+          filter("owner =", my_id)  # TODO: owner does not make it mine - votes
       if 'exclude_user' in filter:
         exclude_user_id = filter['exclude_user']
     user = memcache_get_user_dict(uid)
@@ -158,12 +183,14 @@ def findDbPlacesNearLoc(my_location, search_text=None, filter=None, uid=None, po
           jsonPt["vote"] = vote.vote
           if vote.voter == uid:
             jsonPt["descr"] = vote.comment
-            jsonPt["thumb"] = "thumbdownred.png" if vote.vote == -1 else "thumbupgreen.png"
+            jsonPt["thumb"] = "thumbdownred.png" if \
+              vote.vote == -1 else "thumbupgreen.png"
             if vote.untried:
               jsonPt["untried"] = True
           else:
             jsonPt["descr"] = ""
-            jsonPt["thumb"] = "thumbdown.png" if vote.vote == -1 else "thumbup.png"
+            jsonPt["thumb"] = "thumbdown.png" if \
+              vote.vote == -1 else "thumbup.png"
         else:
           pass
       search_results.append(jsonPt)
@@ -177,7 +204,13 @@ def findDbPlacesNearLoc(my_location, search_text=None, filter=None, uid=None, po
     logging.error("findDbPlacesNearLoc Exception", exc_info=True)
 
 
-def geoSearch(search_centre, my_location, radius=10, max=10, include_maps=False, search_text=None, filter=None):
+def geoSearch(search_centre,
+              my_location,
+              radius=10,
+              max=10,
+              include_maps=False,
+              search_text=None,
+              filter=None):
   # profile_in("geoSearch")
   count = 0
   iterations = 0
@@ -208,7 +241,9 @@ def geoSearch(search_centre, my_location, radius=10, max=10, include_maps=False,
     count = 0
     geo_code = geohash.encode(search_centre.lat, search_centre.lng, geo_precision)
     #https://code.google.com/p/python-geohash/wiki/Tips
-    points_list = Item.all(keys_only=True).filter("geo_hash >", geo_code).filter("geo_hash <", geo_code + "{")
+    points_list = Item.all(keys_only=True).\
+      filter("geo_hash >", geo_code).\
+      filter("geo_hash <", geo_code + "{")
     #we now have a bounded rectangle with maybe some points in it.
     for possibility in points_list:
       possibility_key = str(possibility)
@@ -267,7 +302,7 @@ def geoSearch(search_centre, my_location, radius=10, max=10, include_maps=False,
     radius_m = 100
 
     # Compose a URL to query a predefined location with a radius of 5000 meters
-    url = ('https://maps.googleapis.com/maps/api/place/search/json?location=%s' +
+    url = ('https://maps.googleapis.com/maps/api/place/search/json?location=%s'
            '&radius=%s&sensor=false&key=%s') % (location, radius_m, auth_key)
 
     # Send the GET request to the Place details service (using url from above)
@@ -289,7 +324,8 @@ def geoSearch(search_centre, my_location, radius=10, max=10, include_maps=False,
             continue
         for db_list_idx in range(1, count):
           if local_results[db_list_idx]["place_name"] == place["name"]:
-            # the item was already in the db - don't add it to the list, skip to next
+            # the item was already in the db -
+            # don't add it to the list, skip to next
             skip_it = True
             break
         if not skip_it:
@@ -405,6 +441,7 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
     data = {
       'lat': getProp(it, 'lat'),
       'lng': getProp(it, 'lng'),
+      'website': getProp(it, 'website'),
       'address': getProp(it, 'address'),
       'key': str(it.key()) if type(it) is Item else "",
       'place_name': getProp(it, 'place_name'),
@@ -415,9 +452,11 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
       'img': image_url,
       'thumbnail': thumbnail_url,
       'up': it.votes.filter("vote =", 1).count() if hasattr(it, 'votes') else 0,
-      'down': it.votes.filter("vote =", -1).count() if hasattr(it, 'votes') else 0,
+      'down': it.votes.filter("vote =", -1).count() if
+                                                hasattr(it, 'votes') else 0,
       'owner': getProp(it, 'owner'),
-      # is_map is True if the point came from a google places API search. Default False
+      # is_map is True if the point came
+      # from a google places API search. Default False
       'is_map': False}
     if hasattr(it, 'key'):
       memcache.add("JSON:" + str(it.key()), data)
@@ -425,7 +464,8 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
       # If GPS_origin is None then we include no distnce info (done client side)
       dist_from_GPS = approx_distance(it, GPS_origin)
       if map_origin:
-        if GPS_origin.lat == map_origin.lat and GPS_origin.lng == map_origin.lng:
+        if GPS_origin.lat == map_origin.lat and \
+                GPS_origin.lng == map_origin.lng:
           dist_from_map = dist_from_GPS
         else:
           dist_from_map = approx_distance(it, map_origin)

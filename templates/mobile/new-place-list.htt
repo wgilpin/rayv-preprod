@@ -9,7 +9,7 @@
                data-address="{{ place.address }}"
                data-category="{{ place.category.title }}"
                data-lat="{{ place.lat }}"
-               data-lng="{{ place.lng }}">
+               data-lng="{{ place.lng }}"
                 <div class="list-item-container">
                     <div class="item-img-container">
                         <img class="item-pic"

@@ -97,6 +97,115 @@
         </ul>
     </div>
 </div>
+<div data-role="page" data-control-title="Item" id="item-page">
+    <div data-theme="a" data-role="header" data-position="fixed">
+        <a id="item-edit" data-role="button" data-theme="c" href="#new-detail"
+           data-icon="edit" data-iconpos="right" class="ui-btn-right">
+            Edit
+        </a>
+        <a data-role="button" href="#list-page" data-icon="arrow-l" data-iconpos="left"
+           class="ui-btn-left">
+            Back
+        </a>
+
+        <h3 id="item-title">
+            Header
+        </h3>
+    </div>
+    <div data-role="content">
+        <div data-controltype="htmlblock">
+            <div data-controltype="image" id="item-img">
+                <img src="" alt="image" style=" margin-left: -16px; margin-top: -18px">
+
+                <div style="clear:both">
+                </div>
+            </div>
+            <a id="item-phone-link" href="">
+                <img src="/static/images/phone.png">
+            </a>
+            <a id="item-see-map" href="#">
+                <img id="map-btn" src="/static/images/marker-btn.png">
+            </a>
+            <a id="item-web-link" href="">
+                <img src="/static/images/web-icon.png">
+            </a>
+        </div>
+        <div class="ui-grid-b">
+            <div class="ui-block-a">
+                <div data-controltype="htmlblock">
+                    <br>
+
+                    <div id="item-distance">
+                        0yds
+                    </div>
+                </div>
+            </div>
+            <div class="ui-block-b">
+            </div>
+            <div class="ui-block-c">
+            </div>
+        </div>
+        <div data-controltype="htmlblock">
+            <div id="item-address">
+                Address..
+            </div>
+        </div>
+        <div id="item-category" data-controltype="htmlblock">
+            <br>
+
+            <div id="item-category">
+                Cuisine..
+            </div>
+            <br>
+        </div>
+        <div data-controltype="htmlblock">
+            <div id="item-page-votes" data-role="navbar">
+                <ul>
+                    <li>
+                        <a href="#" id="item-like" data-icon="check">
+                            Like
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="item-dislike" data-icon="delete">
+                            Dislike
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="item-untried" data-icon="star">
+                            Untried
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div data-role="collapsible-set">
+            <div id="item-comment-btn" data-role="collapsible" data-collapsed="false">
+                <h3>
+                    Comments
+                </h3>
+
+                <div data-role="fieldcontain" data-controltype="textarea">
+                    <textarea name="myVoteComment" id="item-descr" placeholder="Comment" data-mini="true"></textarea>
+                </div>
+                <div data-controltype="htmlblock">
+                    <div id="item-comments">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a id="item-save" data-role="button" data-theme="b" href="#item-page">
+            Save
+        </a>
+
+        <div id="item-votes-list-container" data-controltype="htmlblock">
+        </div>
+        <div data-role="fieldcontain" data-controltype="fileinput" class="hidden">
+            <input type="file" name="" id="file-input" accept="*.png;*.jpg;*.jpeg;*.gif">
+        </div>
+    </div>
+</div>
+
 <div data-role="page" data-control-title="Login" id="login-page">
     <div data-theme="a" data-role="header">
         <h3>
@@ -784,111 +893,6 @@
         </ul>
     </div>
 </div>
-<div data-role="page" data-control-title="Item" id="item-page">
-    <div data-theme="a" data-role="header" data-position="fixed">
-        <a id="item-edit" data-role="button" data-theme="c" href="#new-detail"
-           data-icon="edit" data-iconpos="right" class="ui-btn-right">
-            Edit
-        </a>
-        <a data-role="button" href="#list-page" data-icon="arrow-l" data-iconpos="left"
-           class="ui-btn-left">
-            Back
-        </a>
-
-        <h3 id="item-title">
-            Header
-        </h3>
-    </div>
-    <div data-role="content">
-        <div data-controltype="htmlblock">
-            <div data-controltype="image" id="item-img">
-                <img src="" alt="image" style=" margin-left: -16px; margin-top: -18px">
-
-                <div style="clear:both">
-                </div>
-            </div>
-            <a id="item-phone-link" href="">
-                <img src="/static/images/phone.png">
-            </a>
-            <a id="item-see-map" href="#">
-                <img id="map-btn" src="/static/images/marker-btn.png">
-            </a>
-        </div>
-        <div class="ui-grid-b">
-            <div class="ui-block-a">
-                <div data-controltype="htmlblock">
-                    <br>
-
-                    <div id="item-distance">
-                        0yds
-                    </div>
-                </div>
-            </div>
-            <div class="ui-block-b">
-            </div>
-            <div class="ui-block-c">
-            </div>
-        </div>
-        <div data-controltype="htmlblock">
-            <div id="item-address">
-                Address..
-            </div>
-        </div>
-        <div id="item-category" data-controltype="htmlblock">
-            <br>
-
-            <div id="item-category">
-                Cuisine..
-            </div>
-            <br>
-        </div>
-        <div data-controltype="htmlblock">
-            <div id="item-page-votes" data-role="navbar">
-                <ul>
-                    <li>
-                        <a href="#" id="item-like" data-icon="check">
-                            Like
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" id="item-dislike" data-icon="delete">
-                            Dislike
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" id="item-untried" data-icon="star">
-                            Untried
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-        <div data-role="collapsible-set">
-            <div id="item-comment-btn" data-role="collapsible" data-collapsed="false">
-                <h3>
-                    Comments
-                </h3>
-
-                <div data-role="fieldcontain" data-controltype="textarea">
-                    <textarea name="myVoteComment" id="item-descr" placeholder="Comment" data-mini="true"></textarea>
-                </div>
-                <div data-controltype="htmlblock">
-                    <div id="item-comments">
-                    </div>
-                </div>
-            </div>
-        </div>
-        <a id="item-save" data-role="button" data-theme="b" href="#item-page">
-            Save
-        </a>
-
-        <div id="item-votes-list-container" data-controltype="htmlblock">
-        </div>
-        <div data-role="fieldcontain" data-controltype="fileinput" class="hidden">
-            <input type="file" name="" id="file-input" accept="*.png;*.jpg;*.jpeg;*.gif">
-        </div>
-    </div>
-</div>
 <div data-role="page" data-control-title="AddFriendNow" id="page18">
     <div data-theme="a" data-role="header">
         <h3>
@@ -1003,6 +1007,14 @@
                 </a>
             </li>
         </ul>
+    </div>
+</div>
+<div data-role="page" id="page-external" data-add-back-btn="true">
+    <div data-role="header">
+        <h1 id="external-header">example.com</h1>
+    </div>
+    <div data-role="content" id="external-outer">
+        <iframe id='external-iframe' src="http://example.com/"></iframe>
     </div>
 </div>
 

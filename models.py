@@ -50,7 +50,8 @@ class Audit(db.Model):
         a = Audit()
         a.usr = None
         a.action = "Exception"
-        a.values = "###### Cannot send Audit Mail: %s - %s - %s:%s" % (kind, msg, type(err), err)
+        a.values = "###### Cannot send Audit Mail: %s - %s - %s:%s" % \
+                   (kind, msg, type(err), err)
         if subject:
           a.subjectId = subject
         a.save()
@@ -131,7 +132,7 @@ def get_category(key):
     cat = Category().get(key)
     return cat
   except:
-    logging.error("get_category failed for key" + key)
+    logging.error("get_category failed for key" + key, exc_info=True)
     return None
 
 
@@ -155,7 +156,11 @@ class DBImage(db.Model):
         # wide
         new_height = 55
         new_width = int(55.0 * image_ratio)
-        self.thumb = images.resize(self.picture, new_width, new_height, output_encoding=images.JPEG, quality=55,
+        self.thumb = images.resize(self.picture,
+                                   new_width,
+                                   new_height,
+                                   output_encoding=images.JPEG,
+                                   quality=55,
                                    correct_orientation=CORRECT_ORIENTATION)
         self.thumb = images.crop(self.thumb,
                                  left_x=0.5 - 32.0 / new_width,
@@ -165,7 +170,10 @@ class DBImage(db.Model):
       else:
         new_width = 65
         new_height = int(65.0 / image_ratio)
-        self.thumb = images.resize(self.picture, new_width, new_height, output_encoding=images.JPEG, quality=55,
+        self.thumb = images.resize(self.picture,
+                                   new_width, new_height,
+                                   output_encoding=images.JPEG,
+                                   quality=55,
                                    correct_orientation=CORRECT_ORIENTATION)
         self.thumb = images.crop(self.thumb,
                                  left_x=0.0,
@@ -196,6 +204,7 @@ class Item(db.Model):
   thumbsUp = db.IntegerProperty(default=0)
   googleID = db.TextProperty(default="")  #Maps ID
   created = db.DateTimeProperty(auto_now_add=True)
+  website = db.StringProperty(default='', required=False)
 
   def prop(self, name):
     return getProp(self, name)
@@ -221,7 +230,9 @@ class Item(db.Model):
     else:
       lng = float(request.get('lng'))
     geo_code = geohash.encode(lat, lng, precision=6)
-    local_results = Item.all().filter("geo_hash >", geo_code).filter("geo_hash <", geo_code + "{")
+    local_results = Item.all().\
+      filter("geo_hash >", geo_code).\
+      filter("geo_hash <", geo_code + "{")
     lower_name = place_name.lower()
     for place in local_results:
       if lower_name in place.place_name.lower():
@@ -230,7 +241,8 @@ class Item(db.Model):
     it.lat = lat
     it.lng = lng
     it.geo_hash = geohash.encode(lat, lng)
-    logging.info("get_unique_place - create item %s@[%f.4,%f.4]"%(it.place_name, it.lat, it.lng))
+    logging.info("get_unique_place - create item %s@[%f.4,%f.4]"%
+                 (it.place_name, it.lat, it.lng))
     return it
 
   def vote_from(self, user_id):
@@ -281,10 +293,10 @@ class Item(db.Model):
       item = Item().get(key)
       if item:
         if not memcache.set(key, item):
-          logging.error("could not memcache Item " + key)
+          logging.error("could not memcache Item " + key, exc_info=True)
       return item
     except BadKeyError:
-      logging.log('get_item key not found '+key)
+      logging.error('get_item key not found '+key, exc_info=True)
     except Exception, e:
       logging.error("get_item", exc_info=True)
       return None

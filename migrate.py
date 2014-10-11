@@ -208,6 +208,26 @@ class migrate(BaseHandler):
           except Exception:
             self.response.out.write("FAIL ", exc_info=True)
         self.response.out.write("12 - votes clean - MEMCACHE")
+      elif self.request.get("no") == "13":
+        # add websites
+        items = Item.all()
+        for it in items:
+          try:
+            if it.website:
+              self.response.out.write("%s has website<br>" % it.place_name)
+              continue
+            detail = getPlaceDetailFromGoogle(it)
+            if 'website' in detail:
+              it.website = getPlaceDetailFromGoogle(it)['website']
+            else:
+              self.response.out.write("%s no website<br>" % it.place_name)
+            it.put()
+            self.response.out.write("%s is %s<br>" % (it.place_name, it.website))
+          except Exception, e:
+            self.response.out.write("FAIL %s<br>" % it.place_name)
+            self.response.out.write("FAIL %s-%s<br>" % (it.place_name, str(e)))
+            pass
+        self.response.out.write("13 - websites got from google OK")
       else:
         self.response.out.write("No Migration")
     else:

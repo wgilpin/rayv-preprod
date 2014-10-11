@@ -16,6 +16,7 @@ config = {
   'template_dirs': ["/", "/mobile"],
   'online': True,
   'mobile': False,
+  'place_types': 'food|restaurant|bar|cafe|meal_delivery|meal_takeaway',
   'ALLOWED_INCLUDE_ROOTS': "/templates",
   'google_api_key': 'AIzaSyDiTThta8R7EFuFo8cGfPHxIGYoFkc77Bw',
   'all_are_friends': True

@@ -9,6 +9,7 @@ rayv.currentItem = rayv.currentItem||{};
     this.category = "";
     this.key = "";
     this.vote = 0;
+    this.website = "";
     this.mine = "";
     this.img = null;
     this.rotation = 0;
@@ -34,6 +35,7 @@ rayv.currentItem = rayv.currentItem||{};
         console.log("_innerLoad: " + obj.category);
         rayv.currentItem.descr = obj.descr;
         rayv.currentItem.telephone = obj.telephone;
+        rayv.currentItem.website = obj.website;
         rayv.currentItem.lat = obj.lat;
         rayv.currentItem.lng = obj.lng;
         rayv.currentItem.key = obj.key;
@@ -49,6 +51,7 @@ rayv.currentItem = rayv.currentItem||{};
         rayv.currentItem.address = "";
         rayv.currentItem.place_name = "";
         rayv.currentItem.category = "";
+        rayv.currentItem.website = "";
         rayv.currentItem.descr = "";
         rayv.currentItem.lat = "";
         rayv.currentItem.lng = "";
@@ -74,7 +77,8 @@ rayv.UserData = rayv.UserData||{};
         for (var place_idx in obj.places) {
             if (!(obj.places[place_idx].key in rayv.UserData.places)) {
                 // dict indexed by place key
-                rayv.UserData.places[obj.places[place_idx].key] = obj.places[place_idx]
+                rayv.UserData.places[obj.places[place_idx].key] =
+                    obj.places[place_idx]
             }
         }
     };
@@ -101,7 +105,8 @@ rayv.UserData = rayv.UserData||{};
                 for (var frIdx in obj.friendsData) {
                     if (skippedFirstAsThatOneIsMe) {
                         // dictionary indexed by user id
-                        rayv.UserData.friends[obj.friendsData[frIdx].id] = obj.friendsData[frIdx];
+                        rayv.UserData.friends[obj.friendsData[frIdx].id] =
+                            obj.friendsData[frIdx];
                     }
                     else {
                         skippedFirstAsThatOneIsMe = true;
@@ -113,24 +118,35 @@ rayv.UserData = rayv.UserData||{};
     this.getThumbs =function (listULId) {
         //load, cache & display the thumbs for the current list, async
         $(listULId).find("li").each(function () {
-            var key = $(this).find('a').data('key');                    // get the data-key from the <a>
-            var place = rayv.UserData.places[key];                            // lookup the place for that key
-            if (place.imageData) {                                     // if no cached image
-                $(this).find(".item-img-container").html(place.imageData);            // replace the existing image with cached one
+            // get the data-key from the <a>
+            var key = $(this).find('a').data('key');
+            // lookup the place for that key
+            var place = rayv.UserData.places[key];
+            // if no cached image
+            if (place.imageData) {
+                // replace the existing image with cached one
+                $(this).find(".item-img-container").html(place.imageData);
             }
             else {
-                var imgUrl = place['thumbnail'];                        //      get the image URL
-                if (imgUrl == "") {                                     //      blank means no thumb
-                    $(this).find(".item-pic").attr("src", "");             //      no image
+                //      get the image URL
+                var imgUrl = place['thumbnail'];
+                //      blank means no thumb
+                if (imgUrl == "") {
+                    //      no image
+                    $(this).find(".item-pic").attr("src", "");
                 }
                 else {
                     //todo: create the cached image
                     var imgCache = $("<img>");
-                    imgCache.attr("src", imgUrl);         //      create img, load from URL
-                    imgCache.addClass('item-pic');                      //      class for w x h
-                    place.imageData = imgCache;                         //      cache it
+                    //      create img, load from URL
+                    imgCache.attr("src", imgUrl);
+                    //      class for w x h
+                    imgCache.addClass('item-pic');
+                    //      cache it
+                    place.imageData = imgCache;
                     //todo: load the cached image into the dom
-                    $(this).find(".item-img-container").html(imgCache);           // replace the existing image
+                    // replace the existing image
+                    $(this).find(".item-img-container").html(imgCache);
                 }
             }
         });
@@ -260,7 +276,8 @@ var BB = {
             controlImg.setAttribute("src", "/static/images/centre-button.png");
             controlUI.appendChild(controlImg);
             google.maps.event.addDomListener(controlUI, 'click', BB.map_center);
-            BB.theMap.controls[google.maps.ControlPosition.LEFT_CENTER].push(controlUI);
+            BB.theMap.controls[google.maps.ControlPosition.LEFT_CENTER].
+                push(controlUI);
         },
         init: function () {
             this.splash = true;
@@ -276,11 +293,13 @@ var BB = {
                 if ("dirty_list" in obj) {
                     for (var frIdx in obj.dirty_list.friends) {
                         //these friends are dirty
-                        rayv.UserData.friends[obj.dirty_list.friends[frIdx].id] = obj.dirty_list.friends[frIdx];
+                        rayv.UserData.friends[obj.dirty_list.
+                            friends[frIdx].id] = obj.dirty_list.friends[frIdx];
                     }
                     for (var plIdx in obj.dirty_list.places) {
                         //these places are dirty
-                        rayv.UserData.places[obj.dirty_list.places[plIdx].key] = obj.dirty_list.places[plIdx];
+                        rayv.UserData.places[obj.dirty_list.
+                            places[plIdx].key] = obj.dirty_list.places[plIdx];
                     }
                 }
 
@@ -328,15 +347,21 @@ var BB = {
         updateCurrentItemInCache: function () {
             //we have changed the current item, update the cache
             if (rayv.currentItem.key in rayv.UserData.places) {
-                rayv.UserData.places[rayv.currentItem.key].address = rayv.currentItem.address;
-                rayv.UserData.places[rayv.currentItem.key].category = rayv.currentItem.category;
-                if ((rayv.UserData.places[rayv.currentItem.key].img != rayv.currentItem.img) ||
-                    (rayv.UserData.places[rayv.currentItem.key].vote != rayv.currentItem.vote)) {
+                rayv.UserData.places[rayv.currentItem.key].address =
+                    rayv.currentItem.address;
+                rayv.UserData.places[rayv.currentItem.key].category =
+                    rayv.currentItem.category;
+                if ((rayv.UserData.places[rayv.currentItem.key].img !=
+                    rayv.currentItem.img) ||
+                    (rayv.UserData.places[rayv.currentItem.key].vote !=
+                        rayv.currentItem.vote)) {
                     console.log("Can't update in cache - reload");
                     return false;
                 }
-                rayv.UserData.myBook.votes[rayv.currentItem.key].vote = rayv.currentItem.vote == 'dislike' ? -1 : 1;
-                rayv.UserData.myBook.votes[rayv.currentItem.key].comment = rayv.currentItem.descr;
+                rayv.UserData.myBook.votes[rayv.currentItem.key].vote =
+                        rayv.currentItem.vote == 'dislike' ? -1 : 1;
+                rayv.UserData.myBook.votes[rayv.currentItem.key].comment =
+                    rayv.currentItem.descr;
                 console.log("Updated in cache ");
                 return true;
             }
@@ -347,7 +372,8 @@ var BB = {
         },
 
         codeLatLng: function () {
-            BB.geocoder.geocode({'latLng': BB.creatorMap.getCenter()}, function (results, status) {
+            BB.geocoder.geocode({'latLng': BB.creatorMap.getCenter()},
+                function (results, status) {
                 if (status == google.maps.GeocoderStatus.OK) {
                     if (results[1]) {
                         var el = $("#dragged-address")
@@ -377,7 +403,9 @@ var BB = {
                 fd.append("latitude", rayv.currentItem.lat);
                 fd.append("longitude", rayv.currentItem.lng);
                 fd.append("voteScore", rayv.currentItem.vote);
-                fd.append("untried", 'untried' in rayv.currentItem ? rayv.currentItem.untried : false);
+                fd.append("website", rayv.currentItem.website);
+                fd.append("untried", 'untried' in rayv.currentItem ?
+                    rayv.currentItem.untried : false);
                 fd.append("rotation", rayv.currentItem.rotation);
                 fd.append("key", rayv.currentItem.key);
                 return fd;
@@ -386,7 +414,8 @@ var BB = {
             function saveMultiPart() {
                 var _URL;
                 console.log("With file");
-                rayv.currentItem.img = true; // to trigger a reload, make it different
+                // to trigger a reload, make it different
+                rayv.currentItem.img = true;
                 // if a file is present
                 //     resize it
                 //     multipart form with image upload
@@ -406,7 +435,8 @@ var BB = {
                             var fd = build_form(f);
                             var xhr = new XMLHttpRequest();
                             xhr.open('POST', '/item', true);
-                            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+                            xhr.setRequestHeader("X-Requested-With",
+                                "XMLHttpRequest");
                             xhr.setRequestHeader("pragma", "no-cache");
                             // File uploaded
                             xhr.addEventListener("load", function () {
@@ -488,7 +518,8 @@ var BB = {
 
 //todo: is this the right name?
         loadMapItemForEdit: function (place_name, lat, lng) {
-            $('#new-item-votes').find('li').removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
+            $('#new-item-votes').find('li').removeClass('ui-btn-hover-b').
+                addClass('ui-btn-up-b').removeClass('ui-btn-active');
             $('#new-item-like').addClass('ui-btn-active');
             $("#new-category").children("option").removeAttr('selected');
             $("#new-title-hdg").text(place_name);
@@ -512,7 +543,10 @@ var BB = {
 
         setupList: function (UIlist) {
             console.log('setupList');
-            var LIPrototype = "<li data-theme='c' data-icon='false'><a style='background-color:white;' onclick='";
+            var LIPrototype =
+                "<li data-theme='c' " +
+                "data-icon='false'>" +
+                    "<a style='background-color:white;' onclick='";
 
             $(UIlist).find('li').remove();
             if (this.isMapPage()) {
@@ -520,7 +554,8 @@ var BB = {
             }
             var placeList = [];
             for (var it in rayv.UserData.myBook.votes) {
-                if ((BB.filter != 'untried') || (BB.filter == 'untried' && rayv.UserData.myBook.votes[it].untried))
+                if ((BB.filter != 'untried') || (BB.filter == 'untried' &&
+                    rayv.UserData.myBook.votes[it].untried))
                     placeList.push(it);
             }
             if (BB.filter == "all") {
@@ -582,8 +617,14 @@ var BB = {
                         newListItemEnd;
                     if (geoPt.is_map) {
                         // it's a google place result - place_name, lat, long
-                        click_fn = BB.format("javascript:loadMapItemForEdit('{0}','{1}','{2}');", geoPt.place_name, geoPt.lat, geoPt.lng);
-                        newListItemEnd = click_fn + "' href='\#new-detail' data-transition='slide'>" + geoPt.place_name + " [" + geoPt.distance + "]</a></li>";
+                        click_fn =
+                            BB.format(
+                                "javascript:loadMapItemForEdit(" +
+                                    "'{0}','{1}','{2}');", geoPt.place_name, geoPt.lat, geoPt.lng);
+                        newListItemEnd = click_fn +
+                            "' href='\#new-detail' data-transition='slide'>" +
+                            geoPt.place_name +
+                            " [" + geoPt.distance + "]</a></li>";
                         newListItem = LIPrototype + newListItemEnd;
                     }
                     else {
@@ -602,7 +643,8 @@ var BB = {
                     if (BB.isMapPage() && (geoPtIdx < 7)) {
                         var n = Number(geoPtIdx) + 1;
                         this.marker = new google.maps.Marker({
-                            position: new google.maps.LatLng(geoPt.lat, geoPt.lng),
+                            position: new google.maps.LatLng(
+                                geoPt.lat, geoPt.lng),
                             map: BB.theMap,
                             title: geoPt.place_name,
                             icon: BB.iconPath + n + ".png",
@@ -694,18 +736,22 @@ var BB = {
             if (BB.lastMapPosition)
                 if (BB.lastMapPosition.isSet) {
                     last = BB.googleFormatPosition(BB.lastMapPosition);
-                    console.log("populateMainListSuccess set map to last map position, lat: " + last.lat());
+                    console.log(
+                            "populateMainListSuccess set map to last" +
+                            " map position, lat: " + last.lat());
                 }
             if (!last) {
                 last = BB.googleFormatPosition(BB.lastGPSPosition);
-                console.log("populateMainListSuccess set map to last GPS position, lat: " + last.lat());
+                console.log("populateMainListSuccess set map to last GPS " +
+                    "position, lat: " + last.lat());
             }
             BB.theMap.setCenter(last);
 
             // update points with distance
             var map_centre = {"latitude": BB.theMap.getCenter().lat(),
                 "longitude": BB.theMap.getCenter().lng() };
-            console.log("distances from Map: " + map_centre.latitude + ", " + map_centre.longitude);
+            console.log("distances from Map: " + map_centre.latitude + ", " +
+                map_centre.longitude);
             for (var pt in rayv.UserData.places) {
                 var place = rayv.UserData.places[pt];
                 var dist = BB.approx_distance(place, BB.lastGPSPosition);
@@ -731,7 +777,8 @@ var BB = {
             $("#splash").hide();
             BB.splash = false;
             try {
-                $('div[data-role=listview]').listview().listview('refresh').trigger('updatelayout');
+                $('div[data-role=listview]').listview().listview('refresh').
+                    trigger('updatelayout');
             } catch (e) {
             }
 
@@ -742,7 +789,8 @@ var BB = {
             //user clicked on a place (or db entry) in the new Shout page
             if ($(this).data("shoutIsMap")) {
                 // it's a map item
-                //copy the text from the <a> tag to the text box on the New Item page
+                //copy the text from the <a> tag to the text box on the
+                // New Item page
                 var text = $(this).find(".list-item-title").text().trim();
                 $("#new-detail-name").val(text);
                 $("input[name=new-title]").val(text);
@@ -750,10 +798,12 @@ var BB = {
                 rayv.currentItem.place_name = text;
                 rayv.currentItem.address = $(this).data("address");
                 rayv.currentItem.descr = "";
+                rayv.currentItem.website = $(this).data("website");;
 
                 rayv.currentItem.category = $(this).data("category");
                 $("#new-detail-address").val(rayv.currentItem.address);
-                $("#new-detail-comment").val("");   // no comment as it's not in db
+                // no comment as it's not in db
+                $("#new-detail-comment").val("");
                 $("#cat-lookup").find("input").val(rayv.currentItem.category);
                 rayv.currentItem.key = $(this).data("shoutKey");
                 console.log("key set new_places_list_click");
@@ -783,7 +833,8 @@ var BB = {
                     rayv.currentItem.address = "";
                     var el = $("#new-category").find("option");
                     el.removeAttr('selected');
-                    $("#new-category").children("option:contains('" + $("#selectmenu2").val() + "')").attr("selected", true);
+                    $("#new-category").children("option:contains('" +
+                        $("#selectmenu2").val() + "')").attr("selected", true);
                     $("#new-name").val(place);
                 }
                 $.mobile.changePage("#new-detail");
@@ -860,7 +911,9 @@ var BB = {
 
             //rayv.currentItem.descr = $("#new-detail-comment").val();
             rayv.currentItem.category = $("#new-category").val();
-            if (rayv.currentItem.category === "None" || rayv.currentItem.category == null || rayv.currentItem.category.length == 0) {
+            if (rayv.currentItem.category === "None" ||
+                rayv.currentItem.category == null ||
+                rayv.currentItem.category.length == 0) {
                 alert("You must pick a type of cuisine");
                 return;
             }
@@ -969,7 +1022,8 @@ var BB = {
             var search_for = $("#main-search").val();
             if (search_for.length > 0) {
                 $("#main-list").children("li").hide();
-                $('#main-list").children("li:contains("' + search_for + '")').show();
+                $('#main-list").children("li:contains("' + search_for + '")').
+                    show();
             }
             else {
                 $("#main-list").children("li").show();
@@ -993,11 +1047,14 @@ var BB = {
             $("#new-detail-name").val(rayv.currentItem.place_name);
             $("#new-detail-address").val(rayv.currentItem.address);
             $("#new-category").children("option").removeAttr('selected');
-            $("#new-category").children('option:contains("Select Cuisine")').attr("selected", true);
+            $("#new-category").children('option:contains("Select Cuisine")').
+                attr("selected", true);
             if (rayv.currentItem.category.length > 0){
                 var el = $("#new-category");
                 try {
-                    $("#new-category").children("option:contains('" + rayv.currentItem.category + "')").attr("selected", true);
+                    $("#new-category").children("option:contains('" +
+                        rayv.currentItem.category + "')").
+                        attr("selected", true);
                     el.val(rayv.currentItem.category);
                     el.selectmenu("refresh", true);
                 }
@@ -1005,24 +1062,40 @@ var BB = {
                     el.val('');
                 }
             }
-            $("#new-detail-comment").val(rayv.UserData.get_most_relevant_comment(rayv.currentItem.key));
+            $("#new-detail-comment").val(
+                rayv.UserData.get_most_relevant_comment(rayv.currentItem.key));
 
             //set the likes radio
             if (rayv.currentItem.untried) {
-                $('#new-item-votes li').removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
+                $('#new-item-votes li').
+                    removeClass('ui-btn-hover-b').
+                    addClass('ui-btn-up-b').
+                    removeClass('ui-btn-active');
                 $('#new-item-untried').addClass('ui-btn-active');
             }
             else {
                 if (rayv.currentItem.vote >= 0) {
-                    $('#new-item-votes').find('li').removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
+                    $('#new-item-votes').find('li').
+                        removeClass('ui-btn-hover-b').
+                        addClass('ui-btn-up-b').
+                        removeClass('ui-btn-active');
                     $('#new-item-like').addClass('ui-btn-active');
                 }
                 else {
-                    $('#new-item-votes').find('li').removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
+                    $('#new-item-votes').
+                        find('li').
+                        removeClass('ui-btn-hover-b').
+                        addClass('ui-btn-up-b').
+                        removeClass('ui-btn-active');
                     $('#new-item-dislike').addClass('ui-btn-active');
                 }
             }
-            $("#new-preview-box").children("div").children("img").removeClass("rotr").removeClass("rotu").removeClass("rotl");
+            $("#new-preview-box").
+                children("div").
+                children("img").
+                removeClass("rotr").
+                removeClass("rotu").
+                removeClass("rotl");
             BB.imageRotation = 0;
             if (rayv.currentItem.img) {
                 console.log("Show item image");
@@ -1073,7 +1146,8 @@ var BB = {
             BB.lastMapPosition.latitude = rayv.currentItem.lat;
             BB.lastMapPosition.longitude = rayv.currentItem.lng;
             //BB.clearMapMarkers();
-            /*var pos = new google.maps.LatLng(rayv.currentItem.lat, rayv.currentItem.lng);
+            /*var pos = new google.maps.LatLng(rayv.currentItem.lat,
+            rayv.currentItem.lng);
              BB.marker = new google.maps.Marker({
              position: pos,
              map: BB.theMap,
@@ -1084,6 +1158,11 @@ var BB = {
             BB.lastMapPosition.isSet = true;
             BB.lastMapPosition.zoomIn = true;
             $.mobile.changePage("#map-page");
+        },
+        showItemWebPage: function (){
+            $("#external-header").text(rayv.currentItem.place_name);
+            $("#external-iframe").attr('src', rayv.currentItem.website);
+            $.mobile.changePage("#page-external");
         },
         showAnotherItemOnMap: function () {
             // centered on the current item
@@ -1112,23 +1191,31 @@ var BB = {
             switch (BB.imageRotation) {
                 case 0:
                     //original
-                    img.removeClass("rotr").removeClass("rotu").removeClass("rotl");
+                    img.removeClass("rotr").
+                        removeClass("rotu").
+                        removeClass("rotl");
                     rayv.currentItem.rotation = 0;
                     break;
                 case 1:
                     //right
-                    img.removeClass("rotl").removeClass("rotu").addClass("rotr");
+                    img.removeClass("rotl").
+                        removeClass("rotu").
+                        addClass("rotr");
                     rayv.currentItem.rotation = 1;
                     break;
                 case 2:
                     // invert
-                    img.removeClass("rotl").removeClass("rotr").addClass("rotu");
+                    img.removeClass("rotl").
+                        removeClass("rotr").
+                        addClass("rotu");
                     rayv.currentItem.rotation = -2;
                     break;
 
                 case 3:
                     //left
-                    img.removeClass("rotr").removeClass("rotu").addClass("rotl");
+                    img.removeClass("rotr").
+                        removeClass("rotu").
+                        addClass("rotl");
                     rayv.currentItem.rotation = -1;
                     break;
 
@@ -1170,9 +1257,14 @@ var BB = {
             }
             console.log(this.files[0]);
             oFReader.onload = function (oFREvent) {
-                $("#new-preview-box>div>img").html('<img height="150" id="new-image" data-inline="true" src="' + oFREvent.target.result + '">');
+                $("#new-preview-box>div>img").html(
+                        '<img height="150" ' +
+                        'id="new-image" ' +
+                            'data-inline="true" ' +
+                            'src="' + oFREvent.target.result + '">');
                 $('#new-preview-box').show();
-                $("#new-preview-box>div>img").attr('src', oFREvent.target.result);
+                $("#new-preview-box>div>img").attr(
+                    'src', oFREvent.target.result);
                 $("#item-img").show();
                 try {
                     $('#image-dialog').popup('close')
@@ -1196,7 +1288,9 @@ var BB = {
                     try {
                         this.theMap.setCenter(last);
                         this.map_centred = false;
-                        console.log("set map (1) to last position, lat: " + last.lat());
+                        console.log(
+                                "set map (1) to last position, lat: " +
+                                last.lat());
                         if (this.lastMapPosition.zoomIn) {
                             this.theMap.setZoom(18);
                             this.lastMapPosition.zoomIn = false;
@@ -1207,7 +1301,8 @@ var BB = {
                     }
                 } else {
                     last = this.googleFormatPosition(this.lastGPSPosition);
-                    console.log("set map (2) to last position, lat: " + last.lat());
+                    console.log("set map (2) to last position, lat: " +
+                        last.lat());
                     try {
                         this.theMap.setCenter(last);
                         if (this.lastMapPosition.zoomIn) {
@@ -1286,12 +1381,15 @@ var BB = {
                     zoom: 15,
                     center: BB.googleFormatPosition(BB.lastGPSPosition)
                 };
-                BB.creatorMap = new google.maps.Map(document.getElementById('find-on-map-div'),
+                BB.creatorMap = new google.maps.Map(
+                    document.getElementById('find-on-map-div'),
                     mapOptions);
-                google.maps.event.addListener(BB.creatorMap, 'dragend', BB.dragCreatorMap);
+                google.maps.event.addListener(
+                    BB.creatorMap, 'dragend', BB.dragCreatorMap);
             }
             else {
-                BB.creatorMap.setCenter(BB.googleFormatPosition(BB.lastGPSPosition))
+                BB.creatorMap.setCenter(
+                    BB.googleFormatPosition(BB.lastGPSPosition))
             }
             $("#create-name").val($("#new-name").val());
             $("#dragged-address").hide();
@@ -1321,7 +1419,8 @@ var BB = {
             function pageTo_item_inner() {
                 console.log("pageToItem");
                 //todo: check for new Item path
-                // if we have come from the image page, the image should be shown on the item page too
+                // if we have come from the image page,
+                // the image should be shown on the item page too
                 if (previousPage == "image-page")
                     $("#item-img").show();
                 $("#item-img").show();
@@ -1338,6 +1437,12 @@ var BB = {
                 else {
                     $("#item-phone-link").hide();
                 }
+                if (rayv.currentItem.website) {
+                    $("#item-web-link").show();
+                }
+                else {
+                    $("#item-web-link").hide();
+                }
 
                 $("#item-title-2").html(rayv.currentItem.place_name);
                 var comment = rayv.UserData.get_my_comment(rayv.currentItem.key);
@@ -1349,7 +1454,8 @@ var BB = {
 
                 var $btn_text = $("#item-comment-btn a .ui-btn-text");
                 var $btn_child = $btn_text.find('.ui-collapsible-heading-status');
-                //overwrite the header text, then append its child to restore the previous structure
+                //overwrite the header text, then append its
+                // child to restore the previous structure
                 $btn_text.text(comment_header).append($btn_child);
 
                 $("#item-descr").val(comment);
@@ -1367,7 +1473,8 @@ var BB = {
                 $("#item-distance").html(rayv.currentItem.distance);
 
                 //set the likes radio
-                $('#item-page-votes li a').removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
+                $('#item-page-votes li a').removeClass('ui-btn-hover-b').
+                    addClass('ui-btn-up-b').removeClass('ui-btn-active');
                 if (rayv.currentItem.untried) {
                     $('#item-untried').addClass('ui-btn-active');
                 }
@@ -1387,7 +1494,8 @@ var BB = {
                 }
                 else {
                     //$("#item-img").hide();
-                    $("#item-img>img").attr("src", '/static/images/no-image.png');
+                    $("#item-img>img").attr(
+                        "src", '/static/images/no-image.png');
                     $("#item-img>img").attr("style", "");
                 }
                 if (rayv.currentItem.key in rayv.UserData.myBook.votes) {
@@ -1396,7 +1504,9 @@ var BB = {
                 else {
                     $("#item-delete").hide();
                 }
-                $('#item-votes-inner').trigger('collapse').trigger('updatelayout');
+                $('#item-votes-inner').
+                    trigger('collapse').
+                    trigger('updatelayout');
                 $("#vote-cursor").val("");
                 $("#item-votes").html("");
                 BB.loadVotes()
@@ -1450,7 +1560,10 @@ var BB = {
             $("#new-detail-comment").val("");
 
             //set the likes radio
-            $("#new-detail-vote a").removeClass('ui-btn-hover-b').addClass('ui-btn-up-b').removeClass('ui-btn-active');
+            $("#new-detail-vote a").
+                removeClass('ui-btn-hover-b').
+                addClass('ui-btn-up-b').
+                removeClass('ui-btn-active');
             $('#new-item-like').addClass('ui-btn-active');
             $("#new-preview-box").hide();
 
@@ -1490,7 +1603,10 @@ var BB = {
                     var context = {'items': obj.local.points};
                     var UIlist = Mark.up(BB.add_search_nearby_template, context);
 
-                    $("#new-place-list").html(UIlist).listview().trigger('create').trigger('updatelayout');
+                    $("#new-place-list").
+                        html(UIlist).listview().
+                        trigger('create').
+                        trigger('updatelayout');
                     $(".found-address").on("click", BB.item_create);
                     $("#manual-address-lookup").val(rayv.currentItem.address);
                 }
@@ -1506,7 +1622,8 @@ var BB = {
                 $("#new-place-list-loading").hide();
                 //$.mobile.changePage("#new-address-list-page");
                 $("#new-place ul").remove();
-                BB.process_template(jQuery.parseJSON(data), lookAddressList_inner)
+                BB.process_template(
+                    jQuery.parseJSON(data), lookAddressList_inner)
             }
 
             function lookupAddressListErrorHandler() {
@@ -1516,7 +1633,8 @@ var BB = {
                 alert("Not Found");
                 $("#new-page ul").remove();
                 $("#create-new-address-box").show();
-                BB.process_template({items: []}, lookAddressList_inner);  // string to be parsed
+                // string to be parsed
+                BB.process_template({items: []}, lookAddressList_inner);
             }
 
             console.log("AJAX lookupAddressList");
@@ -1650,8 +1768,11 @@ var BB = {
 
         set_list_column_filter: function (val) {
             $("#filter-radio input[type='radio']").attr("checked", null);
-            $("#filter-radio input[type='radio'][value='" + val + "']").attr("checked", "checked");
-            $("#filter-radio  input[type='radio']").checkboxradio().checkboxradio("refresh");
+            $("#filter-radio input[type='radio'][value='" + val + "']").attr(
+                "checked", "checked");
+            $("#filter-radio  input[type='radio']").
+                checkboxradio().
+                checkboxradio("refresh");
         },
 
         get_list_column_filter: function () {
@@ -1685,11 +1806,16 @@ var BB = {
         },
 
         watchPositionSuccess: function (pos) {
-            console.log("watchPositionSuccess: " + pos.coords.latitude + "," + pos.coords.longitude);
+            console.log("watchPositionSuccess: " +
+                pos.coords.latitude + "," +
+                pos.coords.longitude);
             BB.lastGPSPosition = pos.coords;
             var now = new Date();
             if (now - BB.lastGPSTime > (2 * BB.watchPositionOptions.maximumAge)) {
-                BB.watch_position_id = navigator.geolocation.watchPosition(BB.watchPositionSuccess, BB.watchPositionError, BB.watchPositionOptions);
+                BB.watch_position_id = navigator.geolocation.watchPosition(
+                    BB.watchPositionSuccess,
+                    BB.watchPositionError,
+                    BB.watchPositionOptions);
             }
             BB.lastGPSTime = now;
             if (BB.isMapPage() && BB.map_centred) {
@@ -1698,7 +1824,10 @@ var BB = {
         },
 
         watchPositionError: function (err) {
-            console.warn('watchPositionError ERROR(' + err.code + '): ' + err.message);
+            console.warn(
+                    'watchPositionError ERROR(' +
+                    err.code + '): ' +
+                        err.message);
         },
 
         firstWatchPositionSuccess: function (pos) {
@@ -1752,7 +1881,8 @@ var BB = {
             $("#refresh-btn").on("click", BB.loadUserData);
 
             $("#create-new-save-btn").on("click", this.do_create_new_address);
-            $("#create-new-address-btn").on("click", this.show_create_new_address);
+            $("#create-new-address-btn").on(
+                "click", this.show_create_new_address);
             $("#new-item-li").on("click", this.show_create_new_address);
             $("#item-edit").on("click", BB.editItem);
             $("#new-rotr").on("click", this.imageRotate);
@@ -1770,11 +1900,13 @@ var BB = {
             $("#new-place-name-box").on('change input', this.place_search_by_name);
             $("#new-place-near").on('keyup', this.set_search_to_near_place);
             $("#new-search-place-btn").click(BB.lookupManualAddress);
-            $("#new-top-controls input[type='radio']").bind("change", BB.add_search_radio_change);
+            $("#new-top-controls input[type='radio']").bind("change",
+                BB.add_search_radio_change);
             // edit item btn hidden by default. Shown if you own it
             // event handler for map search box on map-page
             $("#map-search").keyup(this.map_search_key);
             $("#item-see-map").on("click", BB.showItemOnMap);
+            $("#item-web-link").on("click", BB.showItemWebPage);
             $("#new-item-save").on("click", BB.new_item_save_click);
             $("#item-save").on("click", BB.updateitem);
             $('#new-preview-box').hide();
@@ -1844,7 +1976,9 @@ $(function () {
                     BB.pageToCreateAddress(event, previousPage);
                     break;
                 case "new-address-list-page":
-                    $("#new-addresses-list").trigger('create').trigger('updatelayout');
+                    $("#new-addresses-list").
+                        trigger('create').
+                        trigger('updatelayout');
                     try {
                         $("#new-addresses-list").listview('refresh');
                     } catch (e) {
@@ -1852,7 +1986,8 @@ $(function () {
                     break;
                 case "settings-page":
                     $.get('/user_profile', {}, function (data) {
-                        $("#settings-screen-name").val(jQuery.parseJSON(data).screen_name);
+                        $("#settings-screen-name").
+                            val(jQuery.parseJSON(data).screen_name);
                     });
                     break;
             }
@@ -1860,7 +1995,9 @@ $(function () {
 
         function beforePageShow(event, data) {
             //some pages are ones you mustn't land on from outside as they need loading
-            console.log("beforePageShow " + data.prevPage.attr("id") + ">" + event.target.id);
+            console.log("beforePageShow " +
+                data.prevPage.attr("id") + ">" +
+                event.target.id);
             if (event.target.id == "item-page") {
                 BB.clearItemPage();
             }
@@ -1911,8 +2048,10 @@ $(function () {
             BB.log(e);
         }
 
-        // change the default jquery "contains" selector so it matches case insensitive
-        // from: http://css-tricks.com/snippets/jquery/make-jquery-contains-case-insensitive/
+        // change the default jquery "contains" selector so
+        // it matches case insensitive
+        // from: http://css-tricks.com/snippets/jquery/
+        // make-jquery-contains-case-insensitive/
         $.expr[":"].contains = $.expr.createPseudo(function (arg) {
             return function (elem) {
                 return $(elem).text().toUpperCase().indexOf(arg.toUpperCase()) >= 0;
@@ -1947,8 +2086,11 @@ $(function () {
         if (!navigator.geolocation) {
             console.error("$. NEED GEO");
             alert("LBS Are Off");
-            //todo: Note: jQuery.mobile.changePage is deprecated as of jQuery Mobile 1.4.0 and will be removed in 1.5.0. Use the pagecontainer widget's change() method instead.
-            //   $( ":mobile-pagecontainer" ).pagecontainer( "change", "need-geo.html");
+            //todo: Note: jQuery.mobile.changePage is deprecated as of
+            // jQuery Mobile 1.4.0 and will be removed in 1.5.0. Use the
+            // pagecontainer widget's change() method instead.
+            //   $( ":mobile-pagecontainer" ).pagecontainer(
+            // "change", "need-geo.html");
             $.mobile.changePage("/need-geo.html")
         }
         else {
@@ -1966,7 +2108,10 @@ $(function () {
             $.mobile.changePage("#need-geo");
         }
         else {
-            navigator.geolocation.getCurrentPosition(BB.firstWatchPositionSuccess, BB.watchPositionError, BB.watchPositionOptions)
+            navigator.geolocation.getCurrentPosition(
+                BB.firstWatchPositionSuccess,
+                BB.watchPositionError,
+                BB.watchPositionOptions)
         }
         BB.setupListeners();
         console.log("JS Init'd");
