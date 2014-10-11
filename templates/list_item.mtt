@@ -5,7 +5,7 @@
         </div>
         " +
         <a style='position:absolute; top:0; width:95%;'
-           onclick="javascript:loadMapItemForEdit(\'{{ pt.key }}\');"
+           onclick="javascript:loadMapItemForEdit()\'{{ pt.key }}\');"
            href='\#item-page' data-transition='slide'>
         {{ pt.place_name }} [{{ pt.distance}}]
         </a>

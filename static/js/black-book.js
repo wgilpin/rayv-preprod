@@ -1,9 +1,27 @@
 var rayv = rayv||{};
+/**
+ * create a geo posn
+ * @param lat
+ * @param lng
+ * @constructor
+ */
+rayv.LatLng = function(lat, lng){
+    this.lat = lat;
+    this.lng = lng;
+    this.googleFormat = function(){
+        return new google.maps.LatLng(this.lat, this.lng);
+    };
+    this.loadFromGoogleFormat = function(g_fmt){
+        this.lat = g_fmt.lat();
+        this.lng = g_fmt.lng();
+        return this;
+    }
+};
+
 rayv.currentItem = rayv.currentItem||{};
 (function(){
     this.address = "";
-    this.lat = 0.0;
-    this.lng = 0.0;
+    this.position = new rayv.LatLng(0.0,0.0);
     this.place_name = "";
     this.descr = "";
     this.category = "";
@@ -14,9 +32,12 @@ rayv.currentItem = rayv.currentItem||{};
     this.img = null;
     this.rotation = 0;
     this.telephone = null;
-    this.isFromMap = false;
     this.distance = null;
     var untried = null;
+    /**
+     * loads the current item given its key
+     * @param [key] {string} - urlsafe key
+     */
     this.loadFromKey = function (key) {
         if (!key) {
             key = this.key;
@@ -25,6 +46,12 @@ rayv.currentItem = rayv.currentItem||{};
             _innerLoad(rayv.UserData.places[key], false);
         }
     };
+    /**
+     * loads the surrentItem from an ajax return object
+     * @param data {object} The ajax objet
+     * @param is_json {bool} is the object already parsed as json?
+     * @private
+     */
     var _innerLoad = function (data, is_json) {
         var obj = is_json ? jQuery.parseJSON(data) : data;
         rayv.currentItem.address = obj.address;
@@ -36,32 +63,31 @@ rayv.currentItem = rayv.currentItem||{};
         rayv.currentItem.descr = obj.descr;
         rayv.currentItem.telephone = obj.telephone;
         rayv.currentItem.website = obj.website;
-        rayv.currentItem.lat = obj.lat;
-        rayv.currentItem.lng = obj.lng;
+        rayv.currentItem.position = new rayv.LatLng(obj.lat, obj.lng);
         rayv.currentItem.key = obj.key;
         rayv.currentItem.mine = obj.mine;
         rayv.currentItem.img = obj.img;
         rayv.currentItem.vote = obj.vote;
         rayv.currentItem.distance = obj.distance;
         rayv.currentItem.rotation = 0;
-        rayv.currentItem.isFromMap = false;
         untried = obj.untried;
     };
+    /**
+     * Clears the currentItem
+     */
     this.clear = function () {
         rayv.currentItem.address = "";
         rayv.currentItem.place_name = "";
         rayv.currentItem.category = "";
         rayv.currentItem.website = "";
         rayv.currentItem.descr = "";
-        rayv.currentItem.lat = "";
-        rayv.currentItem.lng = "";
+        rayv.currentItem.position = new rayv.LatLng(0,0);
         rayv.currentItem.key = null;
         rayv.currentItem.mine = "";
         rayv.currentItem.img = "";
         rayv.currentItem.vote = "";
         rayv.currentItem.distance = "";
         rayv.currentItem.rotation = "";
-        rayv.currentItem.isFromMap = true;
     }
 }).apply(rayv.currentItem);
 
@@ -71,9 +97,13 @@ rayv.UserData = rayv.UserData||{};
     var my_id =0;
     this.places ={};
     this.myBook = {};
-    this.friends = {}
+    this.friends = {};
+    /**
+     * adds places to the cache
+     * only adds - no deletion here (as we don't ref count)
+     * @param obj {object} has a .places element which is {list}
+     */
     var updatePlaceCache =function (obj) {
-        // only adds - no deletion here (as we don't ref count)
         for (var place_idx in obj.places) {
             if (!(obj.places[place_idx].key in rayv.UserData.places)) {
                 // dict indexed by place key
@@ -82,8 +112,11 @@ rayv.UserData = rayv.UserData||{};
             }
         }
     };
+    /**
+     * get All user data from the server
+     * @param callback {function} callback on completion
+     */
     this.load =function (callback) {
-        //get All user data from the server
         var request = {};
         if (!BB.splash) {
             $("#list-loading").show();
@@ -115,8 +148,11 @@ rayv.UserData = rayv.UserData||{};
                 callback();
             });
     };
+    /**
+     * load, cache & display the thumbs for the current list, async
+     * @param listULId {string} element ID of the list
+     */
     this.getThumbs =function (listULId) {
-        //load, cache & display the thumbs for the current list, async
         $(listULId).find("li").each(function () {
             // get the data-key from the <a>
             var key = $(this).find('a').data('key');
@@ -152,8 +188,13 @@ rayv.UserData = rayv.UserData||{};
         });
     };
 
+    /**
+     * gets the single most relevant comment for a place
+     * my comment, else a friend's
+     * @param key {string} the key to the object
+     * @returns {string} comment text
+     */
     this.get_most_relevant_comment =function (key) {
-        // my comment, else a friend's
         if (this.myBook.votes[key]) {
             return this.myBook.votes[key].comment
         }
@@ -166,6 +207,11 @@ rayv.UserData = rayv.UserData||{};
         return "";
     };
 
+    /**
+     * gets my comment for a place
+     * @param key {string} the key to the object
+     * @returns {string} comment text
+     */
     this.get_my_comment = function (key) {
         // my comment;
         if (this.myBook.votes[key]) {
@@ -174,6 +220,11 @@ rayv.UserData = rayv.UserData||{};
         return '';
     };
 
+    /**
+     * gets all the vote for a place give the key
+     * @param key {string} urlsafe place key
+     * @returns {Array} of votes
+     */
     this.get_votes_for_item =function (key) {
         var result = [];
         for (var frIdx in this.friends) {
@@ -200,15 +251,11 @@ var BB = {
         creatorMapMarker: null,
         marker: null,
         navBarActive: false,
-        lastGPSPosition: {"latitude": 0,
-            "longitude": 0,
-            "isSet": false,
-            "zoomIn": false},
+        lastGPSPosition:  new rayv.LatLng(0,0),
         // map_centred set if blue home button pressed, reset if dragged
         map_centred: false,
         lastGPSTime: 0,
-        lastMapPosition: {"latitude": 0,
-            "longitude": 0,
+        lastMapPosition: {"position": new rayv.LatLng(0,0),
             "isSet": false,
             "zoomIn": false},
         theMap: null,
@@ -217,19 +264,26 @@ var BB = {
         iconPath: "/static/images/",
         filter: "mine",
         use_test_location: false,
-        test_lat: null,
-        test_lng: null,
+        test_position: new rayv.LatLng(0,0),
         imageRotation: 0,
         watchPositionOptions: {
             enableHighAccuracy: true,
             maximumAge: 30000 //30 seconds
         },
         detail_saving: false,
+        /**
+         * hide all waiting spinners
+         */
         hide_waiting: function(){
             $('.waiting').hide();
             BB.detail_saving = false;
             console.log('hide_waiting timeout');
         },
+        /**
+         * show the requested spinner
+         * @param selector {string} jQuery selector for the element
+         * @returns {number} time id
+         */
         show_waiting: function(selector){
             //show the ajax spinner & set time to turn off
             var timer = window.setTimeout(BB.hide_waiting, 20000);
@@ -237,12 +291,18 @@ var BB = {
             BB.detail_saving = true;
             return timer;
         },
+        /**
+         * center the map
+         */
         map_center: function () {
-            var last = BB.googleFormatPosition(BB.lastGPSPosition);
+            var last = BB.lastGPSPosition.googleFormat();
             BB.theMap.setCenter(last);
             BB.dragMap();
             BB.map_centred = true;
         },
+        /**
+         * set up the main map
+         */
         map_init: function () {
             //map
             var mapOptions = {
@@ -279,6 +339,9 @@ var BB = {
             BB.theMap.controls[google.maps.ControlPosition.LEFT_CENTER].
                 push(controlUI);
         },
+        /**
+         * initialise app on load
+         */
         init: function () {
             this.splash = true;
             $("#list-loading").hide();
@@ -287,7 +350,10 @@ var BB = {
 
         },
 
-        //every server call, we look for dirty data and append it if needed
+        /**
+         * every server call, we look for dirty data and append it if needed
+         * @param obj {object} ajax return object
+         */
         check_for_dirty_data: function (obj) {
             if (obj) {
                 if ("dirty_list" in obj) {
@@ -306,6 +372,11 @@ var BB = {
             }
         },
 
+        /**
+         * get the distance as yards if close, else miles
+         * @param dist {float} distance in miles
+         * @returns {string} prettified distance string
+         */
         pretty_dist: function (dist) {
             if (dist >= 1.0) {
                 return dist.toFixed(1) + " miles";
@@ -314,6 +385,12 @@ var BB = {
             return yds + " yds";
         },
 
+        /**
+         * one in 60 rule distance calc
+         * @param point {LatLng}
+         * @param origin {LatLng}
+         * @returns {float} distance between points
+         */
         approx_distance: function (point, origin) {
             //based on 1/60 rule
             //delta lat. Degrees * 69 (miles)
@@ -326,14 +403,18 @@ var BB = {
                 p_lat = point["lat"];
                 p_lng = point["lng"];
             }
-            var d_lat = (origin.latitude - p_lat) * 69;
+            var d_lat = (origin.lat - p_lat) * 69;
             //cos(lat) approx by 1/60
             var cos_lat = Math.min(1, (90 - p_lat) / 60);
             //delta lng = degrees * cos(lat) *69 miles
-            var d_lng = (origin.longitude - p_lng) * 69 * cos_lat;
+            var d_lng = (origin.lng - p_lng) * 69 * cos_lat;
             return Math.sqrt(d_lat * d_lat + d_lng * d_lng);
         },
 
+        /**
+         * log the message
+         * @param msg {string} message
+         */
         log: function (msg) {
             try {
                 console.log(msg + " / map lat :" + BB.theMap.getCenter().lat());
@@ -344,8 +425,11 @@ var BB = {
         },
 
 
+        /**
+         * we have changed the current item, update the cache
+         * @returns {boolean} updated
+         */
         updateCurrentItemInCache: function () {
-            //we have changed the current item, update the cache
             if (rayv.currentItem.key in rayv.UserData.places) {
                 rayv.UserData.places[rayv.currentItem.key].address =
                     rayv.currentItem.address;
@@ -376,13 +460,13 @@ var BB = {
                 function (results, status) {
                 if (status == google.maps.GeocoderStatus.OK) {
                     if (results[1]) {
-                        var el = $("#dragged-address")
+                        var el = $("#dragged-address");
                         el.text(results[0].formatted_address);
                         el.show();
                         $("#create-new-save-btn").removeClass("ui-disabled")
                     }
                 } else {
-                    $("#create-new-save-btn").addClass("ui-disabled")
+                    $("#create-new-save-btn").addClass("ui-disabled");
                     console.log("Geocoder failed due to: " + status);
                 }
             });
@@ -400,8 +484,8 @@ var BB = {
                 fd.append("new-title", rayv.currentItem.place_name);
                 fd.append("address", rayv.currentItem.address);
                 fd.append("myComment", rayv.currentItem.descr);
-                fd.append("latitude", rayv.currentItem.lat);
-                fd.append("longitude", rayv.currentItem.lng);
+                fd.append("latitude", rayv.currentItem.position.lat);
+                fd.append("longitude", rayv.currentItem.position.lng);
                 fd.append("voteScore", rayv.currentItem.vote);
                 fd.append("website", rayv.currentItem.website);
                 fd.append("untried", 'untried' in rayv.currentItem ?
@@ -494,8 +578,7 @@ var BB = {
 
         SaveItemAtPos: function (position) {
             console.log("SaveItemAtPos");
-            rayv.currentItem.lat = position.coords.latitude;
-            rayv.currentItem.lng = position.coords.longitude;
+            rayv.currentItem.position = position;
             this.saveCurrentItem();
         },
 
@@ -517,7 +600,12 @@ var BB = {
         },
 
 //todo: is this the right name?
-        loadMapItemForEdit: function (place_name, lat, lng) {
+        /**
+         *
+         * @param place_name {string}
+         * @param posn {LatLng}
+         */
+        loadMapItemForEdit: function (place_name, posn) {
             $('#new-item-votes').find('li').removeClass('ui-btn-hover-b').
                 addClass('ui-btn-up-b').removeClass('ui-btn-active');
             $('#new-item-like').addClass('ui-btn-active');
@@ -525,10 +613,7 @@ var BB = {
             $("#new-title-hdg").text(place_name);
             $("input[name=new-title]").val(place_name);
             $("#new-text").val("");
-            rayv.currentItem.isFromMap = true;
-            var pos = {"coords": ""};
-            pos.coords = {"latitude": lat, "longitude": lng};
-            this.SaveItemAtPos(pos)
+            this.SaveItemAtPos(posn)
         },
 
         format: function () {
@@ -604,7 +689,7 @@ var BB = {
                 console.log("inner_setup_list");
                 // marker for us
                 this.marker = new google.maps.Marker({
-                    position: BB.googleFormatPosition(BB.lastGPSPosition),
+                    position: BB.lastGPSPosition.googleFormat(),
                     map: BB.theMap,
                     icon: BB.iconPath + "blue_dot.png"
                     //infoWindowIndex: geoPtIdx
@@ -622,7 +707,7 @@ var BB = {
                                 "javascript:loadMapItemForEdit(" +
                                     "'{0}','{1}','{2}');", geoPt.place_name, geoPt.lat, geoPt.lng);
                         newListItemEnd = click_fn +
-                            "' href='\#new-detail' data-transition='slide'>" +
+                            "' href='#new-detail' data-transition='slide'>" +
                             geoPt.place_name +
                             " [" + geoPt.distance + "]</a></li>";
                         newListItem = LIPrototype + newListItemEnd;
@@ -735,23 +820,24 @@ var BB = {
             var last = null;
             if (BB.lastMapPosition)
                 if (BB.lastMapPosition.isSet) {
-                    last = BB.googleFormatPosition(BB.lastMapPosition);
+                    last = BB.lastMapPosition.position.googleFormat();
                     console.log(
                             "populateMainListSuccess set map to last" +
                             " map position, lat: " + last.lat());
                 }
             if (!last) {
-                last = BB.googleFormatPosition(BB.lastGPSPosition);
+                last = BB.lastGPSPosition.googleFormat();
                 console.log("populateMainListSuccess set map to last GPS " +
                     "position, lat: " + last.lat());
             }
             BB.theMap.setCenter(last);
 
             // update points with distance
-            var map_centre = {"latitude": BB.theMap.getCenter().lat(),
-                "longitude": BB.theMap.getCenter().lng() };
-            console.log("distances from Map: " + map_centre.latitude + ", " +
-                map_centre.longitude);
+            var map_centre = new rayv.LatLng(0,0).
+                loadFromGoogleFormat(BB.theMap.getCenter());
+            console.log("distances from Map: " +
+                map_centre.lat + ", " +
+                map_centre.lng);
             for (var pt in rayv.UserData.places) {
                 var place = rayv.UserData.places[pt];
                 var dist = BB.approx_distance(place, BB.lastGPSPosition);
@@ -798,8 +884,7 @@ var BB = {
                 rayv.currentItem.place_name = text;
                 rayv.currentItem.address = $(this).data("address");
                 rayv.currentItem.descr = "";
-                rayv.currentItem.website = $(this).data("website");;
-
+                rayv.currentItem.website = $(this).data("website");
                 rayv.currentItem.category = $(this).data("category");
                 $("#new-detail-address").val(rayv.currentItem.address);
                 // no comment as it's not in db
@@ -807,10 +892,9 @@ var BB = {
                 $("#cat-lookup").find("input").val(rayv.currentItem.category);
                 rayv.currentItem.key = $(this).data("shoutKey");
                 console.log("key set new_places_list_click");
-                rayv.currentItem.lat = $(this).data("lat");
-                rayv.currentItem.lng = $(this).data("lng");
-                rayv.currentItem.isFromMap = true;
-
+                rayv.currentItem.position = new rayv.LatLng(
+                    $(this).data("lat"),
+                    $(this).data("lng"));
             }
             else {
                 //new place from scratch
@@ -821,7 +905,6 @@ var BB = {
                     return false;
                 }
                 else {
-                    rayv.currentItem.isFromMap = false;
                     $("#new-title-hdg").text(place);
                     rayv.currentItem.place_name = place;
                     $("input[name=new-title]").val(rayv.currentItem.place_name);
@@ -869,8 +952,8 @@ var BB = {
             $("#new-place-list-loading").show();
             console.log("AJAX gotPositionForPlaces");
             BB.navBarDisable();
-            request.lat = BB.lastGPSPosition.latitude;
-            request.lng = BB.lastGPSPosition.longitude;
+            request.lat = BB.lastGPSPosition.lat;
+            request.lng = BB.lastGPSPosition.lng;
             request.text = search_text;
             $.ajax({
                 url: "/getMapList_Ajax",
@@ -925,9 +1008,7 @@ var BB = {
 
             if (rayv.currentItem.key == "") {
                 //from map or db, use supplied pos
-                var pos = {"coords": 0};
-                pos.coords = {"latitude": rayv.currentItem.lat,
-                    "longitude": rayv.currentItem.lng};
+                var pos = rayv.currentItem.position;
                 BB.SaveItemAtPos(pos);
             }
             else {
@@ -935,9 +1016,7 @@ var BB = {
             }
         },
 
-        googleFormatPosition: function (pos) {
-            return new google.maps.LatLng(pos.latitude, pos.longitude)
-        },
+
 
 
 //load the votes from friends into the UL
@@ -1143,17 +1222,7 @@ var BB = {
 
         showItemOnMap: function () {
             //show the map page, centered on the current item
-            BB.lastMapPosition.latitude = rayv.currentItem.lat;
-            BB.lastMapPosition.longitude = rayv.currentItem.lng;
-            //BB.clearMapMarkers();
-            /*var pos = new google.maps.LatLng(rayv.currentItem.lat,
-            rayv.currentItem.lng);
-             BB.marker = new google.maps.Marker({
-             position: pos,
-             map: BB.theMap,
-             title: rayv.currentItem.place_name
-             });
-             BB.marker.setMap(BB.theMap);*/
+            BB.lastMapPosition.position = rayv.currentItem.position;
             google.maps.event.trigger(BB.theMap, 'resize');
             BB.lastMapPosition.isSet = true;
             BB.lastMapPosition.zoomIn = true;
@@ -1164,8 +1233,7 @@ var BB = {
         },
         showAnotherItemOnMap: function () {
             // centered on the current item
-            BB.lastMapPosition.latitude = rayv.currentItem.lat;
-            BB.lastMapPosition.longitude = rayv.currentItem.lng;
+            BB.lastMapPosition.position = rayv.currentItem.position;
             BB.populateMainList("");
             BB.lastMapPosition.isSet = true;
             BB.lastMapPosition.zoomIn = false;
@@ -1173,8 +1241,8 @@ var BB = {
         },
         dragMap: function () {
             // centered on the map
-            BB.lastMapPosition.latitude = BB.theMap.getCenter().lat();
-            BB.lastMapPosition.longitude = BB.theMap.getCenter().lng();
+            BB.lastMapPosition.position =
+                new rayv.LatLng(0,0).loadFromGoogleFormat(BB.theMap.getCenter());
             BB.populateMainList("");
             BB.lastMapPosition.isSet = true;
             BB.lastMapPosition.zoomIn = false;
@@ -1222,7 +1290,7 @@ var BB = {
 
 
         imageSaveClick: function () {
-            $("input[name=image-id]").val(rayv.currentItem.key);
+            $('input[name=image-id]').val(rayv.currentItem.key);
             if ($("#image-img").children("img").hasClass("rotl"))
                 $("input[name=image-rotate]").val(-1);
             else
@@ -1255,14 +1323,14 @@ var BB = {
             }
             console.log(this.files[0]);
             oFReader.onload = function (oFREvent) {
-                $("#new-preview-box>div>img").html(
-                        '<img height="150" ' +
-                        'id="new-image" ' +
-                            'data-inline="true" ' +
-                            'src="' + oFREvent.target.result + '">');
+                var img = $("#new-preview-box").children("div").children("img");
+                img.html(
+                    '<img height="150" ' +
+                    'id="new-image" ' +
+                        'data-inline="true" ' +
+                        'src="' + oFREvent.target.result + '">');
                 $('#new-preview-box').show();
-                $("#new-preview-box>div>img").attr(
-                    'src', oFREvent.target.result);
+                img.attr('src', oFREvent.target.result);
                 $("#item-img").show();
                 try {
                     $('#image-dialog').popup('close')
@@ -1281,7 +1349,7 @@ var BB = {
                 $("#map-search").val("");
                 var last;
                 if (this.lastMapPosition.isSet) {
-                    last = this.googleFormatPosition(this.lastMapPosition);
+                    last = this.lastMapPosition.position.googleFormat();
                     console.log("set map to last position, lat: " + last.lat());
                     try {
                         this.theMap.setCenter(last);
@@ -1298,7 +1366,7 @@ var BB = {
                         console.log("MAIN MAP NOT SET")
                     }
                 } else {
-                    last = this.googleFormatPosition(this.lastGPSPosition);
+                    last = this.lastGPSPosition.googleFormat();
                     console.log("set map (2) to last position, lat: " +
                         last.lat());
                     try {
@@ -1344,8 +1412,7 @@ var BB = {
         },
 
         pageToImage: function () {
-            $("#image-img>img").attr("src", rayv.currentItem.img);
-            //$("#image-img>img").attr("style", "");
+            $("#image-img").children("img").attr("src", rayv.currentItem.img);
             $("#image-header").text(rayv.currentItem.place_name);
         },
 
@@ -1377,7 +1444,7 @@ var BB = {
             if (!BB.creatorMap) {
                 var mapOptions = {
                     zoom: 15,
-                    center: BB.googleFormatPosition(BB.lastGPSPosition)
+                    center: BB.lastGPSPosition.googleFormat()
                 };
                 BB.creatorMap = new google.maps.Map(
                     document.getElementById('find-on-map-div'),
@@ -1387,7 +1454,7 @@ var BB = {
             }
             else {
                 BB.creatorMap.setCenter(
-                    BB.googleFormatPosition(BB.lastGPSPosition))
+                     BB.lastGPSPosition.googleFormat());
             }
             $("#create-name").val($("#new-name").val());
             $("#dragged-address").hide();
@@ -1450,8 +1517,11 @@ var BB = {
                     comment_header = "Friends' Comments";
                 }
 
-                var $btn_text = $("#item-comment-btn a .ui-btn-text");
-                var $btn_child = $btn_text.find('.ui-collapsible-heading-status');
+                var $btn_text = $("#item-comment-btn").
+                    find("a").
+                    find(".ui-btn-text");
+                var $btn_child = $btn_text.find(
+                    '.ui-collapsible-heading-status');
                 //overwrite the header text, then append its
                 // child to restore the previous structure
                 $btn_text.text(comment_header).append($btn_child);
@@ -1459,11 +1529,14 @@ var BB = {
                 $("#item-descr").val(comment);
 
                 $("#item-comments").html();
-                var votes = rayv.UserData.get_votes_for_item(rayv.currentItem.key);
+                var votes = rayv.UserData.get_votes_for_item(
+                    rayv.currentItem.key);
                 var html = "";
                 for (var vote in votes) {
                     if (votes[vote].vote.comment.length > 0) {
-                        html += Mark.up(BB.friend_comment_template, votes[vote]);
+                        html += Mark.up(
+                            BB.friend_comment_template,
+                            votes[vote]);
                     }
                 }
                 $("#item-comments").html(html);
@@ -1484,17 +1557,18 @@ var BB = {
                         $('#item-dislike').addClass('ui-btn-active');
                     }
                 }
+                var img = $("#item-img");
                 if (rayv.currentItem.img) {
                     console.log("Show item image");
-                    $("#item-img").show();
-                    $("#item-img>img").attr("src", rayv.currentItem.img);
-                    $("#item-img>img").attr("style", "");
+                    img.show();
+                    img.children("img").attr("src", rayv.currentItem.img);
+                    img.children("img").attr("style", "");
                 }
                 else {
                     //$("#item-img").hide();
-                    $("#item-img>img").attr(
+                    img.children("img").attr(
                         "src", '/static/images/no-image.png');
-                    $("#item-img>img").attr("style", "");
+                    img.children("img").attr("style", "");
                 }
                 if (rayv.currentItem.key in rayv.UserData.myBook.votes) {
                     $("#item-delete").show();
@@ -1545,20 +1619,21 @@ var BB = {
                 });
         },
 
-        item_create: function (/*title, address, lat, lng*/) {
+        item_create: function () {
             var properTitle = BB.toProperCase($(this).data('title'));
             $("#new-detail-name").val(decodeURIComponent(properTitle));
             $("#new-detail-address").val($(this).data('address'));
-            $("#new-category>option").removeAttr('selected');
-            $("#new-category").val("Select Cuisine ...");
+            var cat = $("#new-category");
+            cat.children("option").removeAttr('selected');
+            cat.val("Select Cuisine ...");
             try {
-                $("#new-category").selectmenu("refresh", true);
+                cat.selectmenu("refresh", true);
             } catch (e) {
             }
             $("#new-detail-comment").val("");
 
             //set the likes radio
-            $("#new-detail-vote a").
+            $("#new-detail-vote").find("a").
                 removeClass('ui-btn-hover-b').
                 addClass('ui-btn-up-b').
                 removeClass('ui-btn-active');
@@ -1567,8 +1642,9 @@ var BB = {
 
             rayv.currentItem.address = $(this).data('address');
             rayv.currentItem.key = $(this).data('key');
-            rayv.currentItem.lat = $(this).data('lat');
-            rayv.currentItem.lng = $(this).data('lng');
+            rayv.currentItem.position = new rayv.LatLng(
+                $(this).data('lat'),
+                $(this).data('lng'));
             rayv.currentItem.place_name = properTitle;
         },
 
@@ -1619,7 +1695,7 @@ var BB = {
                 $("#search-location-loading").hide();
                 $("#new-place-list-loading").hide();
                 //$.mobile.changePage("#new-address-list-page");
-                $("#new-place ul").remove();
+                $("#new-place").find("ul").remove();
                 BB.process_template(
                     jQuery.parseJSON(data), lookAddressList_inner)
             }
@@ -1629,7 +1705,7 @@ var BB = {
                 $("#new-place-list-loading").hide();
                 console.log("no address found");
                 alert("Not Found");
-                $("#new-page ul").remove();
+                $("#new-page").find("ul").remove();
                 $("#create-new-address-box").show();
                 // string to be parsed
                 BB.process_template({items: []}, lookAddressList_inner);
@@ -1638,8 +1714,8 @@ var BB = {
             console.log("AJAX lookupAddressList");
             addr = rayv.currentItem.address;
             var request = {};
-            request.lat = this.lastGPSPosition.latitude;
-            request.lng = this.lastGPSPosition.longitude;
+            request.lat = this.lastGPSPosition.lat;
+            request.lng = this.lastGPSPosition.lng;
             request.addr = addr;
             // get the place name from the new screen
             request.place_name = $("#new-place-name-box").val();
@@ -1711,8 +1787,9 @@ var BB = {
                 rayv.currentItem.clear();
                 rayv.currentItem.place_name = $("#create-name").val();
                 rayv.currentItem.address = addr;
-                rayv.currentItem.lat = BB.creatorMap.getCenter().lat();
-                rayv.currentItem.lng = BB.creatorMap.getCenter().lng();
+                rayv.currentItem.position =
+                    new rayv.LatLng(0,0).
+                        loadFromGoogleFormat(BB.creatorMap.getCenter());
                 BB.item_load_for_edit();
                 $.mobile.changePage("#new-detail");
             }else
@@ -1765,10 +1842,11 @@ var BB = {
         },
 
         set_list_column_filter: function (val) {
-            $("#filter-radio input[type='radio']").attr("checked", null);
-            $("#filter-radio input[type='radio'][value='" + val + "']").attr(
+            var filter = $("#filter-radio");
+            filter.find("input[type='radio']").attr("checked", null);
+            filter.find("input[type='radio'][value='" + val + "']").attr(
                 "checked", "checked");
-            $("#filter-radio  input[type='radio']").
+            filter.find("input[type='radio']").
                 checkboxradio().
                 checkboxradio("refresh");
         },
@@ -1782,8 +1860,9 @@ var BB = {
                 BB.use_test_location = true;
                 BB.test_lat = parseFloat($("#test-lat").val());
                 BB.test_lng = parseFloat($("#test-lng").val());
-                BB.lastGPSPosition.latitude = BB.test_lat;
-                BB.lastGPSPosition.longitude = BB.test_lng;
+                BB.lastGPSPosition = new rayv.LatLng(
+                    BB.test_lat,
+                    BB.test_lng);
             }
             else {
                 BB.use_test_location = false;
@@ -1807,7 +1886,9 @@ var BB = {
             console.log("watchPositionSuccess: " +
                 pos.coords.latitude + "," +
                 pos.coords.longitude);
-            BB.lastGPSPosition = pos.coords;
+            BB.lastGPSPosition = new rayv.LatLng(
+                pos.coords.latitude,
+                pos.coords.longitude);
             var now = new Date();
             if (now - BB.lastGPSTime > (2 * BB.watchPositionOptions.maximumAge)) {
                 BB.watch_position_id = navigator.geolocation.watchPosition(
@@ -1844,9 +1925,10 @@ var BB = {
         },
 
         set_search_to_near_place: function () {
-            $("#new-select input[type='radio']").attr("checked", "");
+            var radios = $("#new-select").find("input[type='radio']");
+            radios.attr("checked", "");
             $("#new-search-radio-place").attr("checked", "checked");
-            $("#new-select input[type='radio']").checkboxradio("refresh");
+            radios.checkboxradio("refresh");
         },
 
         add_search_radio_change: function (e) {
@@ -1873,8 +1955,10 @@ var BB = {
             $("#file-dlg-btn").on("click", this.open_image_file_click);
             //$("#item-camera-img").on("click",  take_photo_click);
             //hide the default one
-            $("#image-input").hide();
-            $("div[data-controltype='camerainput']").hide();
+            var img_input = $("#image-input");
+            img_input.hide();
+            img_input.change(this.imagePreview);
+            $("div").find("[data-controltype='camerainput']").hide();
             //vote buttons
             $("#refresh-btn").on("click", BB.loadUserData);
 
@@ -1885,12 +1969,11 @@ var BB = {
             $("#item-edit").on("click", BB.editItem);
             $("#new-rotr").on("click", this.imageRotate);
             $("#image-save").on("click", this.imageSaveClick);
-            $("#image-input").change(this.imagePreview);
             $("#new-address-next-btn").on("click", this.lookupManualAddress);
             $("#enter-new-addr-btn").on("click", this.lookupManualAddress);
             $("#new-address-my-locn-btn").on("click", this.lookupMyAddress);
             $("#forgot-btn").attr("data-ajax", "false");
-            $("#column-headers span").on("click", this.clickColumnHeader);
+            $("#column-headers").find("span").on("click", this.clickColumnHeader);
             this.set_list_column_filter('mine');
             $("#filter-radio").on("change", this.clickColumnHeader);
             $("#sort-dist").addClass("list-sort-selected");
@@ -1898,7 +1981,7 @@ var BB = {
             $("#new-place-name-box").on('change input', this.place_search_by_name);
             $("#new-place-near").on('keyup', this.set_search_to_near_place);
             $("#new-search-place-btn").click(BB.lookupManualAddress);
-            $("#new-top-controls input[type='radio']").bind("change",
+            $("#new-top-controls").find("input[type='radio']").bind("change",
                 BB.add_search_radio_change);
             // edit item btn hidden by default. Shown if you own it
             // event handler for map search box on map-page
@@ -1940,12 +2023,8 @@ var BB = {
     ;
 
 
-//                BB.populateMainList("", BB.lastMapPosition.latitude, BB.lastMapPosition.longitude);
-
 
 $(function () {
-
-
         function onPageShow(event, ui) {
             var previousPage = ui.prevPage.attr("id");
             switch (event.target.id) {
@@ -2118,24 +2197,4 @@ $(function () {
     }
 )
 ;
-
-
-/////////////////
-//
-// Codiqa hacks
-//
-/////////////////
-
-// NewItem form
-//
-//    add data-ajax="false"
-//  Login Form
-//      data-url="/#map-page"
-//
-// Load JQUERY V10!!
-//
-// remove maps script from Map page - it's in this code already, mod'd
-//
-// before shout.js
-// <script src="/static/js/jquery.canvasResize.js"></script>
 
