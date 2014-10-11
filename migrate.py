@@ -137,7 +137,8 @@ class migrate(BaseHandler):
             img.remoteURL = getPlaceDetailFromGoogle(it)['photo']
             img.put()
             it.photo = img
-            self.response.out.write("Added <a href='%s'>%s</a><br>" % (img.remoteURL, it.title))
+            self.response.out.write("Added <a href='%s'>%s</a><br>" %
+                                    (img.remoteURL, it.title))
             it.put()
           except Exception, e:
             self.response.out.write("FAIL %s<br>" % it.title)
@@ -181,7 +182,8 @@ class migrate(BaseHandler):
               self.response.out.write("photo %s<br>" % it.place_name)
               continue
             if it.photo.remoteURL and len(it.photo.remoteURL) > 0:
-              self.response.out.write("url %s: '%s'<br>" % (it.place_name, it.photo.remoteURL))
+              self.response.out.write("url %s: '%s'<br>" %
+                                      (it.place_name, it.photo.remoteURL))
               main_url = it.photo.remoteURL % 250
               data = urllib2.urlopen(main_url)
               it.photo.picture = db.Blob(data.read())

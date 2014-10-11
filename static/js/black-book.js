@@ -1160,9 +1160,7 @@ var BB = {
             $.mobile.changePage("#map-page");
         },
         showItemWebPage: function (){
-            $("#external-header").text(rayv.currentItem.place_name);
-            $("#external-iframe").attr('src', rayv.currentItem.website);
-            $.mobile.changePage("#page-external");
+            window.location = rayv.currentItem.website;
         },
         showAnotherItemOnMap: function () {
             // centered on the current item
@@ -2007,6 +2005,7 @@ $(function () {
 //            (event.target.id == "new-page") ||
                 (event.target.id == "new-address-list-page") ||
                 (event.target.id == "create-new-address") ||
+                (event.target.id == "page-external") ||
                 (event.target.id == "new-place")) {
                 if (!data.prevPage.attr("id"))
                     $.mobile.changePage("#list-page");
