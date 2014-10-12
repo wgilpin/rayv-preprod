@@ -2049,7 +2049,9 @@ var BB = {
 
         },
 
-
+        /**
+         * event listeners
+         */
         setupListeners: function () {
             $("#new-shout-form").submit(BB.saveItemAtPos);
             //when the cam icon is clicked, send a click to the file input widget
@@ -2097,11 +2099,12 @@ var BB = {
             $("#map-search-btn").on("click", BB.mapSearchClick);
             $("#map-search-btn-box").on("click", BB.mapSearchClick);
             $("#map-search-btn-box").hide();
-            $("#main-search").on('keyup change', BB.list_text_filter);
+            var search_box = $("#main-search")
+            search_box.on('keyup change', BB.list_text_filter);
             $("#item-delete").on("click", BB.itemDelete);
             $("#new-item-delete").on("click", BB.itemDelete);
-            $("#main-search").parent().removeClass('ui-body-a').addClass('ui-body-b');
-            $("#main-search").removeClass('ui-body-a').addClass('ui-body-b');
+            search_box.parent().removeClass('ui-body-a').addClass('ui-body-b');
+            search_box.removeClass('ui-body-a').addClass('ui-body-b');
             $("#test-loc-set").change(BB.set_test_location);
             $('#item-descr').keypress(BB.comment_validate);
             $("#settings-save-profile").click(BB.save_profile);
@@ -2241,7 +2244,7 @@ $(function () {
         //add a pipe to markup.js so we can do x-> 100%-x
         Mark.pipes.subFrom = function (a, b) {
             try {
-                return parseInt(b) - parseInt(a);
+                return parseInt(b,10) - parseInt(a,10);
             }
             catch (e) {
                 return 0;
@@ -2252,7 +2255,7 @@ $(function () {
         //add a pipe to markup.js to show x if x>y
         Mark.pipes.above = function (a, b) {
             try {
-                if (parseInt(a) > parseInt(b))
+                if (parseInt(a,10) > parseInt(b,10))
                     return a;
                 else
                     return "";

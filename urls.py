@@ -33,7 +33,7 @@ urls = [
   webapp2.Route('/getItem/<key:\S+>', views.getItem_ajax),
   webapp2.Route('/getVotes/<key:\S+>', views.getItemVotes_ajax),
   webapp2.Route('/addVote_Ajax', views.addVote_ajax),
-  webapp2.Route('/img', views.ImageHandler),
+  webapp2.Route('/img/<key:\S+>', views.ImageHandler),
   webapp2.Route('/thumb', views.ThumbHandler),
   webapp2.Route('/imageSave_Ajax', views.imageEdit_Ajax),
   webapp2.Route('/search', views.search),

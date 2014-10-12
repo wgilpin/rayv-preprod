@@ -422,7 +422,7 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
   try:
     if getProp(it, 'photo'):
       if it.photo.picture:
-        image_url = '/img?img_id=' + str(it.key())
+        image_url = '/img/' + str(it.key())
         thumbnail_url = '/thumb?img_id=' + str(it.key())
       else:
         image_url = it.photo.remoteURL % 200 if it.photo.remoteURL else ''
