@@ -343,9 +343,9 @@ var BB = {
          * initialise app on load
          */
         init: function () {
-            this.splash = true;
+            BB.splash = true;
             $("#list-loading").hide();
-            this.geocoder = new google.maps.Geocoder();
+            BB.geocoder = new google.maps.Geocoder();
             BB.map_init();
 
         },
@@ -455,6 +455,9 @@ var BB = {
             }
         },
 
+        /**
+         * encode a latLng
+         */
         codeLatLng: function () {
             BB.geocoder.geocode({'latLng': BB.creatorMap.getCenter()},
                 function (results, status) {
@@ -471,6 +474,10 @@ var BB = {
                 }
             });
         },
+
+        /**
+         * save to server
+         */
         saveCurrentItem: function () {
             console.log("saveCurrentItem");
             var file = $("#image-input").prop("files")[0];
@@ -495,6 +502,9 @@ var BB = {
                 return fd;
             }
 
+            /**
+             * save with an image upload
+             */
             function saveMultiPart() {
                 var _URL;
                 console.log("With file");
@@ -545,6 +555,9 @@ var BB = {
                 img.src = _URL.createObjectURL(file);
             }
 
+            /**
+             * save with no image upload
+             */
             function saveSinglePart() {
                 // no photo attached
                 // simple post, no upload
@@ -576,27 +589,28 @@ var BB = {
             }
         },
 
-        SaveItemAtPos: function (position) {
-            console.log("SaveItemAtPos");
+        /**
+         * set the position of the item, then save it
+         * @param position {LatLng}
+         */
+        saveItemAtPos: function (position) {
+            console.log("saveItemAtPos");
             rayv.currentItem.position = position;
-            this.saveCurrentItem();
+            BB.saveCurrentItem();
         },
 
-
+        /**
+         * remove all map markers
+         */
         clearMapMarkers: function () {
             //todo: markers?
-            if (this.marker) {
-                this.marker.setMap(null);
+            if (BB.marker) {
+                BB.marker.setMap(null);
             }
             for (var mIdx in BB.mapMarkers) {
                 BB.mapMarkers[mIdx].setMap(null);
             }
             BB.mapMarkers = [];
-
-            /*for (var j in this.mapInfoWindows) {
-             this.mapInfoWindows[j].setMap(null);
-             this.mapInfoWindows = [];
-             }*/
         },
 
 //todo: is this the right name?
@@ -613,9 +627,14 @@ var BB = {
             $("#new-title-hdg").text(place_name);
             $("input[name=new-title]").val(place_name);
             $("#new-text").val("");
-            this.SaveItemAtPos(posn)
+            BB.saveItemAtPos(posn)
         },
 
+        /**
+         * sprintf type {1}, {2} etc
+         * arg list of values
+         * @returns {string}
+         */
         format: function () {
             var s = arguments[0];
             for (var i = 0; i < arguments.length - 1; i++) {
@@ -626,6 +645,11 @@ var BB = {
             return s;
         },
 
+        /**
+         * setup a list of places
+         * @param UIlist {string} list selector #map-list or #main-list
+         * @returns {*}
+         */
         setupList: function (UIlist) {
             console.log('setupList');
             var LIPrototype =
@@ -634,8 +658,8 @@ var BB = {
                     "<a style='background-color:white;' onclick='";
 
             $(UIlist).find('li').remove();
-            if (this.isMapPage()) {
-                this.clearMapMarkers();
+            if (BB.isMapPage()) {
+                BB.clearMapMarkers();
             }
             var placeList = [];
             for (var it in rayv.UserData.myBook.votes) {
@@ -688,13 +712,13 @@ var BB = {
             function inner_setup_list() {
                 console.log("inner_setup_list");
                 // marker for us
-                this.marker = new google.maps.Marker({
+                BB.marker = new google.maps.Marker({
                     position: BB.lastGPSPosition.googleFormat(),
                     map: BB.theMap,
                     icon: BB.iconPath + "blue_dot.png"
                     //infoWindowIndex: geoPtIdx
                 });
-                BB.mapMarkers.push(this.marker);
+                BB.mapMarkers.push(BB.marker);
                 for (var geoPtIdx  in detailList) {
                     var geoPt = detailList[geoPtIdx],
                         newListItem,
@@ -727,7 +751,7 @@ var BB = {
                     //todo: infoWindow?
                     if (BB.isMapPage() && (geoPtIdx < 7)) {
                         var n = Number(geoPtIdx) + 1;
-                        this.marker = new google.maps.Marker({
+                        var marker = new google.maps.Marker({
                             position: new google.maps.LatLng(
                                 geoPt.lat, geoPt.lng),
                             map: BB.theMap,
@@ -735,9 +759,10 @@ var BB = {
                             icon: BB.iconPath + n + ".png",
                             key: geoPt.key
                         });
-                        BB.mapMarkers.push(this.marker);
+                        BB.mapMarkers.push(marker);
                         google.maps.event.addListener(marker, 'click',
                             function () {
+                                //todo: what this?
                                 if (this.key) {
                                     rayv.currentItem.loadFromKey(this.key);
                                     BB.showAnotherItemOnMap();
@@ -786,6 +811,10 @@ var BB = {
             }
         },
 
+        /**
+         * are we on the Map page?
+         * @returns {boolean}
+         */
         isMapPage: function () {
             try {
                 return $.mobile.activePage.attr("id") == "map-page";
@@ -799,6 +828,11 @@ var BB = {
 //Load Data
 
 
+        /**
+         * Error handler if we didnt get the list data
+         * from loadLocalPlaces()
+         * @param data {object} server return value
+         */
         populateMainListError: function (data) {
             console.log("populateMainListError");
             if (data.status == 401) {
@@ -810,6 +844,9 @@ var BB = {
             $("#splash").hide();
         },
 
+        /**
+         * populate the place list on main page
+         */
         populateMainList: function () {
             console.log("populateMainList");
             // if lat=0 & long=0 then we will use the map position, else GPS
@@ -870,6 +907,10 @@ var BB = {
 
         },
 
+        /**
+         * Click handler for the list of places on the Add page
+         * @param event {event}
+         */
         new_places_list_click: function (event) {
             console.log("new_places_list_click");
             //user clicked on a place (or db entry) in the new Shout page
@@ -916,7 +957,7 @@ var BB = {
                     rayv.currentItem.address = "";
                     var el = $("#new-category").find("option");
                     el.removeAttr('selected');
-                    $("#new-category").children("option:contains('" +
+                    el.children("option:contains('" +
                         $("#selectmenu2").val() + "')").attr("selected", true);
                     $("#new-name").val(place);
                 }
@@ -925,6 +966,10 @@ var BB = {
             // go to the page
         },
 
+        /**
+         * ajax callback on loaded list of possible places to Add
+         * @param data {object} server data
+         */
         loadPlacesListSuccessHandler: function (data) {
             console.log("loadPlacesListSuccessHandler");
             BB.navBarEnable();
@@ -944,6 +989,10 @@ var BB = {
             BB.navBarActive = true;
         },
 
+        /**
+         * load the list of local places for Add New
+         * @param search_text {string}
+         */
         loadLocalPlaces: function (search_text) {
             // this is for the "new place" page list -
             //  from google maps and from my db
@@ -965,7 +1014,9 @@ var BB = {
             });
         },
 
-
+        /**
+         * save the item being edited
+         */
         new_item_save_click: function () {
             // save a new item
             //called from new-detail-page
@@ -1009,7 +1060,7 @@ var BB = {
             if (rayv.currentItem.key == "") {
                 //from map or db, use supplied pos
                 var pos = rayv.currentItem.position;
-                BB.SaveItemAtPos(pos);
+                BB.saveItemAtPos(pos);
             }
             else {
                 BB.saveCurrentItem();
@@ -1019,13 +1070,15 @@ var BB = {
 
 
 
-//load the votes from friends into the UL
+        /**
+         * load the votes from friends into the UL on the detail page
+         */
         loadVotes: function () {
             /**
              * load the list of votes for an item
              */
             //todo: use a template
-            if (this.item_votes_template == null) {
+            if (BB.item_votes_template == null) {
                 //load from file
                 $.get(
                     'static/templates/item-votes-list.htt',
@@ -1037,9 +1090,13 @@ var BB = {
                 )
             }
             else {
-                this.loadVotesInner()
+                BB.loadVotesInner()
             }
         },
+
+        /**
+         * success callback on get item detail page voted from server
+         */
         loadVotesInner: function () {
             var votes = [];
             for (var frIdx in rayv.UserData.friends) {
@@ -1053,12 +1110,15 @@ var BB = {
             }
             var context = { votes: votes };
             // https://github.com/adammark/Markup.js/
-            var newVoteList = Mark.up(this.item_votes_template, context);
+            var newVoteList = Mark.up(BB.item_votes_template, context);
             $("#item-votes-list-container").html(newVoteList);
             $("#item-votes").trigger("create");
             $("#item-votes-collapsible").show();
         },
 
+        /**
+         *  click handler for item save button
+         */
         updateitem: function () {
             console.log("updateitem");
             rayv.currentItem.descr = $("#item-descr").val();
@@ -1188,16 +1248,11 @@ var BB = {
             }
         },
 
-        /*validate_vote_comment: function () {
-         if ($("#item-vote-comment").val().length == 0) {
-         return confirm("Vote without commenting?");
-         }
-         else {
-         return true;
-         }
-         },*/
 
-// map-search key press event
+        /**
+         * map-search key press event
+         * @param e {event}
+         */
         map_search_key: function (e) {
             var el = $("#map-search");
             if (el.val().length == 0) {
@@ -1214,31 +1269,45 @@ var BB = {
                 $("#map-search-btn").hide();
                 $("input").blur();
                 //load results
-                this.populateMainList($("#map-search").val());
+                BB.populateMainList($("#map-search").val());
                 $("#map-list-loading").show();
             }
         },
 
 
+        /**
+         * show the map page, centered on the current item
+         */
         showItemOnMap: function () {
-            //show the map page, centered on the current item
             BB.lastMapPosition.position = rayv.currentItem.position;
             google.maps.event.trigger(BB.theMap, 'resize');
             BB.lastMapPosition.isSet = true;
             BB.lastMapPosition.zoomIn = true;
             $.mobile.changePage("#map-page");
         },
+
+        /**
+         * open the web page associated with the place
+         */
         showItemWebPage: function (){
             window.location = rayv.currentItem.website;
         },
+
+        /**
+         * center map on the current item
+         * called on marker click
+         */
         showAnotherItemOnMap: function () {
-            // centered on the current item
             BB.lastMapPosition.position = rayv.currentItem.position;
             BB.populateMainList("");
             BB.lastMapPosition.isSet = true;
             BB.lastMapPosition.zoomIn = false;
             BB.pageToMap();
         },
+
+        /**
+         * redo distances and order on map drag
+         */
         dragMap: function () {
             // centered on the map
             BB.lastMapPosition.position =
@@ -1250,6 +1319,10 @@ var BB = {
             BB.pageToMap();
         },
 
+        /**
+         * work out image rotation change on details page
+         * @param e {event}
+         */
         imageRotate: function (e) {
             e.preventDefault();
             BB.imageRotation = (BB.imageRotation + 1) % 4;
@@ -1289,22 +1362,11 @@ var BB = {
         },
 
 
-        imageSaveClick: function () {
-            $('input[name=image-id]').val(rayv.currentItem.key);
-            if ($("#image-img").children("img").hasClass("rotl"))
-                $("input[name=image-rotate]").val(-1);
-            else
-                $("input[name=image-rotate]").val(1);
-
-            $("#image-working").show();
-            console.log("imageSaveClick");
-            $("#image-form").submit();
-        },
 
         pageToList: function (event) {
             console.log("PAGE list");
 
-            if (this.navBarActive) {
+            if (BB.navBarActive) {
 
                 BB.populateMainList("");
                 $("#list-loading").hide();
@@ -1316,6 +1378,7 @@ var BB = {
         imagePreview: function () {
             var oFReader = new FileReader();
             try {
+                //todo: what this?
                 oFReader.readAsDataURL(this.files[0]);
             }
             catch (e) {
@@ -1343,37 +1406,37 @@ var BB = {
 
         pageToMap: function () {
             console.log("PAGE map");
-            if (this.navBarActive) {
+            if (BB.navBarActive) {
                 $("#map-list-loading").show();
                 $("#map-search-btn").hide();
                 $("#map-search").val("");
                 var last;
-                if (this.lastMapPosition.isSet) {
-                    last = this.lastMapPosition.position.googleFormat();
+                if (BB.lastMapPosition.isSet) {
+                    last = BB.lastMapPosition.position.googleFormat();
                     console.log("set map to last position, lat: " + last.lat());
                     try {
-                        this.theMap.setCenter(last);
-                        this.map_centred = false;
+                        BB.theMap.setCenter(last);
+                        BB.map_centred = false;
                         console.log(
                                 "set map (1) to last position, lat: " +
                                 last.lat());
-                        if (this.lastMapPosition.zoomIn) {
-                            this.theMap.setZoom(18);
-                            this.lastMapPosition.zoomIn = false;
+                        if (BB.lastMapPosition.zoomIn) {
+                            BB.theMap.setZoom(18);
+                            BB.lastMapPosition.zoomIn = false;
                         }
                     }
                     catch (e) {
                         console.log("MAIN MAP NOT SET")
                     }
                 } else {
-                    last = this.lastGPSPosition.googleFormat();
+                    last = BB.lastGPSPosition.googleFormat();
                     console.log("set map (2) to last position, lat: " +
                         last.lat());
                     try {
-                        this.theMap.setCenter(last);
-                        if (this.lastMapPosition.zoomIn) {
-                            this.theMap.setZoom(18);
-                            this.lastMapPosition.zoomIn = false;
+                        BB.theMap.setCenter(last);
+                        if (BB.lastMapPosition.zoomIn) {
+                            BB.theMap.setZoom(18);
+                            BB.lastMapPosition.zoomIn = false;
                         }
                     }
                     catch (e) {
@@ -1386,7 +1449,7 @@ var BB = {
                  title: 'Hello World!'
                  });*/
                 google.maps.event.trigger(BB.theMap, 'resize');
-                this.populateMainList("");
+                BB.populateMainList("");
             }
             else
                 event.preventDefault();
@@ -1394,7 +1457,7 @@ var BB = {
 
         pageToNewPlace: function (event, previousPage) {
             console.log("PAGE new place");
-            if (this.navBarActive) {
+            if (BB.navBarActive) {
                 $('#new-preview-box').hide();
                 $("#new-place-near").hide();
                 $("#new-search-place-btn").hide();
@@ -1619,6 +1682,9 @@ var BB = {
                 });
         },
 
+        /**
+         * load a place for edit when it comes from a geo search on Add New
+         */
         item_create: function () {
             var properTitle = BB.toProperCase($(this).data('title'));
             $("#new-detail-name").val(decodeURIComponent(properTitle));
@@ -1714,8 +1780,8 @@ var BB = {
             console.log("AJAX lookupAddressList");
             addr = rayv.currentItem.address;
             var request = {};
-            request.lat = this.lastGPSPosition.lat;
-            request.lng = this.lastGPSPosition.lng;
+            request.lat = BB.lastGPSPosition.lat;
+            request.lng = BB.lastGPSPosition.lng;
             request.addr = addr;
             // get the place name from the new screen
             request.place_name = $("#new-place-name-box").val();
@@ -1825,6 +1891,9 @@ var BB = {
                 })
         },
 
+        /**
+         * delete an item - means remove my vote for it
+         */
         itemDelete: function () {
             //delete the current item
             //is it in my list?
@@ -1841,6 +1910,10 @@ var BB = {
             }
         },
 
+        /**
+         * set the main list filter
+         * @param val
+         */
         set_list_column_filter: function (val) {
             var filter = $("#filter-radio");
             filter.find("input[type='radio']").attr("checked", null);
@@ -1851,6 +1924,10 @@ var BB = {
                 checkboxradio("refresh");
         },
 
+        /**
+         * Which filter is selected for the main list?
+         * @returns {string} the name of the filter
+         */
         get_list_column_filter: function () {
             return $("#filter-radio").find("input:checked").val();
         },
@@ -1870,6 +1947,10 @@ var BB = {
         },
 
 
+        /**
+         * check comment has no more characters than allowed (140)
+         * on details page
+         */
         comment_validate: function () {
             var text = $(this).val();
             var chars = text.length;
@@ -1882,6 +1963,10 @@ var BB = {
             }
         },
 
+        /**
+         * got gps pos
+         * @param pos
+         */
         watchPositionSuccess: function (pos) {
             console.log("watchPositionSuccess: " +
                 pos.coords.latitude + "," +
@@ -1902,6 +1987,10 @@ var BB = {
             }
         },
 
+        /**
+         * couldn't get gps
+         * @param err
+         */
         watchPositionError: function (err) {
             console.warn(
                     'watchPositionError ERROR(' +
@@ -1909,12 +1998,19 @@ var BB = {
                         err.message);
         },
 
+        /**
+         * got first gps pos
+         * @param pos
+         */
         firstWatchPositionSuccess: function (pos) {
             BB.watchPositionSuccess(pos);
             BB.init();
             BB.loadUserData();
         },
 
+        /**
+         * save user profile
+         */
         save_profile: function () {
             $.post(
                 '/user_profile',
@@ -1924,6 +2020,9 @@ var BB = {
                 });
         },
 
+        /**
+         * for Add New - search near a place, show the box to type it in
+         */
         set_search_to_near_place: function () {
             var radios = $("#new-select").find("input[type='radio']");
             radios.attr("checked", "");
@@ -1931,6 +2030,10 @@ var BB = {
             radios.checkboxradio("refresh");
         },
 
+        /**
+         * are we adding near me, or near a place?
+         * @param e {event}
+         */
         add_search_radio_change: function (e) {
             switch ($(this).val()) {
                 case "place":
@@ -1948,44 +2051,43 @@ var BB = {
 
 
         setupListeners: function () {
-            $("#new-shout-form").submit(BB.SaveItemAtPos);
+            $("#new-shout-form").submit(BB.saveItemAtPos);
             //when the cam icon is clicked, send a click to the file input widget
-            $("#new-item-camera-img").on("click", this.take_photo_click);
-            $("#camera-dlg-btn").on("click", this.take_photo_click);
-            $("#file-dlg-btn").on("click", this.open_image_file_click);
+            $("#new-item-camera-img").on("click", BB.take_photo_click);
+            $("#camera-dlg-btn").on("click", BB.take_photo_click);
+            $("#file-dlg-btn").on("click", BB.open_image_file_click);
             //$("#item-camera-img").on("click",  take_photo_click);
             //hide the default one
             var img_input = $("#image-input");
             img_input.hide();
-            img_input.change(this.imagePreview);
+            img_input.change(BB.imagePreview);
             $("div").find("[data-controltype='camerainput']").hide();
             //vote buttons
             $("#refresh-btn").on("click", BB.loadUserData);
 
-            $("#create-new-save-btn").on("click", this.do_create_new_address);
+            $("#create-new-save-btn").on("click", BB.do_create_new_address);
             $("#create-new-address-btn").on(
-                "click", this.show_create_new_address);
-            $("#new-item-li").on("click", this.show_create_new_address);
+                "click", BB.show_create_new_address);
+            $("#new-item-li").on("click", BB.show_create_new_address);
             $("#item-edit").on("click", BB.editItem);
-            $("#new-rotr").on("click", this.imageRotate);
-            $("#image-save").on("click", this.imageSaveClick);
-            $("#new-address-next-btn").on("click", this.lookupManualAddress);
-            $("#enter-new-addr-btn").on("click", this.lookupManualAddress);
-            $("#new-address-my-locn-btn").on("click", this.lookupMyAddress);
+            $("#new-rotr").on("click", BB.imageRotate);
+            $("#new-address-next-btn").on("click", BB.lookupManualAddress);
+            $("#enter-new-addr-btn").on("click", BB.lookupManualAddress);
+            $("#new-address-my-locn-btn").on("click", BB.lookupMyAddress);
             $("#forgot-btn").attr("data-ajax", "false");
-            $("#column-headers").find("span").on("click", this.clickColumnHeader);
-            this.set_list_column_filter('mine');
-            $("#filter-radio").on("change", this.clickColumnHeader);
+            $("#column-headers").find("span").on("click", BB.clickColumnHeader);
+            BB.set_list_column_filter('mine');
+            $("#filter-radio").on("change", BB.clickColumnHeader);
             $("#sort-dist").addClass("list-sort-selected");
             $("#col-mine").addClass("list-filter-selected");
-            $("#new-place-name-box").on('change input', this.place_search_by_name);
-            $("#new-place-near").on('keyup', this.set_search_to_near_place);
+            $("#new-place-name-box").on('change input', BB.place_search_by_name);
+            $("#new-place-near").on('keyup', BB.set_search_to_near_place);
             $("#new-search-place-btn").click(BB.lookupManualAddress);
             $("#new-top-controls").find("input[type='radio']").bind("change",
                 BB.add_search_radio_change);
             // edit item btn hidden by default. Shown if you own it
             // event handler for map search box on map-page
-            $("#map-search").keyup(this.map_search_key);
+            $("#map-search").keyup(BB.map_search_key);
             $("#item-see-map").on("click", BB.showItemOnMap);
             $("#item-web-link").on("click", BB.showItemWebPage);
             $("#new-item-save").on("click", BB.new_item_save_click);
@@ -1995,7 +2097,7 @@ var BB = {
             $("#map-search-btn").on("click", BB.mapSearchClick);
             $("#map-search-btn-box").on("click", BB.mapSearchClick);
             $("#map-search-btn-box").hide();
-            $("#main-search").on('keyup change', this.list_text_filter);
+            $("#main-search").on('keyup change', BB.list_text_filter);
             $("#item-delete").on("click", BB.itemDelete);
             $("#new-item-delete").on("click", BB.itemDelete);
             $("#main-search").parent().removeClass('ui-body-a').addClass('ui-body-b');

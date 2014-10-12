@@ -42,6 +42,18 @@ def map_and_db_search(
     my_locn,
     text_to_search,
     user_id):
+  """
+  Get the list of place near a point from the DB & from geo search
+  :param exclude_user_id: int - ignore this user's results
+  :param filter_kind: string - eg 'mine' or 'all'
+  :param include_maps_data: bool - do we include geo data from google
+  :param lat: float
+  :param lng: float
+  :param my_locn: LatLng
+  :param text_to_search: string
+  :param user_id: int userId of the current user
+  :return: dict {"local": [points]}
+  """
   search_filter = {
     "kind": filter_kind,
     "userId": user_id,
@@ -209,6 +221,7 @@ def serialize_user_details(user_id, places, current_user):
 
 class getFullUserRecord(BaseHandler):
   def get(self):
+    """ get the entire user record, including friends' places """
     my_id = self.user_id
     if my_id:
       profile_in("getFullUserRecord")
@@ -269,14 +282,24 @@ class user_profile(BaseHandler):
     user_obj.put()
 
 def json_serial(o):
-  """JSON serializer for objects not serializable by default json code
+  """
+  JSON serializer for objects not serializable by default json code
      http://stackoverflow.com/questions/11875770/how-to-overcome-
-            datetime-datetime-not-json-serializable-in-python"""
+            datetime-datetime-not-json-serializable-in-python
+  """
   if type(o) is datetime.date or type(o) is datetime.datetime:
     return o.isoformat()
 
 
 def get_google_db_places(lat, lng, name, radius):
+  """
+  do a google geo search
+  :param lat: float
+  :param lng: float
+  :param name: string - to look for
+  :param radius: int - search radius (m)
+  :return: dict - {"item_count": int, "items": []}
+  """
   url = ("https://maps.googleapis.com/maps/api/place/nearbysearch/"
         "json?radius=%d&types=%s&location=%f,%f&name=%s&sensor=false&key=%s")\
         % \

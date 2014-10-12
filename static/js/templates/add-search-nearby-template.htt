@@ -8,7 +8,11 @@
     {{ items }}
     <li data-theme='c' data-icon='false'>
         <a class='found-address' href='#new-detail'
-           data-title='{{ place_name }}' data-address='{{ address }}' data-lat='{{ lat }}' data-lng='{{ lng }}' data-key='{{ key }}'>
+           data-title='{{ place_name }}'
+           data-address='{{ address }}'
+           data-lat='{{ lat }}'
+           data-lng='{{ lng }}'
+           data-key='{{ key }}'>
         <div class='search-title'>{{ place_name }}</div>
             <div class='search-address'>{{ address }}</div>
         </a>
