@@ -921,16 +921,23 @@ var BB = {
                 var text = $(this).find(".list-item-title").text().trim();
                 $("#new-detail-name").val(text);
                 $("input[name=new-title]").val(text);
-                $("#new-name").val(text);
                 rayv.currentItem.place_name = text;
                 rayv.currentItem.address = $(this).data("address");
                 rayv.currentItem.descr = "";
-                rayv.currentItem.website = $(this).data("website");
                 rayv.currentItem.category = $(this).data("category");
                 $("#new-detail-address").val(rayv.currentItem.address);
                 // no comment as it's not in db
                 $("#new-detail-comment").val("");
-                $("#cat-lookup").find("input").val(rayv.currentItem.category);
+                var el = $("#new-category").find("option");
+                el.removeAttr('selected');
+                if (rayv.currentItem.category.length >0 ) {
+                    el.children("option:contains('" +
+                        rayv.currentItem.category + "')").attr("selected", true);
+                }
+                else {
+                    el.children("option:contains('Select Cuisine ...')").
+                        attr("selected", true);
+                }
                 rayv.currentItem.key = $(this).data("shoutKey");
                 console.log("key set new_places_list_click");
                 rayv.currentItem.position = new rayv.LatLng(
@@ -939,7 +946,7 @@ var BB = {
             }
             else {
                 //new place from scratch
-                var place = $("#new-place-name-box");
+                var place = $("#new-place-name-box").val();
                 if (place.length < 2) {
                     alert("You need to enter a name");
                     event.preventDefault();
@@ -957,9 +964,8 @@ var BB = {
                     rayv.currentItem.address = "";
                     var el = $("#new-category").find("option");
                     el.removeAttr('selected');
-                    el.children("option:contains('" +
-                        $("#selectmenu2").val() + "')").attr("selected", true);
-                    $("#new-name").val(place);
+                    el.children("option:contains('Select Cuisine ...')").
+                        attr("selected", true);
                 }
                 $.mobile.changePage("#new-detail");
             }
