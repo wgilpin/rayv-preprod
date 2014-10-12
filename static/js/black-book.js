@@ -1,3 +1,4 @@
+//var google={};
 var rayv = rayv||{};
 /**
  * create a geo posn
@@ -104,13 +105,13 @@ rayv.UserData = rayv.UserData||{};
      * @param obj {object} has a .places element which is {list}
      */
     var updatePlaceCache =function (obj) {
-        for (var place_idx in obj.places) {
-            if (!(obj.places[place_idx].key in rayv.UserData.places)) {
+        for (idx in obj.places){
+            var place = obj.places[idx];
+            if (!(place.key in rayv.UserData.places)) {
                 // dict indexed by place key
-                rayv.UserData.places[obj.places[place_idx].key] =
-                    obj.places[place_idx]
+                rayv.UserData.places[place.key] = place
             }
-        }
+        };
     };
     /**
      * get All user data from the server
@@ -135,16 +136,16 @@ rayv.UserData = rayv.UserData||{};
                 delete rayv.UserData.friends;
                 rayv.UserData.friends = {};
                 var skippedFirstAsThatOneIsMe = false;
-                for (var frIdx in obj.friendsData) {
+                obj.friendsData.forEach(function (data) {
                     if (skippedFirstAsThatOneIsMe) {
                         // dictionary indexed by user id
-                        rayv.UserData.friends[obj.friendsData[frIdx].id] =
-                            obj.friendsData[frIdx];
+                        rayv.UserData.friends[data.id] =
+                            data;
                     }
                     else {
                         skippedFirstAsThatOneIsMe = true;
                     }
-                }
+                });
                 callback();
             });
     };
@@ -199,11 +200,12 @@ rayv.UserData = rayv.UserData||{};
             return this.myBook.votes[key].comment
         }
         //not in my list
-        for (var frIdx in this.friends) {
-            if (this.friends[frIdx].votes[key]) {
-                return this.friends[frIdx].votes[key].comment
+        for (var idx in this.friends){
+            var friend = this.friends[idx];
+            if (friend.votes[key]) {
+                return friend.votes[key].comment
             }
-        }
+        };
         return "";
     };
 
@@ -227,13 +229,14 @@ rayv.UserData = rayv.UserData||{};
      */
     this.get_votes_for_item =function (key) {
         var result = [];
-        for (var frIdx in this.friends) {
-            var vote = {name: this.friends[frIdx].name};
-            if (this.friends[frIdx].votes[key]) {
-                vote.vote = this.friends[frIdx].votes[key];
+        for (var idx in this.friends){
+            var friend = this.friends[idx];
+            var vote = {name: friend.name};
+            if (friend.votes[key]) {
+                vote.vote = friend.votes[key];
                 result.push(vote);
             }
-        }
+        };
         return result;
     }
 }).apply(rayv.UserData);
@@ -359,11 +362,13 @@ var BB = {
                 if ("dirty_list" in obj) {
                     for (var frIdx in obj.dirty_list.friends) {
                         //these friends are dirty
+                        //noinspection JSUnfilteredForInLoop
                         rayv.UserData.friends[obj.dirty_list.
                             friends[frIdx].id] = obj.dirty_list.friends[frIdx];
                     }
                     for (var plIdx in obj.dirty_list.places) {
                         //these places are dirty
+                        //noinspection JSUnfilteredForInLoop
                         rayv.UserData.places[obj.dirty_list.
                             places[plIdx].key] = obj.dirty_list.places[plIdx];
                     }
@@ -374,7 +379,7 @@ var BB = {
 
         /**
          * get the distance as yards if close, else miles
-         * @param dist {float} distance in miles
+         * @param dist {number} distance in miles
          * @returns {string} prettified distance string
          */
         pretty_dist: function (dist) {
@@ -389,7 +394,7 @@ var BB = {
          * one in 60 rule distance calc
          * @param point {LatLng}
          * @param origin {LatLng}
-         * @returns {float} distance between points
+         * @returns {number} distance between points
          */
         approx_distance: function (point, origin) {
             //based on 1/60 rule
@@ -607,9 +612,9 @@ var BB = {
             if (BB.marker) {
                 BB.marker.setMap(null);
             }
-            for (var mIdx in BB.mapMarkers) {
-                BB.mapMarkers[mIdx].setMap(null);
-            }
+            BB.mapMarkers.forEach(function (marker) {
+                marker.setMap(null);
+            });
             BB.mapMarkers = [];
         },
 
@@ -665,26 +670,29 @@ var BB = {
                 BB.clearMapMarkers();
             }
             var placeList = [];
+
             for (var it in rayv.UserData.myBook.votes) {
+                //noinspection JSUnfilteredForInLoop
                 if ((BB.filter != 'untried') || (BB.filter == 'untried' &&
                     rayv.UserData.myBook.votes[it].untried))
                     placeList.push(it);
             }
             if (BB.filter == "all") {
                 //add the other lists
-                for (var friend in rayv.UserData.friends) {
-                    for (it in rayv.UserData.friends[friend].votes) {
+                rayv.UserData.friends.forEach(function (friend) {
+                    for (it in friend.votes) {
+                        //noinspection JSUnfilteredForInLoop
                         if (placeList.indexOf(it) == -1) {
                             placeList.push(it)
                         }
                     }
-                }
+                });
             }
             var detailList = [];
-            for (var geoPtIdx in placeList) {
-                var geoPt = rayv.UserData.places[placeList[geoPtIdx]];
+            placeList.forEach(function (place) {
+                var geoPt = rayv.UserData.places[place];
                 detailList.push(geoPt);
-            }
+            });
 
             function compare_by_distance(a, b) {
                 if (a.dist_float < b.dist_float)
@@ -723,6 +731,7 @@ var BB = {
                 });
                 BB.mapMarkers.push(BB.marker);
                 for (var geoPtIdx  in detailList) {
+                    //noinspection JSUnfilteredForInLoop
                     var geoPt = detailList[geoPtIdx],
                         newListItem,
                         click_fn,
@@ -878,15 +887,15 @@ var BB = {
             console.log("distances from Map: " +
                 map_centre.lat + ", " +
                 map_centre.lng);
-            for (var pt in rayv.UserData.places) {
-                var place = rayv.UserData.places[pt];
+            for (var key in rayv.UserData.places){
+                var place = rayv.UserData.places[key];
                 var dist = BB.approx_distance(place, BB.lastGPSPosition);
                 place.distance = BB.pretty_dist(dist);
                 place.dist_float = dist;
                 var map_centre_dist = BB.approx_distance(place, map_centre);
                 place.map_dist_float = map_centre_dist;
                 place.map_distance = BB.pretty_dist(map_centre_dist);
-            }
+            };
             BB.navBarEnable();
 
             if (BB.isMapPage()) {
@@ -931,8 +940,8 @@ var BB = {
                 $("#new-detail-address").val(rayv.currentItem.address);
                 // no comment as it's not in db
                 $("#new-detail-comment").val("");
-                var el = $("#new-category").find("option");
-                el.removeAttr('selected');
+                var el = $("#new-category");
+                el.find("option").removeAttr('selected');
                 if (rayv.currentItem.category.length >0 ) {
                     el.children("option:contains('" +
                         rayv.currentItem.category + "')").attr("selected", true);
@@ -965,8 +974,8 @@ var BB = {
 
                     //todo: what's the address?
                     rayv.currentItem.address = "";
-                    var el = $("#new-category").find("option");
-                    el.removeAttr('selected');
+                    var el = $("#new-category");
+                    el.find("option").removeAttr('selected');
                     el.children("option:contains('Select Cuisine')").
                         attr("selected", true);
                 }
@@ -1108,15 +1117,16 @@ var BB = {
          */
         loadVotesInner: function () {
             var votes = [];
-            for (var frIdx in rayv.UserData.friends) {
-                for (var voteIdx in rayv.UserData.friends[frIdx].votes) {
-                    var vote = rayv.UserData.friends[frIdx].votes[voteIdx];
+            for (var idx in rayv.UserData.friends){
+                var friend = rayv.UserData.friends[idx];
+                for (var key in friend.votes){
+                    var vote = friend.votes[key];
                     if (vote == rayv.currentItem.key) {
-                        vote.userName = rayv.UserData.friends[frIdx].name;
+                        vote.userName = friend.name;
                         votes.push(vote)
                     }
-                }
-            }
+                };
+            };
             var context = { votes: votes };
             // https://github.com/adammark/Markup.js/
             var newVoteList = Mark.up(BB.item_votes_template, context);
@@ -1194,13 +1204,13 @@ var BB = {
             }
             $("#new-detail-name").val(rayv.currentItem.place_name);
             $("#new-detail-address").val(rayv.currentItem.address);
-            $("#new-category").children("option").removeAttr('selected');
-            $("#new-category").children('option:contains("Select Cuisine")').
+            var el = $("#new-category");
+            el.children("option").removeAttr('selected');
+            el.children('option:contains("Select Cuisine")').
                 attr("selected", true);
             if (rayv.currentItem.category.length > 0){
-                var el = $("#new-category");
                 try {
-                    $("#new-category").children("option:contains('" +
+                    el.children("option:contains('" +
                         rayv.currentItem.category + "')").
                         attr("selected", true);
                     el.val(rayv.currentItem.category);
@@ -1475,7 +1485,7 @@ var BB = {
                     console.log("PAGE new place - no reload")
                 }
                 else {
-                    BB.loadLocalPlaces(null, false);
+                    BB.loadLocalPlaces(null);
                     $("input[name=new-title]").val("");
                 }
             }
@@ -1604,19 +1614,19 @@ var BB = {
                 var votes = rayv.UserData.get_votes_for_item(
                     rayv.currentItem.key);
                 var html = "";
-                for (var vote in votes) {
-                    if (votes[vote].vote.comment.length > 0) {
+                votes.forEach(function (vote) {
+                    if (vote.vote.comment.length > 0) {
                         html += Mark.up(
                             BB.friend_comment_template,
-                            votes[vote]);
+                            vote);
                     }
-                }
+                });
                 $("#item-comments").html(html);
 
                 $("#item-distance").html(rayv.currentItem.distance);
 
                 //set the likes radio
-                $('#item-page-votes li a').removeClass('ui-btn-hover-b').
+                $('#item-page-votes').find('li').find('a').removeClass('ui-btn-hover-b').
                     addClass('ui-btn-up-b').removeClass('ui-btn-active');
                 if (rayv.currentItem.untried) {
                     $('#item-untried').addClass('ui-btn-active');
@@ -2109,7 +2119,7 @@ var BB = {
             $("#map-search-btn").on("click", BB.mapSearchClick);
             $("#map-search-btn-box").on("click", BB.mapSearchClick);
             $("#map-search-btn-box").hide();
-            var search_box = $("#main-search")
+            var search_box = $("#main-search");
             search_box.on('keyup change', BB.list_text_filter);
             $("#item-delete").on("click", BB.itemDelete);
             $("#new-item-delete").on("click", BB.itemDelete);
