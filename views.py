@@ -1,4 +1,3 @@
-from operator import itemgetter
 import urllib2
 import datetime
 from google.appengine.api import images, memcache
@@ -11,7 +10,8 @@ from caching import memcache_get_user_dict, memcache_touch_user, memcache_put_us
 from dataloader import load_data
 from geo import getPlaceDetailFromGoogle, geoCodeAddress
 from models import Item, DBImage, Vote, Category
-from geo import itemToJSONPoint, LatLng, findDbPlacesNearLoc, itemKeyToJSONPoint, approx_distance
+from geo import LatLng, itemKeyToJSONPoint
+from places_db import PlacesDB
 from profiler import profile_in, profile_out
 import settings
 import logging
@@ -33,98 +33,6 @@ def logged_in():
     return False
 
 
-def map_and_db_search(
-    exclude_user_id,
-    filter_kind,
-    include_maps_data,
-    lat,
-    lng,
-    my_locn,
-    text_to_search,
-    user_id):
-  """
-  Get the list of place near a point from the DB & from geo search
-  :param exclude_user_id: int - ignore this user's results
-  :param filter_kind: string - eg 'mine' or 'all'
-  :param include_maps_data: bool - do we include geo data from google
-  :param lat: float
-  :param lng: float
-  :param my_locn: LatLng
-  :param text_to_search: string
-  :param user_id: int userId of the current user
-  :return: dict {"local": [points]}
-  """
-  search_filter = {
-    "kind": filter_kind,
-    "userId": user_id,
-    "exclude_user": exclude_user_id}
-  calc_dist_from = my_locn if include_maps_data else None
-  list_of_place_names = []
-  points = findDbPlacesNearLoc(
-    my_locn,
-    search_text=text_to_search,
-    filter=search_filter,
-    uid=user_id,
-    position=calc_dist_from,
-    place_names=list_of_place_names,
-    ignore_votes=True)
-  if include_maps_data:
-    googPts = get_google_db_places(lat, lng, text_to_search, 5000)
-    includeList = []
-    # todo: step through both in sequence
-    try:
-      for gpt in googPts["items"]:
-        if gpt["place_name"] in list_of_place_names:
-          continue
-        includeList.append(gpt)
-    except Exception, e:
-      pass
-    # points["points"] = []
-    #points["count"] = 0
-    # todo: this returns all items - limit?
-    for gpt in includeList:
-      jPt = itemToJSONPoint(gpt,my_locn)
-      points["points"].append(jPt)
-      points["count"] += 1
-
-    sorted_results = points["points"]
-    # this is sorted as the client doesnt for map items
-    sorted_results.sort(key=itemgetter('distance_map_float'))
-    points["points"] = sorted_results
-  result = {"local": points}
-  return result
-
-
-def get_item_list(request, include_maps_data, user_id, exclude_user_id=None):
-  """ get the list of item around a place
-  @param request:
-  @param include_maps_data: bool: include data from google maps?
-  @param user_id:
-  @return: list of JSON points
-  """
-  around = LatLng(lat=float(request.get("lat")),
-                  lng=float(request.get("lng")))
-  try:
-    my_locn = LatLng(lat=float(request.get("myLat")),
-                     lng=float(request.get("myLng")))
-  except Exception, E:
-    # logging.exception("get_item_list " + str(E))
-    my_locn = around
-  lat = my_locn.lat
-  lng = my_locn.lng
-  text_to_search = request.get("text")
-  # by default we apply no filter: return all results
-  search_filter = None
-  filter_kind = request.get("filter")
-  return map_and_db_search(
-    exclude_user_id,
-    filter_kind,
-    include_maps_data,
-    lat,
-    lng,
-    my_locn,
-    text_to_search,
-    user_id)
 
 
 class getItems_Ajax(BaseHandler):
@@ -134,7 +42,7 @@ class getItems_Ajax(BaseHandler):
     """
     profile_in("getItems_Ajax")
     if logged_in():
-      result = get_item_list(self.request, False, self.user_id)
+      result = PlacesDB.get_item_list(self.request, False, self.user_id)
       check_for_dirty_data(self.user_id, result)
       json.dump(result,
                 self.response.out)
@@ -160,21 +68,6 @@ class getBook(BaseHandler):
       self.error(401)
 
 
-def get_user_votes(friend, current_user):
-  try:
-    profile_in("get_user_votes")
-    entry = {}
-    friend_vote_list = Vote.all().filter("voter =", friend)
-    for user_vote in friend_vote_list:
-      vote_detail = {"vote": user_vote.vote,
-                     "untried": user_vote.untried,
-                     "comment": user_vote.comment
-      }
-      entry[str(user_vote.item.key())] = vote_detail
-    profile_out("get_user_votes")
-    return entry
-  except Exception:
-    logging.error("get_user_votes Exception", exc_info=True)
 
 
 def serialize_user_details(user_id, places, current_user):
@@ -190,7 +83,7 @@ def serialize_user_details(user_id, places, current_user):
     if 'v' in user_dict:
       votes = user_dict['v']
     else:
-      votes = get_user_votes(user_id, current_user)
+      votes = Vote.get_user_votes(user_id, current_user)
       user_dict['v'] = votes
       memcache_put_user_dict(user_dict)
     if user_id != current_user:
@@ -291,55 +184,6 @@ def json_serial(o):
     return o.isoformat()
 
 
-def get_google_db_places(lat, lng, name, radius):
-  """
-  do a google geo search
-  :param lat: float
-  :param lng: float
-  :param name: string - to look for
-  :param radius: int - search radius (m)
-  :return: dict - {"item_count": int, "items": []}
-  """
-  url = ("https://maps.googleapis.com/maps/api/place/nearbysearch/"
-        "json?radius=%d&types=%s&location=%f,%f&name=%s&sensor=false&key=%s")\
-        % \
-        (radius,
-         settings.config['place_types'],
-         lat,
-         lng,
-         name,
-         settings.config['google_api_key'] )
-  response = urllib2.urlopen(url)
-  jsonResult = response.read()
-  addressResult = json.loads(jsonResult)
-  results = {"item_count": 0,
-             "items": []}
-  addresses = []
-  if addressResult['status'] == "OK":
-    origin = LatLng(lat=lat, lng=lng)
-    for r in addressResult['results']:
-      if "formatted_address" in r:
-        address = r['formatted_address']
-      else:
-        address = r['vicinity']
-      post_code = r['postal_code'].split(' ')[0] if 'postal_code' in r else ''
-      distance = approx_distance(r['geometry']['location'], origin)
-      detail = {'place_name': r['name'],
-                'address': address,
-                'post_code': post_code,
-                'distance_map_float': distance,
-                "lat": r['geometry']['location']['lat'],
-                "lng": r['geometry']['location']['lng']}
-      addresses.append(detail)
-      results["item_count"] += 1
-    results['items'] = addresses
-    return results
-  else:
-    logging.error(
-      "get_google_db_places near [%f,%f]: %s" %
-        (lat, lng, addressResult['status']),
-      exc_info=True)
-    return []
 
 
 def check_for_dirty_data(user_id, results):
@@ -381,7 +225,7 @@ class getAddresses_ajax(BaseHandler):
       if addressResult['status'] == "OK":
         lat = addressResult['results'][0]['geometry']['location']['lat']
         lng = addressResult['results'][0]['geometry']['location']['lng']
-    results = map_and_db_search(
+    results = PlacesDB.map_and_db_search(
       -1,
       '',
       True,
@@ -396,7 +240,8 @@ class getAddresses_ajax(BaseHandler):
                 self.response.out,
                 default=json_serial)
     else:
-      # logging.info("get_google_db_places near [%f,%f]: %s" % (lat, lng, "none found"))
+      # logging.info("get_google_db_places near [%f,%f]: %s" %
+      # (lat, lng, "none found"))
       logging.debug("getAddresses_ajax - none found ")
       self.error(401)
 
@@ -520,12 +365,10 @@ class updateItem(BaseHandler):
       self.display_message("Unable to save item")
 
 
-def update_item_internal(self, user_id):
-  # is it an edit or a new?
-  it = Item.get_unique_place(self.request)
+def update_photo(it, request_handler):
   try:
-    raw_file = self.request.get('new-photo')
-    rot = self.request.get("rotation")
+    raw_file = request_handler.request.get('new-photo')
+    rot = request_handler.request.get("rotation")
     if len(raw_file) > 0:
       if it.photo:  # the item has an image already?
         img = it.photo  # - yes: use it
@@ -538,14 +381,14 @@ def update_item_internal(self, user_id):
         raw_file = images.rotate(raw_file, angle)
       # exif = raw_file.get_original_metadata()
       img.picture = db.Blob(raw_file)
-      img.owner = self.user_id
+      img.owner = request_handler.user_id
       img.put()
     else:
       img = None  # no image supplied
       if rot and (rot != u'0'):  # is a rotation requested?
         old_img = it.photo
         if old_img and old_img.picture:
-        # if so, does the item have a pic already?
+          # if so, does the item have a pic already?
           angle = int(rot) * 90  # rotate & save in place
           rotated_pic = images.rotate(old_img.picture, angle)
           old_img.picture = db.Blob(rotated_pic)
@@ -555,6 +398,33 @@ def update_item_internal(self, user_id):
     logging.exception("newOrUpdateItem Image Resize: ", exc_info=True)
     img = None
 
+  return img
+
+
+def update_votes(item, request_handler, user_id):
+  try:
+    old_votes = item.votes.filter("voter =", user_id)
+    for v in old_votes:
+      v.delete()
+    vote = Vote()
+    vote.item = item
+    vote.voter = user_id
+    vote.comment = request_handler.request.get('myComment')
+    if request_handler.request.get("untried") == 'true':
+      vote.untried = True
+      vote.vote = 0
+    else:
+      vote_str = request_handler.request.get("voteScore")
+      vote.vote = 1 if vote_str == "1" or vote_str == "like" else -1
+    vote.put()
+  except Exception:
+    logging.error("newOrUpdateItem votes exception", exc_info=True)
+
+
+def update_item_internal(self, user_id):
+  # is it an edit or a new?
+  it = Item.get_unique_place(self.request)
+  img = update_photo(it, self)
   # it.place_name = self.request.get('new-title') set in get_unique_place
   it.address = self.request.get('address')
   it.owner = user_id
@@ -595,42 +465,24 @@ def update_item_internal(self, user_id):
   it.put()
   # refresh cache
   memcache_touch_place(it)
-  try:
-    old_votes = it.votes.filter("voter =", user_id)
-    for v in old_votes:
-      v.delete()
-    vote = Vote()
-    vote.item = it
-    vote.voter = user_id
-    vote.comment = self.request.get('myComment')
-    if self.request.get("untried") == 'true':
-      vote.untried = True
-      vote.vote = 0
-    else:
-      vote_str = self.request.get("voteScore")
-      vote.vote = 1 if vote_str == "1" or vote_str == "like" else -1
-    vote.put()
-  except Exception:
-    logging.error("newOrUpdateItem votes exception", exc_info=True)
-
-
+  update_votes(it, self, user_id)
   # todo: why?
   it.put()  # again
   # mark user as dirty
   memcache_touch_user(user_id)
 
-class updateItemFromAnotherAppAPI(BaseHandler):
+class UpdateItemFromAnotherAppAPI(BaseHandler):
   def post(self):
     #https://cloud.google.com/appengine/docs/python/
     # appidentity/#Python_Asserting_identity_to_other_App_Engine_apps
-    logging.debug("updateItemFromAnotherAppAPI")
+    logging.debug("UpdateItemFromAnotherAppAPI")
     #TODO: Security
     #if app_identity.get_application_id() != settings.API_TARGET_APP_ID:
-    #  logging.debug("updateItemFromAnotherAppAPI 403: %s != %s"%\
+    #  logging.debug("UpdateItemFromAnotherAppAPI 403: %s != %s"%\
     # (app_identity.get_application_id(),settings.API_TARGET_APP_ID))
     #  self.abort(403)
     #app_id = self.request.headers.get('X-Appengine-Inbound-Appid', None)
-    #logging.info('updateItemFromAnotherAppAPI: from app %s'%app_id)
+    #logging.info('UpdateItemFromAnotherAppAPI: from app %s'%app_id)
     #if app_id in settings.ALLOWED_APP_IDS:
     if True:
       seed_user = None
@@ -639,20 +491,20 @@ class updateItemFromAnotherAppAPI(BaseHandler):
           seed_user = u.key.id()
           break
       if seed_user:
-        logging.debug("updateItemFromAnotherAppAPI user:"+str(seed_user))
+        logging.debug("UpdateItemFromAnotherAppAPI user:"+str(seed_user))
         params = ""
         for k in self.request.params:
           params += '"%s": "%s"'%(k, self.request.params[k])
-        logging.debug("updateItemFromAnotherAppAPI params: "+params)
+        logging.debug("UpdateItemFromAnotherAppAPI params: "+params)
         update_item_internal(self, seed_user)
-        logging.debug("updateItemFromAnotherAppAPI Done ")
+        logging.debug("UpdateItemFromAnotherAppAPI Done ")
         self.response.out.write("OK")
       else:
-        logging.error("updateItemFromAnotherAppAPI - couldn't get seed user",
+        logging.error("UpdateItemFromAnotherAppAPI - couldn't get seed user",
                       exc_info=True)
         self.abort(500)
     else:
-      logging.debug("updateItemFromAnotherAppAPI not allowed")
+      logging.debug("UpdateItemFromAnotherAppAPI not allowed")
       self.abort(403)
 
 
@@ -882,7 +734,7 @@ class addVote_ajax(BaseHandler):
 class getMapList_Ajax(BaseHandler):
   def get(self):
     if logged_in():
-      result = get_item_list(
+      result = PlacesDB.get_item_list(
         request=self.request,
         include_maps_data=True,
         user_id=self.user_id,

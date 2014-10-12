@@ -326,6 +326,20 @@ class Vote(db.Model):
     name = user.screen_name
     memcache.set('USERNAME' + str(self.voter), name)
 
+  @classmethod
+  def get_user_votes(cls, friend, current_user):
+    try:
+      entry = {}
+      friend_vote_list = Vote.all().filter("voter =", friend)
+      for user_vote in friend_vote_list:
+        vote_detail = {"vote": user_vote.vote,
+                       "untried": user_vote.untried,
+                       "comment": user_vote.comment
+        }
+        entry[str(user_vote.item.key())] = vote_detail
+      return entry
+    except Exception:
+      logging.error("get_user_votes Exception", exc_info=True)
 
 class Trust(db.Model):
   # Trust value from first user to second user, where firstId < secondId
