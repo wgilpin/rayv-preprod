@@ -623,7 +623,10 @@ var BB = {
             $('#new-item-votes').find('li').removeClass('ui-btn-hover-b').
                 addClass('ui-btn-up-b').removeClass('ui-btn-active');
             $('#new-item-like').addClass('ui-btn-active');
-            $("#new-category").children("option").removeAttr('selected');
+            var el = $("#new-category");
+            el.children("option").removeAttr('selected');
+            el.children("option:contains('Select Cuisine')").
+                        attr("selected", true);
             $("#new-title-hdg").text(place_name);
             $("input[name=new-title]").val(place_name);
             $("#new-text").val("");
@@ -935,7 +938,7 @@ var BB = {
                         rayv.currentItem.category + "')").attr("selected", true);
                 }
                 else {
-                    el.children("option:contains('Select Cuisine ...')").
+                    el.children("option:contains('Select Cuisine')").
                         attr("selected", true);
                 }
                 rayv.currentItem.key = $(this).data("shoutKey");
@@ -964,7 +967,7 @@ var BB = {
                     rayv.currentItem.address = "";
                     var el = $("#new-category").find("option");
                     el.removeAttr('selected');
-                    el.children("option:contains('Select Cuisine ...')").
+                    el.children("option:contains('Select Cuisine')").
                         attr("selected", true);
                 }
                 $.mobile.changePage("#new-detail");
@@ -1697,7 +1700,8 @@ var BB = {
             $("#new-detail-address").val($(this).data('address'));
             var cat = $("#new-category");
             cat.children("option").removeAttr('selected');
-            cat.val("Select Cuisine ...");
+            cat.children("option:contains('Select Cuisine')").
+                        attr("selected", true);
             try {
                 cat.selectmenu("refresh", true);
             } catch (e) {
