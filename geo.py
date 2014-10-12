@@ -417,8 +417,14 @@ def itemKeyToJSONPoint(key):
 
 
 def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
-  # create a json object for the web.
-  # dist_from_GPS = approx_distance(it, GPS_origin)
+  """
+  create a json object for the web.
+  :param it: Item
+  :param GPS_origin: LatLng
+  :param map_origin: bool - do we calculate distances from where the map is
+          centred, as opposed to from my location?
+  :return: dict - json repr of the place
+  """
   try:
     if getProp(it, 'photo'):
       if it.photo.picture:

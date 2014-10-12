@@ -1,38 +1,48 @@
 CACHE MANIFEST
-# Cache manifest version 0.0.22
+# Cache manifest version 0.0.31
  static/css/codiqa.ext.css
  static/css/codiqa.ext.min.css
  static/css/jqm-neue.css
  static/css/jquery.mobile.icons.min.css
  static/css/jquery.mobile.structure-1.3.2.min.css
  static/css/jquery.mobile.theme-1.3.2.min.css
- static/css/jquery.mobile-1.3.2.min.css
+ static/css/jquery.mobile.theme-1.3.2.min.css
+ static/css/jquery-mobile.css
  static/css/shout.css
- static/css/images/ajax-loader.gif
- static/css/images/splash.png
- static/css/images/no-image.png
- static/css/images/thumbdown.png
- static/css/images/thumbdownred.png
- static/css/images/thumbup.png
- static/css/images/thumbupgreen.png
- static/css/images/star.png
- static/css/images/1.png
- static/css/images/2.png
- static/css/images/3.png
- static/css/images/4.png
- static/css/images/5.png
- static/css/images/6.png
- static/css/images/6.png
- static/css/images/blue_dot.png
- static/css/images/icons-18-black.png
- static/css/images/icons-36-black.png
- static/css/images/icons-18-white.png
- static/css/images/icons-36-white.png
- static/css/images/marker-btn.png
- static/css/images/phone.png
- static/js/templates/add-search-nearby-template.htt
- static/js/templates/item-votes-list.htt
- static/js/templates/list-item-template.htt
+ static/images/ajax-loader.gif
+ static/images/rayvcircle.gif
+ static/images/splash.png
+ static/images/no-image.png
+ static/images/heart-2.png
+ static/images/heart-small.png
+ static/images/no-entry-2.png
+ static/images/star-2.png
+ static/images/star.png
+ static/images/icon-grid.png
+ static/images/icon-add.png
+ static/images/icon-map.png
+ static/images/icon-gear.png
+ static/images/1.png
+ static/images/2.png
+ static/images/3.png
+ static/images/4.png
+ static/images/5.png
+ static/images/6.png
+ static/images/6.png
+ static/images/blue_dot.png
+ static/images/icons-18-black.png
+ static/images/icons-36-black.png
+ static/images/icons-18-white.png
+ static/images/icons-36-white.png
+ static/images/marker-btn.png
+ static/images/phone.png
+ static/images/web-icon.png
+ static/images/search.png
+ static/images/rotate.png
+ static/images/86-camera.png
+ static/templates/add-search-nearby-template.htt
+ static/templates/item-votes-list.htt
+ static/templates/list-item-template.htt
  static/js/binaryajax.js
  static/js/black-book.js
  static/js/canvasResize.jquery.json
@@ -50,7 +60,6 @@ CACHE MANIFEST
  static/js/shout-login.js
  static/js/shout-reset.js
  static/js/zepto.min.js
- index.html
 
 NETWORK:
 # All URLs that start with the following lines
