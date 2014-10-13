@@ -628,6 +628,7 @@ var BB = {
          * @param posn {LatLng}
          */
         loadMapItemForEdit: function (place_name, posn) {
+            console.log('loadMapItemForEdit');
             $('#new-item-votes').find('li').removeClass('ui-btn-hover-b').
                 addClass('ui-btn-up-b').removeClass('ui-btn-active');
             $('#new-item-like').addClass('ui-btn-active');
@@ -635,6 +636,9 @@ var BB = {
             el.children("option").removeAttr('selected');
             el.children("option:contains('Select Cuisine')").
                         attr("selected", true);
+            try {
+                el.selectmenu("refresh", true);
+            } catch (e) {}
             $("#new-title-hdg").text(place_name);
             $("input[name=new-title]").val(place_name);
             $("#new-text").val("");
@@ -953,6 +957,9 @@ var BB = {
                     el.children("option:contains('Select Cuisine')").
                         attr("selected", true);
                 }
+                try {
+                    el.selectmenu("refresh", true);
+                } catch (e) {}
                 rayv.currentItem.key = $(this).data("shoutKey");
                 console.log("key set new_places_list_click");
                 rayv.currentItem.position = new rayv.LatLng(
@@ -981,6 +988,9 @@ var BB = {
                     el.find("option").removeAttr('selected');
                     el.children("option:contains('Select Cuisine')").
                         attr("selected", true);
+                    try {
+                        el.selectmenu("refresh", true);
+                    } catch (e) {}
                 }
                 $.mobile.changePage("#new-detail");
             }
