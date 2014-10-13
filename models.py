@@ -132,7 +132,7 @@ def get_category(key):
     cat = Category().get(key)
     return cat
   except:
-    logging.error("get_category failed for key" + key, exc_info=True)
+    logging.error("get_category failed for key " + key, exc_info=True)
     return None
 
 
@@ -296,7 +296,7 @@ class Item(db.Model):
           logging.error("could not memcache Item " + key, exc_info=True)
       return item
     except BadKeyError:
-      logging.error('get_item key not found '+key, exc_info=True)
+      logging.error('get_item key not found '+key)
     except Exception, e:
       logging.error("get_item", exc_info=True)
       return None

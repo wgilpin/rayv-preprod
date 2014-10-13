@@ -581,6 +581,9 @@ var BB = {
                         else {
                             BB.loadUserData();
                         }
+                    },
+                    error: function() {
+                        hide_waiting();
                     }
                 });
                 console.log("AJAX saverayv.currentItem");
@@ -1038,8 +1041,14 @@ var BB = {
         new_item_save_click: function () {
             // save a new item
             //called from new-detail-page
+            if (BB.detail_saving){
+                console.log("new_item_save_click ignored");
+                return;
+            }
             console.log("new_item_save_click");
             var hasVote = false;
+            rayv.currentItem.untried = false;
+            rayv.currentItem.vote = 1;
             if ($('#new-item-dislike').hasClass('ui-btn-active')) {
                 rayv.currentItem.vote = -1;
                 rayv.currentItem.untried = false;
@@ -1057,8 +1066,7 @@ var BB = {
                 alert('Please vote!');
                 return;
             }
-            if (BB.detail_saving)
-                return;
+
             BB.show_waiting("#details-save-waiting");
 
             //rayv.currentItem.descr = $("#new-detail-comment").val();
@@ -1072,8 +1080,6 @@ var BB = {
             rayv.currentItem.address = $("#new-detail-address").val();
             rayv.currentItem.place_name = $("#new-detail-name").val();
             rayv.currentItem.descr = $("#new-detail-comment").val();
-            rayv.currentItem.vote = 1;
-            rayv.currentItem.untried = false;
 
             if (rayv.currentItem.key == "") {
                 //from map or db, use supplied pos
