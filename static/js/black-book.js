@@ -106,6 +106,7 @@ rayv.UserData = rayv.UserData||{};
      */
     var updatePlaceCache =function (obj) {
         for (idx in obj.places){
+            //noinspection JSUnfilteredForInLoop
             var place = obj.places[idx];
             if (!(place.key in rayv.UserData.places)) {
                 // dict indexed by place key
@@ -201,6 +202,7 @@ rayv.UserData = rayv.UserData||{};
         }
         //not in my list
         for (var idx in this.friends){
+            //noinspection JSUnfilteredForInLoop
             var friend = this.friends[idx];
             if (friend.votes[key]) {
                 return friend.votes[key].comment
@@ -230,6 +232,7 @@ rayv.UserData = rayv.UserData||{};
     this.get_votes_for_item =function (key) {
         var result = [];
         for (var idx in this.friends){
+            //noinspection JSUnfilteredForInLoop
             var friend = this.friends[idx];
             var vote = {name: friend.name};
             if (friend.votes[key]) {
@@ -686,14 +689,16 @@ var BB = {
             }
             if (BB.filter == "all") {
                 //add the other lists
-                rayv.UserData.friends.forEach(function (friend) {
+                for (var fIdx in rayv.UserData.friends) {
+                    //noinspection JSUnfilteredForInLoop
+                    var friend = rayv.UserData.friends[fIdx];
                     for (it in friend.votes) {
                         //noinspection JSUnfilteredForInLoop
                         if (placeList.indexOf(it) == -1) {
                             placeList.push(it)
                         }
                     }
-                });
+                };
             }
             var detailList = [];
             placeList.forEach(function (place) {
@@ -895,6 +900,7 @@ var BB = {
                 map_centre.lat + ", " +
                 map_centre.lng);
             for (var key in rayv.UserData.places){
+                //noinspection JSUnfilteredForInLoop
                 var place = rayv.UserData.places[key];
                 var dist = BB.approx_distance(place, BB.lastGPSPosition);
                 place.distance = BB.pretty_dist(dist);
@@ -1134,8 +1140,10 @@ var BB = {
         loadVotesInner: function () {
             var votes = [];
             for (var idx in rayv.UserData.friends){
+                //noinspection JSUnfilteredForInLoop
                 var friend = rayv.UserData.friends[idx];
                 for (var key in friend.votes){
+                    //noinspection JSUnfilteredForInLoop
                     var vote = friend.votes[key];
                     if (vote == rayv.currentItem.key) {
                         vote.userName = friend.name;
