@@ -1191,12 +1191,14 @@ var BB = {
          * on change event for the new place lookup
          */
         list_text_filter: function () {
-            // hide all items
-            // now show those containing our text
+            console.log('list_text_filter');
             var search_for = $("#main-search").val();
             if (search_for.length > 0) {
-                $("#main-list").children("li").hide();
-                $('#main-list").children("li:contains("' + search_for + '")').
+                // hide all items
+                var list = $("#main-list")
+                list.children("li").hide();
+                // now show those containing our text
+                list.children('li:contains("' + search_for + '")').
                     show();
             }
             else {
