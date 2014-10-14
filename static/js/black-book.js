@@ -734,6 +734,7 @@ var BB = {
 
             function inner_setup_list() {
                 console.log("inner_setup_list");
+                $(UIlist).find('li').remove();
                 // marker for us
                 BB.marker = new google.maps.Marker({
                     position: BB.lastGPSPosition.googleFormat(),
