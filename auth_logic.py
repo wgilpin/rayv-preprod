@@ -182,7 +182,7 @@ class LoginHandler(BaseHandler):
         try:
             u = self.auth.get_user_by_password(username, password, remember=True,
                                                save_session=True)
-            self.redirect('/')
+            self.redirect('/index.html')
         except (InvalidAuthIdError, InvalidPasswordError) as e:
             logging.info('Login failed for userId %s because of %s', username, type(e))
             self._serve_page(True)
