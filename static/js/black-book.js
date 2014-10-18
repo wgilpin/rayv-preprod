@@ -104,8 +104,9 @@ rayv.UserData = rayv.UserData||{};
      * only adds - no deletion here (as we don't ref count)
      * @param obj {object} has a .places element which is {list}
      */
-    var updatePlaceCache =function (obj) {
-        for (idx in obj.places){
+    var updatePlaceCache =function (obj) //noinspection JSUnnecessarySemicolon
+    {
+        for (var idx in obj.places){
             //noinspection JSUnfilteredForInLoop
             var place = obj.places[idx];
             if (!(place.key in rayv.UserData.places)) {
@@ -196,7 +197,8 @@ rayv.UserData = rayv.UserData||{};
      * @param key {string} the key to the object
      * @returns {string} comment text
      */
-    this.get_most_relevant_comment =function (key) {
+    this.get_most_relevant_comment =function (key) //noinspection JSUnnecessarySemicolon
+    {
         if (this.myBook.votes[key]) {
             return this.myBook.votes[key].comment
         }
@@ -229,7 +231,8 @@ rayv.UserData = rayv.UserData||{};
      * @param key {string} urlsafe place key
      * @returns {Array} of votes
      */
-    this.get_votes_for_item =function (key) {
+    this.get_votes_for_item =function (key) //noinspection JSUnnecessarySemicolon
+    {
         var result = [];
         for (var idx in this.friends){
             //noinspection JSUnfilteredForInLoop
@@ -687,18 +690,20 @@ var BB = {
                     rayv.UserData.myBook.votes[it].untried))
                     placeList.push(it);
             }
-            if (BB.filter == "all") {
-                //add the other lists
-                for (var fIdx in rayv.UserData.friends) {
-                    //noinspection JSUnfilteredForInLoop
-                    var friend = rayv.UserData.friends[fIdx];
-                    for (it in friend.votes) {
-                        //noinspection JSUnfilteredForInLoop
-                        if (placeList.indexOf(it) == -1) {
-                            placeList.push(it)
-                        }
-                    }
-                };
+            if (BB.filter == "all") { //noinspection JSUnnecessarySemicolon
+                {
+                                //add the other lists
+                                for (var fIdx in rayv.UserData.friends) {
+                                    //noinspection JSUnfilteredForInLoop
+                                    var friend = rayv.UserData.friends[fIdx];
+                                    for (it in friend.votes) {
+                                        //noinspection JSUnfilteredForInLoop
+                                        if (placeList.indexOf(it) == -1) {
+                                            placeList.push(it)
+                                        }
+                                    }
+                                };
+                            }
             }
             var detailList = [];
             placeList.forEach(function (place) {
@@ -754,7 +759,8 @@ var BB = {
                         click_fn =
                             BB.format(
                                 "javascript:loadMapItemForEdit(" +
-                                    "'{0}','{1}','{2}');", geoPt.place_name, geoPt.lat, geoPt.lng);
+                                    "'{0}','{1}','{2}');",
+                                geoPt.place_name, geoPt.lat, geoPt.lng);
                         newListItemEnd = click_fn +
                             "' href='#new-detail' data-transition='slide'>" +
                             geoPt.place_name +
@@ -872,7 +878,8 @@ var BB = {
         /**
          * populate the place list on main page
          */
-        populateMainList: function () {
+        populateMainList: function () //noinspection JSUnnecessarySemicolon
+        {
             console.log("populateMainList");
             // if lat=0 & long=0 then we will use the map position, else GPS
             if (!BB.splash) {
@@ -1138,19 +1145,22 @@ var BB = {
         /**
          * success callback on get item detail page voted from server
          */
-        loadVotesInner: function () {
+        loadVotesInner: function () //noinspection JSUnnecessarySemicolon
+        {
             var votes = [];
-            for (var idx in rayv.UserData.friends){
-                //noinspection JSUnfilteredForInLoop
-                var friend = rayv.UserData.friends[idx];
-                for (var key in friend.votes){
-                    //noinspection JSUnfilteredForInLoop
-                    var vote = friend.votes[key];
-                    if (vote == rayv.currentItem.key) {
-                        vote.userName = friend.name;
-                        votes.push(vote)
-                    }
-                };
+            for (var idx in rayv.UserData.friends){ //noinspection JSUnnecessarySemicolon
+                {
+                                //noinspection JSUnfilteredForInLoop
+                                var friend = rayv.UserData.friends[idx];
+                                for (var key in friend.votes){
+                                    //noinspection JSUnfilteredForInLoop
+                                    var vote = friend.votes[key];
+                                    if (vote == rayv.currentItem.key) {
+                                        vote.userName = friend.name;
+                                        votes.push(vote)
+                                    }
+                                };
+                            }
             };
             var context = { votes: votes };
             // https://github.com/adammark/Markup.js/

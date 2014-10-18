@@ -645,8 +645,7 @@ class ImageHandler(BaseHandler):
 
 
 class ThumbHandler(BaseHandler):
-  def get(self):
-    key = self.request.get('img_id')
+  def get(self, key):
     try:
       item = db.get(key)
       if item.photo:

@@ -236,12 +236,14 @@ class Item(db.Model):
     lower_name = place_name.lower()
     for place in local_results:
       if lower_name in place.place_name.lower():
+        logging.debug('get_unique_place Found %s@[%f.4,%f.4]'%
+                      (place_name,lat,lng))
         return place
     it = Item(place_name=place_name)
     it.lat = lat
     it.lng = lng
     it.geo_hash = geohash.encode(lat, lng)
-    logging.info("get_unique_place - create item %s@[%f.4,%f.4]"%
+    logging.debug("get_unique_place - create item %s@[%f.4,%f.4]"%
                  (it.place_name, it.lat, it.lng))
     return it
 
@@ -299,7 +301,7 @@ class Item(db.Model):
       logging.error('get_item key not found '+key)
     except Exception, e:
       logging.error("get_item", exc_info=True)
-      return None
+    return None
 
 
 
