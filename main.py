@@ -25,5 +25,8 @@ app = webapp2.WSGIApplication(urls, debug=True, config=config)
 
 logging.getLogger().setLevel(logging.DEBUG)
 
+#todo: specify Django lib as per
+# https://cloud.google.com/appengine/docs/python/tools/libraries#Django
+
 #app.error_handlers[404] = handle_error
 #app.error_handlers[400] = handle_error

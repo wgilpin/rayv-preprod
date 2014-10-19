@@ -219,6 +219,7 @@ class Item(db.Model):
   def get_unique_place(cls, request):
     it = Item.get_item(request.get('key'))
     if it:
+      logging.debug('get_unique_place exists '+it.place_name)
       return it
     place_name = request.get('new-title')
     if 'latitude' in request.params:
