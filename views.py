@@ -648,7 +648,7 @@ class ThumbHandler(BaseHandler):
   def get(self, key):
     try:
       item = db.get(key)
-      if item.photo:
+      if item and item.photo:
         self.response.headers['Content-Type'] = 'image/png'
         self.response.out.write(item.photo.get_thumb())
     except Exception, e:
