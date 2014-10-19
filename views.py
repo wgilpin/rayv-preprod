@@ -1,6 +1,7 @@
 import urllib2
 import datetime
 from google.appengine.api import images, memcache
+from google.appengine.api.images import Image
 from google.appengine.api.mail import EmailMessage
 from google.appengine.ext import db
 from webapp2_extras import auth
@@ -650,6 +651,13 @@ class ThumbHandler(BaseHandler):
       if item and item.photo:
         self.response.headers['Content-Type'] = 'image/png'
         self.response.out.write(item.photo.get_thumb())
+      else:
+        default_thumb = memcache.get('DEFAULT-THUMB')
+        if not default_thumb:
+          default_thumb = Image()
+          default_thumb.resize(65,55)
+          memcache.set('DEFAULT_THUMB', default_thumb)
+          self.response.out.write(default_thumb)
     except Exception:
       logging.error('ThumbHandler '+key, exc_info=True)
 
