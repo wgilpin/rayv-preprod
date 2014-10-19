@@ -651,11 +651,8 @@ class ThumbHandler(BaseHandler):
       if item and item.photo:
         self.response.headers['Content-Type'] = 'image/png'
         self.response.out.write(item.photo.get_thumb())
-    except Exception, e:
-      self.response.headers['Content-Type'] = 'image/png'
-      no_pic = DBImage.get_by_key_name("default")
-      self.response.out.write(no_pic.picture)
-
+    except Exception:
+      logging.error('ThumbHandler', exc_info=True)
 
 class search(BaseHandler):
   def get(self):
