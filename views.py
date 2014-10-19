@@ -427,7 +427,7 @@ def update_item_internal(self, user_id, allow_update=True):
   it = Item.get_unique_place(self.request, allow_update)
   if not it:
     # it will be None if it exists and not allow_update
-    return
+    return None
   img = update_photo(it, self)
   # it.place_name = self.request.get('new-title') set in get_unique_place
   it.address = self.request.get('address')
@@ -474,6 +474,7 @@ def update_item_internal(self, user_id, allow_update=True):
   it.put()  # again
   # mark user as dirty
   memcache_touch_user(user_id)
+  return it
 
 class UpdateItemFromAnotherAppAPI(BaseHandler):
   def post(self):
@@ -500,8 +501,10 @@ class UpdateItemFromAnotherAppAPI(BaseHandler):
         for k in self.request.params:
           params += '"%s": "%s"'%(k, self.request.params[k])
         logging.debug("UpdateItemFromAnotherAppAPI params: "+params)
-        update_item_internal(self, seed_user, allow_update=False)
-        logging.debug("UpdateItemFromAnotherAppAPI Done ")
+        if update_item_internal(self, seed_user, allow_update=False):
+          logging.debug("UpdateItemFromAnotherAppAPI Done ")
+        else:
+          logging.debug("UpdateItemFromAnotherAppAPI Existed ")
         self.response.out.write("OK")
       else:
         logging.error("UpdateItemFromAnotherAppAPI - couldn't get seed user",
