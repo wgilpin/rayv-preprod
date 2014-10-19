@@ -433,8 +433,6 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
       else:
         image_url = ''
         thumbnail_url = ''
-      if it.photo.key() == "ag1zfnNob3V0LWFib3V0chQLEgdEQkltYWdlGICAgIDJlr4JDA":
-        logging.debug(thumbnail_url)
     else:
       image_url = ''
       thumbnail_url = ''
