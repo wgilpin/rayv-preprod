@@ -237,7 +237,7 @@ class Item(db.Model):
     lower_name = place_name.lower()
     for place in local_results:
       if lower_name in place.place_name.lower():
-        logging.debug('get_unique_place Found %s@[%f.4,%f.4]'%
+        logging.debug('get_unique_place Found "%"s@[%f.4,%f.4]'%
                       (place_name,lat,lng))
         return place
     it = Item(place_name=place_name)
