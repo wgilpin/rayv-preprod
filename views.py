@@ -649,15 +649,18 @@ class ThumbHandler(BaseHandler):
     try:
       item = db.get(key)
       if item and item.photo:
+        logging.debug('ThumbHandler for '+item.place_name)
         self.response.headers['Content-Type'] = 'image/png'
         self.response.out.write(item.photo.get_thumb())
       else:
+        logging.debug('ThumbHandler DEFAULT for '+item.place_name)
         default_thumb = memcache.get('DEFAULT-THUMB')
         if not default_thumb:
           default_thumb = Image()
           default_thumb.resize(65,55)
-          memcache.set('DEFAULT_THUMB', default_thumb)
+          self.response.headers['Content-Type'] = 'image/png'
           self.response.out.write(default_thumb)
+          memcache.set('DEFAULT-THUMB', default_thumb)
     except Exception:
       logging.error('ThumbHandler '+key, exc_info=True)
 

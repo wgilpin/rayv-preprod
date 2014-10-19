@@ -1,5 +1,6 @@
 import logging
 from random import random
+import urllib2
 from google.appengine.ext import db
 import time
 from webapp2_extras import auth
@@ -241,7 +242,17 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
           new_it.geo_hash = geohash.encode(new_it.lat, new_it.lng)
           img = DBImage()
           detail = getPlaceDetailFromGoogle(new_it)
-          img.remoteURL = detail['photo']
+          remoteURL = detail['photo']
+          if remoteURL:
+            main_url = remoteURL % 250
+            data = urllib2.urlopen(main_url)
+            img.picture = db.Blob(data.read())
+            img.remoteURL = None
+            thumb_url = remoteURL % 65
+            thumb_data = urllib2.urlopen(thumb_url)
+            img.thumb = db.Blob(thumb_data.read())
+            img.put()
+            new_it.photo = img
           img.put()
           new_it.photo = img
           new_it.telephone = detail['telephone']
