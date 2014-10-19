@@ -16,6 +16,7 @@ __author__ = 'Will'
 
 
 def getPlaceDetailFromGoogle(item):
+  logging.debug('getPlaceDetailFromGoogle '+item.place_name)
   params = {'radius': 150,
             'types': config['place_types'],
             'location': '%f,%f' % (item.lat, item.lng),
@@ -73,10 +74,9 @@ def getPlaceDetailFromGoogle(item):
                    item.place_name)
     return res
   else:
-    logging.error(
+    logging.warning(
       "getPlaceDetailFromGoogle %s: %s" %
-        (item.place_name, address_result['status']),
-      exc_info=True)
+        (item.place_name, address_result['status']))
     return {"photo": None, "telephone": None}
 
 

@@ -216,11 +216,11 @@ class Item(db.Model):
     return self.__unicode__()
 
   @classmethod
-  def get_unique_place(cls, request):
+  def get_unique_place(cls, request, return_existing=True):
     it = Item.get_item(request.get('key'))
     if it:
       logging.debug('get_unique_place exists '+it.place_name)
-      return it
+      return it if return_existing else None
     place_name = request.get('new-title')
     if 'latitude' in request.params:
       lat = float(request.get('latitude'))
@@ -239,7 +239,7 @@ class Item(db.Model):
       if lower_name in place.place_name.lower():
         logging.debug('get_unique_place Found "%"s@[%f.4,%f.4]'%
                       (place_name,lat,lng))
-        return place
+        return place if return_existing else None
     it = Item(place_name=place_name)
     it.lat = lat
     it.lng = lng

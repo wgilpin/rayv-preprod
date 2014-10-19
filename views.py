@@ -422,9 +422,12 @@ def update_votes(item, request_handler, user_id):
     logging.error("newOrUpdateItem votes exception", exc_info=True)
 
 
-def update_item_internal(self, user_id):
+def update_item_internal(self, user_id, allow_update=True):
   # is it an edit or a new?
-  it = Item.get_unique_place(self.request)
+  it = Item.get_unique_place(self.request, allow_update)
+  if not it:
+    # it will be None if it exists and not allow_update
+    return
   img = update_photo(it, self)
   # it.place_name = self.request.get('new-title') set in get_unique_place
   it.address = self.request.get('address')
@@ -497,7 +500,7 @@ class UpdateItemFromAnotherAppAPI(BaseHandler):
         for k in self.request.params:
           params += '"%s": "%s"'%(k, self.request.params[k])
         logging.debug("UpdateItemFromAnotherAppAPI params: "+params)
-        update_item_internal(self, seed_user)
+        update_item_internal(self, seed_user, allow_update=False)
         logging.debug("UpdateItemFromAnotherAppAPI Done ")
         self.response.out.write("OK")
       else:
@@ -512,7 +515,7 @@ class UpdateItemFromAnotherAppAPI(BaseHandler):
 class newOrUpdateItem(BaseHandler):
   def post(self):
     if logged_in():
-      update_item_internal(self, self.user_id)
+      update_item_internal(self, self.user_id, allow_update=True)
 
       self.response.out.write("OK")
     else:
