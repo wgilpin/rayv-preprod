@@ -13,17 +13,22 @@ def memcache_get_user_dict(UserId):
   @param UserId:
   @return user:
   """
-  user_rec = memcache.get(str(UserId))
-  if user_rec:
-    return user_rec
-  user = User().get_by_id(UserId)
-  if user:
-    uprof = user.profile()
-    record = {'u': user,
-              'p': uprof}
-    if not memcache.set(str(UserId), record):
-      logging.error("could not memcache Item " + UserId)
-  return record
+  try:
+    user_rec = memcache.get(str(UserId))
+    if user_rec:
+      return user_rec
+    user = User().get_by_id(UserId)
+    if user:
+      uprof = user.profile()
+      record = {'u': user,
+                'p': uprof}
+      if not memcache.set(str(UserId), record):
+        logging.error("could not memcache Item " + UserId)
+      return record
+    else:
+      logging.error('memcache_get_user_dict No User '+str(UserId))
+  except:
+    logging.error('memcache_get_user_dict', exc_info=True)
 
 
 def memcache_touch_user(id):
