@@ -639,9 +639,8 @@ class ImageHandler(BaseHandler):
         self.response.headers['Content-Type'] = 'image/png'
         self.response.out.write(item.photo.picture)
     except:
-      self.response.headers['Content-Type'] = 'image/png'
-      no_pic = DBImage.get_by_key_name("default")
-      self.response.out.write(no_pic.picture)
+      logging.error('ImageHandler '+key, exc_info=True)
+
 
 
 class ThumbHandler(BaseHandler):
@@ -652,7 +651,7 @@ class ThumbHandler(BaseHandler):
         self.response.headers['Content-Type'] = 'image/png'
         self.response.out.write(item.photo.get_thumb())
     except Exception:
-      logging.error('ThumbHandler', exc_info=True)
+      logging.error('ThumbHandler '+key, exc_info=True)
 
 class search(BaseHandler):
   def get(self):
