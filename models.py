@@ -2,7 +2,7 @@ import logging
 from google.appengine.api import images, memcache
 from google.appengine.api.images import CORRECT_ORIENTATION
 from google.appengine.ext import db
-from google.appengine.ext.db import BadKeyError
+from google.appengine.ext.db import BadKeyError, BadRequestError
 from auth_model import User
 import geohash
 from settings import config
@@ -222,6 +222,9 @@ class Item(db.Model):
       logging.debug('get_unique_place exists '+it.place_name)
       return it if return_existing else None
     place_name = request.get('new-title')
+    if not place_name:
+      place_name = request.get('place_name')
+    logging.debug('get_unique_place name '+place_name)
     if 'latitude' in request.params:
       lat = float(request.get('latitude'))
     else:
@@ -300,6 +303,9 @@ class Item(db.Model):
       return item
     except BadKeyError:
       logging.error('get_item key not found '+key)
+    except BadRequestError:
+      #this happens if we pass the key form another app in - which we do
+      logging.info('get_item key Bad Request '+key)
     except Exception, e:
       logging.error("get_item", exc_info=True)
     return None

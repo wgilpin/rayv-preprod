@@ -1243,8 +1243,7 @@ var BB = {
             $("#new-detail-address").val(rayv.currentItem.address);
             var el = $("#new-category");
             el.children("option").removeAttr('selected');
-            el.children('option:contains("Select Cuisine")').
-                attr("selected", true);
+
             if (rayv.currentItem.category.length > 0){
                 try {
                     el.children("option:contains('" +
@@ -1254,8 +1253,14 @@ var BB = {
                     el.selectmenu("refresh", true);
                 }
                 catch (e) {
+                    console.error('item_load_for_edit');
                     el.val('');
                 }
+            }
+            else{
+                el.children('option:contains("Select Cuisine")').
+                    attr("selected", true);
+                el.selectmenu("refresh", true);
             }
             $("#new-detail-comment").val(
                 rayv.UserData.get_most_relevant_comment(rayv.currentItem.key));
