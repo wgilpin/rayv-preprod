@@ -22,6 +22,7 @@ urls = [
   webapp2.Route('/getItems_Ajax', views.getItems_Ajax, name='getItems_Ajax'),
   webapp2.Route('/getMapList_Ajax', views.getMapList_Ajax),
   webapp2.Route('/getAddresses_ajax', views.getAddresses_ajax),
+  webapp2.Route('/getCuisines_ajax', views.getCuisines_ajax),
   webapp2.Route('/register', views.register, name='register'),
   webapp2.Route('/item/del/<key:\S+>', views.deleteItem),
   webapp2.Route('/item/<key:\S+>', views.updateItem),

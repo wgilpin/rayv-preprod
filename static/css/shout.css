@@ -824,3 +824,7 @@ div {
     height: 100%;
     border: none;
 }
+
+#cuisine-lookup {
+    padding: 0.6em;
+}

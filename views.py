@@ -203,6 +203,17 @@ def check_for_dirty_data(user_id, results):
                              "places": dirty_places}
 
 
+class getCuisines_ajax(BaseHandler):
+  def get(self):
+    list = []
+    cats =  Category.all()
+    for cat in cats:
+      list.append(cat.title)
+    results = {'categories': list}
+    json.dump(results,
+               self.response.out);
+
+
 class getAddresses_ajax(BaseHandler):
   def get(self):
     address = self.request.get("addr")

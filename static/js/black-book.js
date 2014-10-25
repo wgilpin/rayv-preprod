@@ -638,13 +638,8 @@ var BB = {
             $('#new-item-votes').find('li').removeClass('ui-btn-hover-b').
                 addClass('ui-btn-up-b').removeClass('ui-btn-active');
             $('#new-item-like').addClass('ui-btn-active');
-            var el = $("#new-category");
-            el.children("option").removeAttr('selected');
-            el.children("option:contains('Select Cuisine')").
-                        attr("selected", true);
-            try {
-                el.selectmenu("refresh", true);
-            } catch (e) {}
+            $("#new-category").val('');
+            $("#cuisine-lookup").hide();
             $("#new-title-hdg").text(place_name);
             $("input[name=new-title]").val(place_name);
             $("#new-text").val("");
@@ -940,6 +935,51 @@ var BB = {
 
         },
 
+        check_cuisine_categories: function(){
+            console.info('check_cuisine_categories')
+            if (BB.cuisine_categories){
+                return;
+            };
+            BB.cuisine_categories = [];
+            $.get('/getCuisines_ajax',
+                {},
+                function(data){
+                    var obj = jQuery.parseJSON(data);
+                    for (var idx=0; idx<obj.categories.length; idx++){
+                        BB.cuisine_categories.push(obj.categories[idx].toLowerCase());
+                    }
+                })
+        },
+
+        cuisine_keyup: function(){
+            var text = $('#new-category').val().toLowerCase();
+            var lookup = $('#cuisine-lookup');
+            lookup.hide();
+            for (var idx=0; idx<BB.cuisine_categories.length; idx++){
+                if (BB.cuisine_categories[idx].indexOf(text) >-1){
+                    var titleCase =
+                        BB.cuisine_categories[idx].charAt(0).toUpperCase() +
+                        BB.cuisine_categories[idx].substr(1).toLowerCase();
+                    lookup.text(titleCase);
+                    lookup.show();
+                    break;
+                }
+            }
+        },
+
+        cuisine_lookup_click: function(){
+            console.log('cuisine_lookup_click')
+            $('#new-category').val($('#cuisine-lookup').text());
+            $('#cuisine-lookup').hide();
+        },
+
+        set_edit_page_category: function () {
+            console.log('set_edit_page_category = '+rayv.currentItem.category);
+            $("#new-category").val(rayv.currentItem.category);
+            $("#cuisine-lookup").hide();
+            BB.check_cuisine_categories()
+        },
+
         /**
          * Click handler for the list of places on the Add page
          * @param event {event}
@@ -961,19 +1001,7 @@ var BB = {
                 $("#new-detail-address").val(rayv.currentItem.address);
                 // no comment as it's not in db
                 $("#new-detail-comment").val("");
-                var el = $("#new-category");
-                el.find("option").removeAttr('selected');
-                if (rayv.currentItem.category.length >0 ) {
-                    el.children("option:contains('" +
-                        rayv.currentItem.category + "')").attr("selected", true);
-                }
-                else {
-                    el.children("option:contains('Select Cuisine')").
-                        attr("selected", true);
-                }
-                try {
-                    el.selectmenu("refresh", true);
-                } catch (e) {}
+                BB.set_edit_page_category();
                 rayv.currentItem.key = $(this).data("shoutKey");
                 console.log("key set new_places_list_click");
                 rayv.currentItem.position = new rayv.LatLng(
@@ -998,13 +1026,7 @@ var BB = {
 
                     //todo: what's the address?
                     rayv.currentItem.address = "";
-                    var el = $("#new-category");
-                    el.find("option").removeAttr('selected');
-                    el.children("option:contains('Select Cuisine')").
-                        attr("selected", true);
-                    try {
-                        el.selectmenu("refresh", true);
-                    } catch (e) {}
+                    BB.set_edit_page_category();
                 }
                 $.mobile.changePage("#new-detail");
             }
@@ -1095,10 +1117,23 @@ var BB = {
 
             //rayv.currentItem.descr = $("#new-detail-comment").val();
             rayv.currentItem.category = $("#new-category").val();
-            if (rayv.currentItem.category === "None" ||
-                rayv.currentItem.category == null ||
-                rayv.currentItem.category.length == 0) {
+            var ok=false;
+            var lower_category = rayv.currentItem.category.toLowerCase();
+            for (var idx=0; idx<BB.cuisine_categories.length; idx++){
+                if (BB.cuisine_categories[idx] == lower_category){
+                    ok = true;
+                    break
+                }
+            }
+            if (!ok){
+                if ($('#cuisine-lookup').is(':visible')){
+                    rayv.currentItem.category = $('#cuisine-lookup').text();
+                    ok = true;
+                }
+            }
+            if (!ok){
                 alert("You must pick a type of cuisine");
+                BB.detail_saving = false;
                 return;
             }
             rayv.currentItem.address = $("#new-detail-address").val();
@@ -1241,27 +1276,10 @@ var BB = {
             }
             $("#new-detail-name").val(rayv.currentItem.place_name);
             $("#new-detail-address").val(rayv.currentItem.address);
-            var el = $("#new-category");
-            el.children("option").removeAttr('selected');
+            //CATEGORY logic
+            BB.set_edit_page_category();
 
-            if (rayv.currentItem.category.length > 0){
-                try {
-                    el.children("option:contains('" +
-                        rayv.currentItem.category + "')").
-                        attr("selected", true);
-                    el.val(rayv.currentItem.category);
-                    el.selectmenu("refresh", true);
-                }
-                catch (e) {
-                    console.error('item_load_for_edit');
-                    el.val('');
-                }
-            }
-            else{
-                el.children('option:contains("Select Cuisine")').
-                    attr("selected", true);
-                el.selectmenu("refresh", true);
-            }
+            //END CATEGORY LOGIC
             $("#new-detail-comment").val(
                 rayv.UserData.get_most_relevant_comment(rayv.currentItem.key));
 
@@ -1750,14 +1768,8 @@ var BB = {
             var properTitle = BB.toProperCase($(this).data('title'));
             $("#new-detail-name").val(decodeURIComponent(properTitle));
             $("#new-detail-address").val($(this).data('address'));
-            var cat = $("#new-category");
-            cat.children("option").removeAttr('selected');
-            cat.children("option:contains('Select Cuisine')").
-                        attr("selected", true);
-            try {
-                cat.selectmenu("refresh", true);
-            } catch (e) {
-            }
+            $("#new-category").val('');
+            $("#cuisine-lookup").hide();
             $("#new-detail-comment").val("");
 
             //set the likes radio
@@ -2172,6 +2184,9 @@ var BB = {
             $("#settings-save-profile").click(BB.save_profile);
             $("#new-search-title-btn").click(BB.add_search_name);
             $("#new-search-name-btn").click(BB.lookupMyAddress);
+            $('#new-category').keyup(BB.cuisine_keyup);
+            $('#cuisine-lookup').click(BB.cuisine_lookup_click);
+
 
             /*window.onerror = function errorHandler(msg, url, line) {
              alert(msg + ": " + line);

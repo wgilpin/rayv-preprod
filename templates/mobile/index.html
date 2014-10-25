@@ -9,13 +9,13 @@
 
 
     <link href="/static/css/codiqa.ext.min.css" rel="stylesheet">
-    <link href="/static/css/jquery.mobile.theme-1.3.2.min.css" rel="stylesheet">
+    <link href="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css" rel="stylesheet">
     <link href="/static/css/jquery-mobile.css" rel="stylesheet">
     <link href="/static/css/jquery.mobile.structure-1.3.2.min.css" rel="stylesheet">
     <link href="/static/css/shout.css" rel="stylesheet">
 
     <script src="/static/js/jquery-1.11.1.min.js"></script>
-    <script src="/static/js/jquery.mobile-1.3.2.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js"></script>
     <script src="/static/js/codiqa.ext.min.js"></script>
     <script type="text/javascript"
             xsrc="https://maps.googleapis.com/maps/api/js?key=AIzaSyChXHZvWxK8AppO5uN8ciNENv1GZTXTBns">
@@ -511,20 +511,13 @@
                 </table>
             </div>
             <div id="cat-lookup" data-controltype="htmlblock" class="cuisine-lookup">
-                <select id="new-category">
-                    <option value="None">
-                        Select Cuisine ...
-                    </option>
-                    {% for cat in cats %}
-                        <option value="{{ cat.title }}">
-                            {{ cat.title }}
-                        </option>
-                    {% endfor %}
-                </select>
+                <input id="new-category" type="text"
+                       placeholder="Enter Cuisine">
+                <a href="#" data-role="button" id="cuisine-lookup"></a>
             </div>
             <div data-role="fieldcontain" data-controltype="camerainput">
-                <input type="file" name="new-photo" id="image-input" accept="image/*"
-                       capture="camera">
+                <input type="file" name="new-photo" id="image-input"
+                       accept="image/*" capture="camera">
             </div>
             <div data-controltype="htmlblock">
                 <div id="new-detail-vote" data-role="navbar">
