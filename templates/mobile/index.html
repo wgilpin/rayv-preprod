@@ -10,15 +10,15 @@
 
     <link href="/static/css/codiqa.ext.min.css" rel="stylesheet">
     <link
-        href="https://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css"
-        rel="stylesheet">
+            href="https://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css"
+            rel="stylesheet">
     <link href="/static/css/jquery-mobile.css" rel="stylesheet">
     <link href="/static/css/jquery.mobile.structure-1.3.2.min.css" rel="stylesheet">
     <link href="/static/css/shout.css" rel="stylesheet">
 
     <script src="/static/js/jquery-1.11.1.min.js"></script>
     <script
-      src="https://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js"></script>
+            src="https://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js"></script>
     <script src="/static/js/codiqa.ext.min.js"></script>
     <script type="text/javascript"
             xsrc="https://maps.googleapis.com/maps/api/js?key=AIzaSyChXHZvWxK8AppO5uN8ciNENv1GZTXTBns">
@@ -350,9 +350,11 @@
 
             <fieldset data-role="controlgroup">
                 <input type="radio" name="new-search-radio" id="new-search-radio-me" value="me" checked="checked">
-                <label id="new-search-label-me" for="new-search-radio-me">Near Me</label>
+                <label id="new-search-label-me" for="new-search-radio-me">Near
+                    Me</label>
                 <input type="radio" name="new-search-radio" id="new-search-radio-place" value="place">
-                <label id="new-search-label-place" for="new-search-radio-place">Near A Place</label>
+                <label id="new-search-label-place" for="new-search-radio-place">Near
+                    A Place</label>
 
                 <div class="left-input">
                     <input name="new-near" id="new-place-near" placeholder="Near Address"
@@ -514,9 +516,10 @@
                 </table>
             </div>
             <div id="cat-lookup" data-controltype="htmlblock" class="cuisine-lookup">
-                <input id="new-category" type="text"
-                       placeholder="Enter Cuisine">
-                <a href="#" data-role="button" id="cuisine-lookup"></a>
+                <input id="new-category" type="text">
+                <div data-role="controlgroup" id="new-category-list">
+
+                </div>
             </div>
             <div data-role="fieldcontain" data-controltype="camerainput">
                 <input type="file" name="new-photo" id="image-input"
@@ -624,7 +627,9 @@
             <input class="form-control" name="screen_name" id="settings-screen-name"
                    placeholder="Nickname (for friends)">
         </div>
-        <button id="settings-save-profile" type="button" class="btn">Save Profile</button>
+        <button id="settings-save-profile" type="button" class="btn">Save
+            Profile
+        </button>
         <hr>
         <form action="/logout" data-ajax="false">
             <input type="submit" value="Log Out">
@@ -679,7 +684,8 @@
         </h4>
     </div>
     <div data-role="content">
-        <a href="https://www.youtube.com/embed/z2PvZcGajBc">Video explaining how to enable location services on an iPhone</a>
+        <a href="https://www.youtube.com/embed/z2PvZcGajBc">Video explaining how
+            to enable location services on an iPhone</a>
     </div>
 </div>
 <div data-role="page" data-control-title="Forgot" id="forgot-pwd">

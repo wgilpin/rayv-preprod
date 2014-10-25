@@ -935,8 +935,8 @@ var BB = {
 
         },
 
-        check_cuisine_categories: function(){
-            console.info('check_cuisine_categories')
+        cuisine_setup_categories: function(){
+            console.info('cuisine_setup_categories')
             if (BB.cuisine_categories){
                 return;
             };
@@ -944,40 +944,51 @@ var BB = {
             $.get('/getCuisines_ajax',
                 {},
                 function(data){
+                    var li_html = '';
+                    var widgetType = $( "[name='radio-widget']:checked" ).attr( "id" ),
+                        group = $( "#new-category-list" ),
+                        $el;
+
                     var obj = jQuery.parseJSON(data);
                     for (var idx=0; idx<obj.categories.length; idx++){
-                        BB.cuisine_categories.push(obj.categories[idx].toLowerCase());
+                        $el = $( "<a href='#'>" +
+                            obj.categories[idx] +
+                            "</a>" ).bind( "click", BB.cuisine_lookup_click );
+                        group.controlgroup( "container" )["append"]($el);
+                        $el.buttonMarkup();
+                    }
+                    group.controlgroup( "refresh" );
+                    if (rayv.currentItem.category){
+                        $('#new-category-list').hide();
                     }
                 })
         },
 
         cuisine_keyup: function(){
             var text = $('#new-category').val().toLowerCase();
-            var lookup = $('#cuisine-lookup');
-            lookup.hide();
-            for (var idx=0; idx<BB.cuisine_categories.length; idx++){
-                if (BB.cuisine_categories[idx].indexOf(text) >-1){
-                    var titleCase =
-                        BB.cuisine_categories[idx].charAt(0).toUpperCase() +
-                        BB.cuisine_categories[idx].substr(1).toLowerCase();
-                    lookup.text(titleCase);
-                    lookup.show();
-                    break;
+            var lookup = $('#new-category-list');
+            lookup.show();
+            lookup.find('a').each(function(){
+                if ($(this).text().toLowerCase().indexOf(text)>-1){
+                    $(this).show();
                 }
-            }
+                else{
+                    $(this).hide();
+                }
+            });
         },
 
         cuisine_lookup_click: function(){
             console.log('cuisine_lookup_click')
-            $('#new-category').val($('#cuisine-lookup').text());
-            $('#cuisine-lookup').hide();
+            $('#new-category').val($(this).text());
+            $('#new-category-list').hide();
         },
 
         set_edit_page_category: function () {
             console.log('set_edit_page_category = '+rayv.currentItem.category);
             $("#new-category").val(rayv.currentItem.category);
             $("#cuisine-lookup").hide();
-            BB.check_cuisine_categories()
+            BB.cuisine_setup_categories()
         },
 
         /**
@@ -1117,21 +1128,7 @@ var BB = {
 
             //rayv.currentItem.descr = $("#new-detail-comment").val();
             rayv.currentItem.category = $("#new-category").val();
-            var ok=false;
-            var lower_category = rayv.currentItem.category.toLowerCase();
-            for (var idx=0; idx<BB.cuisine_categories.length; idx++){
-                if (BB.cuisine_categories[idx] == lower_category){
-                    ok = true;
-                    break
-                }
-            }
-            if (!ok){
-                if ($('#cuisine-lookup').is(':visible')){
-                    rayv.currentItem.category = $('#cuisine-lookup').text();
-                    ok = true;
-                }
-            }
-            if (!ok){
+            if (!rayv.currentItem.category){
                 alert("You must pick a type of cuisine");
                 BB.detail_saving = false;
                 return;
