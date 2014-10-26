@@ -343,13 +343,10 @@ class Vote(db.Model):
       for user_vote in user_vote_list:
         vote_detail = {"vote": user_vote.vote,
                        "untried": user_vote.untried,
-                       "comment": user_vote.comment
+                       "comment": user_vote.comment,
+                       "DEBUG-place_name": user_vote.item.place_name,
         }
         entry[str(user_vote.item.key())] = vote_detail
-        logging.debug('get_user_votes %s = %s, u=%s'%(
-            user_vote.item.place_name,
-            user_vote.vote,
-            user_vote.untried))
       return entry
     except Exception:
       logging.error("get_user_votes Exception", exc_info=True)
