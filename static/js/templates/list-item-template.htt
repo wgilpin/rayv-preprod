@@ -11,31 +11,23 @@
             </div>
             <div id='div_right'>
                 {{if pt.vote|more>0}}
-                    {{if pt.down|equals>0}}
-                    <div class="item-up-2 item-votes">
-                    {{else}}
-                    <div class="item-up item-votes">
-                    {{/if}}
-                {{/if }}
+                    <div class="item-like item-votes"></div>
+                {{/if}}
                 {{if pt.vote|less>0}}
-                    {{if pt.down|equals>0}}
-                    <div class="item-down-2 item-votes">
-                    {{else}}
-                    <div class="item-down item-votes">
-                    {{/if}}
+                    <div class="item-dislike item-votes"></div>
                 {{/if}}
                 {{if pt.vote|equals>0 }}
-                    {{if pt.down|equals>0}}
-                    <div class="item-none-2 item-votes">
-                    {{else}}
-                    <div class="item-none item-votes">
-                    {{/if}}
+                    <div class="item-untried item-votes"></div>
                 {{/if}}
-                <div class="item-up-votes">{{ pt.up }}</div>
-                {{if pt.down|more>0}}
-                    <div class="item-down-votes">{{ pt.down }}</div>
-                {{/if }}
+                <div class="item-like-sm">
+                    <div class="item-like-score">{{pt.up}}</div>
                 </div>
+                {{if pt.down|more>0}}
+                    <div class="item-dislike-sm ">
+                        <div class="item-dislike-score">{{pt.down}}</div>
+                    </div>
+                {{/if}}
+
             </div>
             <div id='div_middle'>
                 <div class="list-item-title truncate">

@@ -740,33 +740,59 @@ div {
     color: rgba(91, 90, 239, 0.59);
     position: relative;
     float: right;
-    width: 71px;
-    height: 51px;
+    width: 50px;
+    height: 30px;
     text-align: center;
-    line-height: 51px;
+    line-height: 30px;
     top: 5px;
     text-shadow: 1px 1px #a8f;
 }
 
-.item-down {
-    background: url('/static/images/no-entry-3.png') no-repeat;
-}
-.item-down-2 {
-    background: url('/static/images/no-entry-2.png') no-repeat;
+.item-dislike {
+    background: url('/static/images/no-entry-lg.png') no-repeat;
 }
 
-.item-up {
-    background: url('/static/images/heart-3.png') no-repeat;
-}
-.item-up-2 {
-    background: url('/static/images/heart-2.png') no-repeat;
+.item-dislike-score {
+    color: rgba(91, 90, 239, 0.59);
+    position: relative;
+    line-height: 18px;
+    left: -11px;
+    top: 3px;
 }
 
-.item-none {
-    background: url('/static/images/star-3.png') no-repeat;
+.item-like-score {
+    color: rgba(91, 90, 239, 0.59);
+    position: relative;
+    line-height: 18px;
+    left: 19px;
+    top: 3px;
 }
-.item-none-2 {
-    background: url('/static/images/star-2.png') no-repeat;
+
+.item-untried {
+    background: url('/static/images/start-lg.png') no-repeat;
+}
+
+.item-like {
+    background: url('/static/images/heart-lg.png') no-repeat;
+}
+.item-like-sm {
+    background: url('/static/images/heart-sm.png') no-repeat;
+    position: relative;
+    float: right;
+    width: 18px;
+    height: 18px;
+    top: 5px;
+    left: -14px;
+}
+
+.item-dislike-sm {
+    background: url('/static/images/no-entry-sm.png') no-repeat;
+    position: relative;
+    float: right;
+    width: 20px;
+    height: 20px;
+    left: -19px;
+    top: 5px;
 }
 
 .item-up-votes {
