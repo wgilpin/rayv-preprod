@@ -9,7 +9,8 @@ import json
 from auth_model import UserProfile, User
 from caching import memcache_get_user_dict, memcache_touch_user, memcache_put_user_dict, memcache_touch_place
 from dataloader import load_data
-from geo import getPlaceDetailFromGoogle, geoCodeAddress
+from geo import getPlaceDetailFromGoogle, geoCodeAddress, \
+  adjust_votes_for_JSON_pt
 from models import Item, DBImage, Vote, Category
 from geo import LatLng, itemKeyToJSONPoint
 from places_db import PlacesDB
@@ -102,7 +103,7 @@ def serialize_user_details(user_id, places, current_user):
         del votes[idx]
 
     last_write = user_dict['p'].last_write if \
-      hasattr(user_dict['p'], 'last_write') else None
+      hasattr(user_dict['p'],'last_write') else None
     result = {"votes": votes,
               "id": user_id,
               # todo is it first_name?
@@ -118,6 +119,9 @@ def serialize_user_details(user_id, places, current_user):
           place_json['vote'] = votes[place_key]['vote']
           place_json['untried'] = votes[place_key]['untried']
         places[place_key] = place_json
+    for place in places:
+      places[place] = adjust_votes_for_JSON_pt(places[place])
+
     return result
   except Exception, e:
     logging.error("serialize_user_details Exception", exc_info=True)

@@ -176,7 +176,7 @@ def findDbPlacesNearLoc(my_location,
           continue
       jsonPt = itemToJSONPoint(it, position)
       if not ignore_votes:
-        vote = self.votes.filter("voter =", uid).get()
+        vote = it.votes.filter("voter =", uid).get()
         if vote:
           # if the user has voted for this item, and the user is excluded, next
           jsonPt["mine"] = True;
@@ -186,7 +186,7 @@ def findDbPlacesNearLoc(my_location,
             jsonPt["untried"] = True
         else:
           pass
-      search_results.append(jsonPt)
+      search_results.append(adjust_votes_for_JSON_pt(jsonPt))
       place_names.append(it.place_name)
 
     return_data['count'] = len(search_results)
@@ -479,5 +479,25 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
     logging.exception('itemToJSONPoint', exc_info=True)
 
 
-"""get a json list of db places around a position
-"""
+def adjust_votes_for_JSON_pt(json_pt):
+  """
+  The up & down scores in a json pt include the vote of the current user
+  This routine removes the vote of the current user from the calculation
+  :param json_pt: dict: the jsonPt
+  :return: dict: the amended jsonPt
+  """
+  if hasattr(json_pt, 'adjusted'):
+    #already done
+    return json_pt
+  try:
+    if json_pt['vote'] == 1:
+      if json_pt['up'] > 0:
+        json_pt['up'] -= 1
+        json_pt['adjusted'] = True
+    elif json_pt['vote'] == -1:
+      if json_pt['down'] > 0:
+        json_pt['down'] -= 1
+        json_pt['adjusted'] = True
+  except:
+    pass
+  return json_pt
