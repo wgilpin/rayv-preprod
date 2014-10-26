@@ -113,7 +113,7 @@ rayv.UserData = rayv.UserData||{};
                 // dict indexed by place key
                 rayv.UserData.places[place.key] = place
             }
-        };
+        }
     };
     /**
      * get All user data from the server
@@ -209,7 +209,7 @@ rayv.UserData = rayv.UserData||{};
             if (friend.votes[key]) {
                 return friend.votes[key].comment
             }
-        };
+        }
         return "";
     };
 
@@ -242,7 +242,7 @@ rayv.UserData = rayv.UserData||{};
                 vote.vote = friend.votes[key];
                 result.push(vote);
             }
-        };
+        }
         return result;
     }
 }).apply(rayv.UserData);
@@ -697,8 +697,8 @@ var BB = {
                                             placeList.push(it)
                                         }
                                     }
-                                };
-                            }
+                                }
+                }
             }
             var detailList = [];
             placeList.forEach(function (place) {
@@ -911,7 +911,7 @@ var BB = {
                 var map_centre_dist = BB.approx_distance(place, map_centre);
                 place.map_dist_float = map_centre_dist;
                 place.map_distance = BB.pretty_dist(map_centre_dist);
-            };
+            }
             BB.navBarEnable();
 
             if (BB.isMapPage()) {
@@ -936,20 +936,17 @@ var BB = {
         },
 
         cuisine_setup_categories: function(){
-            console.info('cuisine_setup_categories')
+            console.info('cuisine_setup_categories');
             if (BB.cuisine_categories){
                 return;
-            };
+            }
             BB.cuisine_categories = [];
             $.get('/getCuisines_ajax',
                 {},
                 function(data){
-                    var li_html = '';
-                    var widgetType = $( "[name='radio-widget']:checked" ).attr( "id" ),
-                        group = $( "#new-category-list" ),
-                        $el;
-
-                    var obj = jQuery.parseJSON(data);
+                    var group = $( "#new-category-list" ),
+                        $el,
+                        obj = jQuery.parseJSON(data);
                     for (var idx=0; idx<obj.categories.length; idx++){
                         $el = $( "<a href='#'>" +
                             obj.categories[idx] +
@@ -979,7 +976,7 @@ var BB = {
         },
 
         cuisine_lookup_click: function(){
-            console.log('cuisine_lookup_click')
+            console.log('cuisine_lookup_click');
             $('#new-category').val($(this).text());
             $('#new-category-list').hide();
         },
@@ -1191,9 +1188,9 @@ var BB = {
                                         vote.userName = friend.name;
                                         votes.push(vote)
                                     }
-                                };
-                            }
-            };
+                                }
+                }
+            }
             var context = { votes: votes };
             // https://github.com/adammark/Markup.js/
             var newVoteList = Mark.up(BB.item_votes_template, context);
@@ -1246,7 +1243,7 @@ var BB = {
             var search_for = $("#main-search").val();
             if (search_for.length > 0) {
                 // hide all items
-                var list = $("#main-list")
+                var list = $("#main-list");
                 list.children("li").hide();
                 // now show those containing our text
                 list.children('li:contains("' + search_for + '")').
@@ -1320,7 +1317,7 @@ var BB = {
                 el.attr("style", "");
             }
             else {
-                el.hide();
+                $("#new-img").hide();
             }
             $("#new-category-list").hide();
         },
