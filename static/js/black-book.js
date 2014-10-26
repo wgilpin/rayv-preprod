@@ -1260,7 +1260,7 @@ var BB = {
         /**
          * copy details from the Item page to the New Item age to edit them
          */
-        item_load_for_edit: function () {
+        page_to_edit_item: function () {
             // copy over the vals from the item page
             //todo: check for new Item path
             console.log("cat: " + $("#item-category").val());
@@ -1322,6 +1322,7 @@ var BB = {
             else {
                 el.hide();
             }
+            $("#new-category-list").hide();
         },
 
 
@@ -1927,7 +1928,7 @@ var BB = {
                 rayv.currentItem.position =
                     new rayv.LatLng(0,0).
                         loadFromGoogleFormat(BB.creatorMap.getCenter());
-                BB.item_load_for_edit();
+                BB.page_to_edit_item();
                 $.mobile.changePage("#new-detail");
             }else
             {
@@ -2222,7 +2223,7 @@ $(function () {
                 case "new-detail":
                     BB.hide_waiting();
                     if (rayv.currentItem.key) {
-                        BB.item_load_for_edit();
+                        BB.page_to_edit_item();
                     }
                     break;
                 case "item-page":
