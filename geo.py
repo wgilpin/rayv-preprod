@@ -445,6 +445,7 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
       'category': category.title if category else "",
       'telephone': getProp(it, 'telephone'),
       'untried': False,
+      'vote': 'null',
       'img': image_url,
       'thumbnail': thumbnail_url,
       'up': it.votes.filter("vote =", 1).count() if hasattr(it, 'votes') else 0,

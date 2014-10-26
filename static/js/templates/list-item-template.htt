@@ -10,7 +10,7 @@
 
             </div>
             <div id='div_right'>
-                {{if pt.vote}}
+                {{if pt.vote|notequals>null}}
                     {{if pt.vote|more>0}}
                         <div class="item-like item-votes"></div>
                     {{/if}}
