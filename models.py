@@ -336,16 +336,20 @@ class Vote(db.Model):
     memcache.set('USERNAME' + str(self.voter), name)
 
   @classmethod
-  def get_user_votes(cls, friend_id):
+  def get_user_votes(cls, user_id):
     try:
       entry = {}
-      friend_vote_list = Vote.all().filter("voter =", friend_id)
-      for user_vote in friend_vote_list:
+      user_vote_list = Vote.all().filter("voter =", user_id)
+      for user_vote in user_vote_list:
         vote_detail = {"vote": user_vote.vote,
                        "untried": user_vote.untried,
                        "comment": user_vote.comment
         }
         entry[str(user_vote.item.key())] = vote_detail
+        logging.debug('get_user_votes %s = %s, u=%s'%(
+            user_vote.item.place_name,
+            user_vote.vote,
+            user_vote.untried))
       return entry
     except Exception:
       logging.error("get_user_votes Exception", exc_info=True)
