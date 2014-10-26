@@ -336,10 +336,10 @@ class Vote(db.Model):
     memcache.set('USERNAME' + str(self.voter), name)
 
   @classmethod
-  def get_user_votes(cls, friend, current_user):
+  def get_user_votes(cls, friend_id):
     try:
       entry = {}
-      friend_vote_list = Vote.all().filter("voter =", friend)
+      friend_vote_list = Vote.all().filter("voter =", friend_id)
       for user_vote in friend_vote_list:
         vote_detail = {"vote": user_vote.vote,
                        "untried": user_vote.untried,
