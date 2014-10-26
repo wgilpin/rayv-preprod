@@ -1654,7 +1654,7 @@ var BB = {
                 var comment_header = comment;
 
                 if (comment.length == 0) {
-                    comment_header = "Friends' Comments";
+                    comment_header = "Friends' Comments / Tips";
                 }
 
                 var $btn_text = $("#item-comment-btn").
