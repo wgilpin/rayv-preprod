@@ -775,6 +775,10 @@ div {
 .item-like {
     background: url('/static/images/heart-lg.png') no-repeat;
 }
+
+.item-no-vote{
+}
+
 .item-like-sm {
     background: url('/static/images/heart-sm.png') no-repeat;
     position: relative;

@@ -10,15 +10,19 @@
 
             </div>
             <div id='div_right'>
-                {{if pt.vote|more>0}}
-                    <div class="item-like item-votes"></div>
-                {{/if}}
-                {{if pt.vote|less>0}}
-                    <div class="item-dislike item-votes"></div>
-                {{/if}}
-                {{if pt.vote|equals>0 }}
-                    <div class="item-untried item-votes"></div>
-                {{/if}}
+                {{if pt.vote}}
+                    {{if pt.vote|more>0}}
+                        <div class="item-like item-votes"></div>
+                    {{/if}}
+                    {{if pt.vote|less>0}}
+                        <div class="item-dislike item-votes"></div>
+                    {{/if}}
+                    {{if pt.vote|equals>0 }}
+                        <div class="item-untried item-votes"></div>
+                    {{/if}}
+                {{else }}
+                    <div class="item-no-vote item-votes"></div>
+                {{/if }}
                 <div class="item-like-sm">
                     <div class="item-like-score">{{pt.up}}</div>
                 </div>

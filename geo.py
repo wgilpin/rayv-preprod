@@ -142,7 +142,8 @@ def geo_distance(point, origin):
 
 def findDbPlacesNearLoc(my_location,
                         search_text=None,
-                        filter=None, uid=None,
+                        filter=None,
+                        uid=None,
                         position=None,
                         exclude_user_id=None,
                         place_names=None,
@@ -175,22 +176,14 @@ def findDbPlacesNearLoc(my_location,
           continue
       jsonPt = itemToJSONPoint(it, position)
       if not ignore_votes:
-        vote = it.closest_vote_from(user)
+        vote = self.votes.filter("voter =", uid).get()
         if vote:
           # if the user has voted for this item, and the user is excluded, next
-          if exclude_user_id and exclude_user_id == vote.voter:
-            jsonPt["mine"] = True;
+          jsonPt["mine"] = True;
           jsonPt["vote"] = vote.vote
-          if vote.voter == uid:
-            jsonPt["descr"] = vote.comment
-            jsonPt["thumb"] = "thumbdownred.png" if \
-              vote.vote == -1 else "thumbupgreen.png"
-            if vote.untried:
-              jsonPt["untried"] = True
-          else:
-            jsonPt["descr"] = ""
-            jsonPt["thumb"] = "thumbdown.png" if \
-              vote.vote == -1 else "thumbup.png"
+          jsonPt["descr"] = vote.comment
+          if vote.untried:
+            jsonPt["untried"] = True
         else:
           pass
       search_results.append(jsonPt)
@@ -451,7 +444,6 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
       'place_name': getProp(it, 'place_name'),
       'category': category.title if category else "",
       'telephone': getProp(it, 'telephone'),
-      'vote': 0,
       'untried': False,
       'img': image_url,
       'thumbnail': thumbnail_url,

@@ -105,8 +105,9 @@ def serialize_user_details(user_id, places, current_user):
     for place_key in votes:
       if not place_key in places:
         place_json = itemKeyToJSONPoint(place_key)
-        place_json['vote'] = votes[place_key]['vote']
-        place_json['untried'] = votes[place_key]['untried']
+        if user_id == current_user:
+          place_json['vote'] = votes[place_key]['vote']
+          place_json['untried'] = votes[place_key]['untried']
         places[place_key] = place_json
     return result
   except Exception, e:
@@ -118,7 +119,7 @@ class getFullUserRecord(BaseHandler):
     """ get the entire user record, including friends' places """
     my_id = self.user_id
     if my_id:
-      profile_in("getFullUserRecord")
+      #profile_in("getFullUserRecord")
       user = memcache_get_user_dict(my_id)
       if user:
         # logged in
@@ -158,7 +159,7 @@ class getFullUserRecord(BaseHandler):
         json.dump(result,
                   self.response.out,
                   default=json_serial)
-        profile_out("getFullUserRecord")
+        #profile_out("getFullUserRecord")
         return
     self.error(401)
 
@@ -666,11 +667,9 @@ class ThumbHandler(BaseHandler):
     try:
       item = db.get(key)
       if item and item.photo:
-        logging.debug('ThumbHandler for '+item.place_name)
         self.response.headers['Content-Type'] = 'image/png'
         self.response.out.write(item.photo.get_thumb())
       else:
-        logging.debug('ThumbHandler DEFAULT for '+item.place_name)
         default_thumb = memcache.get('DEFAULT-THUMB')
         if not default_thumb:
           default_thumb = Image()
