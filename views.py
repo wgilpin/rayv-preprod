@@ -106,6 +106,9 @@ def serialize_user_details(user_id, places, current_user):
       if not place_key in places:
         place_json = itemKeyToJSONPoint(place_key)
         if user_id == current_user:
+          logging.debug('serialize_user_details %s vote:%s'%(
+              place_json['place_name'],
+              votes[place_key]['vote']))
           place_json['vote'] = votes[place_key]['vote']
           place_json['untried'] = votes[place_key]['untried']
         places[place_key] = place_json
@@ -125,7 +128,8 @@ class getFullUserRecord(BaseHandler):
         # logged in
         # is it for a specific user?
         for_1_user = long(self.request.get("forUser")) if \
-          "forUser" in self.request.params else None
+                  "forUser" in self.request.params \
+                  else None
         # either the first lookup is for me, plus everyone,
         # or it is for a specified user
         result = {"id": my_id}
