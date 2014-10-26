@@ -17,13 +17,7 @@
 
                     </div>
                     <div class="list-item-text-container list-item-container-spacer">
-                        {% if place.vote %}
-                            <img
-                                    class="list-item-thumb"
-                                    width="26"
-                                    height="26"
-                                    src="/static/css/images/{{ place.thumb }}">
-                        {% endif %}
+
                         <div class="list-item-title">
                             {{ place.place_name }}
                         </div>
