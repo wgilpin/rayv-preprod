@@ -1,10 +1,11 @@
 CACHE MANIFEST
-# Cache manifest version 0.0.43
+# Cache manifest version 0.0.44
  static/css/codiqa.ext.css
  static/css/codiqa.ext.min.css
  static/css/jqm-neue.css
  static/css/jquery.mobile.icons.min.css
  static/css/jquery-mobile.css
+ static/css/jquery-mobile-1.3.2.min.css
  static/css/shout.css
  static/images/ajax-loader.gif
  static/images/rayvcircle.gif
@@ -51,6 +52,7 @@ CACHE MANIFEST
  static/js/jquery.exif.js
  static/js/jquery-1.11.1.min.js
  static/js/jquery-1.11.1.min.map
+ static/js/jquery.mobile-1.3.2.min.js
  static/js/markup.min.js
  static/js/shout-login.js
  static/js/shout-reset.js
