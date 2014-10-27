@@ -88,12 +88,12 @@ def serialize_user_details(user_id, places, current_user):
       votes = Vote.get_user_votes(user_id)
       user_dict['v'] = votes
       memcache_put_user_dict(user_dict)
-    if user_id == current_user:
-      for vote in votes:
-        logging.debug('VOTES %s = %s, u=%s'%(
-            votes[vote]['DEBUG-place_name'],
-            votes[vote]['vote'],
-            votes[vote]['untried']))
+    #if user_id == current_user:
+    #  for vote in votes:
+    #    logging.debug('VOTES %s = %s, u=%s'%(
+    #        votes[vote]['DEBUG-place_name'],
+    #        votes[vote]['vote'],
+    #        votes[vote]['untried']))
     if user_id != current_user:
       to_be_removed = []
       for vote in votes:
