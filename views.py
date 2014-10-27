@@ -81,7 +81,7 @@ def serialize_user_details(user_id, places, current_user):
   @return:
   """
   try:
-    profile_in("serialize_user_details")
+    #profile_in("serialize_user_details")
     user_dict = memcache_get_user_dict(user_id)
     if 'v' in user_dict:
       votes = user_dict['v']
@@ -114,15 +114,12 @@ def serialize_user_details(user_id, places, current_user):
       if not place_key in places:
         place_json = itemKeyToJSONPoint(place_key)
         if user_id == current_user:
-          logging.debug('serialize_user_details %s vote:%s'%(
-              place_json['place_name'],
-              votes[place_key]['vote']))
           place_json['vote'] = votes[place_key]['vote']
           place_json['untried'] = votes[place_key]['untried']
         places[place_key] = place_json
     for place in places:
       places[place] = adjust_votes_for_JSON_pt(places[place])
-    profile_out("serialize_user_details")
+    #profile_out("serialize_user_details")
     return result
   except Exception, e:
     logging.error("serialize_user_details Exception", exc_info=True)
@@ -134,7 +131,7 @@ class getFullUserRecord(BaseHandler):
     """ get the entire user record, including friends' places """
     my_id = self.user_id
     if my_id:
-      profile_in("getFullUserRecord")
+      #profile_in("getFullUserRecord")
       user = memcache_get_user_dict(my_id)
       if user:
         # logged in
@@ -175,7 +172,7 @@ class getFullUserRecord(BaseHandler):
         json.dump(result,
                   self.response.out,
                   default=json_serial)
-        profile_out("getFullUserRecord")
+        #profile_out("getFullUserRecord")
         return
     self.error(401)
 
