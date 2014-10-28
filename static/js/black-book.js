@@ -2386,6 +2386,7 @@ $(function () {
                 BB.watchPositionError,
                 BB.watchPositionOptions)
         }
+        BB.cuisine_setup_categories();
         BB.setupListeners();
         console.log("JS Init'd");
         $("#loading").html('.');
