@@ -965,6 +965,7 @@ var BB = {
             }
             var group = $( "#new-category-list" ),
                         $el;
+            group.controlgroup();
             for (var idx=0; idx<BB.cuisine_categories.length; idx++){
                 $el = $( "<a href='#'>" +
                     BB.cuisine_categories[idx] +
