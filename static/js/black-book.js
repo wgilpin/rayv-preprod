@@ -958,7 +958,19 @@ var BB = {
                     if (rayv.currentItem.category){
                         $('#new-category-list').hide();
                     }
+                    else{
+                        $('#new-category-list').show();
+                    }
+
                 })
+        },
+
+        cuisine_show_all_options: function(){
+            var lookup = $('#new-category-list');
+            lookup.show();
+            lookup.find('a').each(function(){
+                $(this).show();
+            });
         },
 
         cuisine_keyup: function(){
@@ -984,7 +996,9 @@ var BB = {
         set_edit_page_category: function () {
             console.log('set_edit_page_category = '+rayv.currentItem.category);
             $("#new-category").val(rayv.currentItem.category);
-            $("#cuisine-lookup").hide();
+            if (rayv.currentItem.category){
+                $("#cuisine-lookup").hide();
+            }
             BB.cuisine_setup_categories()
         },
 
@@ -1319,7 +1333,6 @@ var BB = {
             else {
                 $("#new-img").hide();
             }
-            $("#new-category-list").hide();
         },
 
 
@@ -1760,11 +1773,12 @@ var BB = {
          * load a place for edit when it comes from a geo search on Add New
          */
         item_create: function () {
+            console.log('item_create');
             var properTitle = BB.toProperCase($(this).data('title'));
             $("#new-detail-name").val(decodeURIComponent(properTitle));
             $("#new-detail-address").val($(this).data('address'));
             $("#new-category").val('');
-            $("#cuisine-lookup").hide();
+            BB.cuisine_setup_categories();
             $("#new-detail-comment").val("");
 
             //set the likes radio
