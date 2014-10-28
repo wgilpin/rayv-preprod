@@ -44,11 +44,16 @@ rayv.currentItem = rayv.currentItem||{};
             key = this.key;
         }
         if (key) {
-            _innerLoad(rayv.UserData.places[key], false);
+            try{
+                _innerLoad(rayv.UserData.places[key], false);
+            }
+            catch(e) {
+                console.error('loadFromKey')
+            }
         }
     };
     /**
-     * loads the surrentItem from an ajax return object
+     * loads the currentItem from an ajax return object
      * @param data {object} The ajax objet
      * @param is_json {bool} is the object already parsed as json?
      * @private
@@ -104,7 +109,7 @@ rayv.UserData = rayv.UserData||{};
      * only adds - no deletion here (as we don't ref count)
      * @param obj {object} has a .places element which is {list}
      */
-    var updatePlaceCache =function (obj) //noinspection JSUnnecessarySemicolon
+    var updatePlaceCache =function (obj) 
     {
         for (var idx in obj.places){
             //noinspection JSUnfilteredForInLoop
@@ -197,7 +202,7 @@ rayv.UserData = rayv.UserData||{};
      * @param key {string} the key to the object
      * @returns {string} comment text
      */
-    this.get_most_relevant_comment =function (key) //noinspection JSUnnecessarySemicolon
+    this.get_most_relevant_comment =function (key) 
     {
         if (this.myBook.votes[key]) {
             return this.myBook.votes[key].comment
@@ -231,7 +236,7 @@ rayv.UserData = rayv.UserData||{};
      * @param key {string} urlsafe place key
      * @returns {Array} of votes
      */
-    this.get_votes_for_item =function (key) //noinspection JSUnnecessarySemicolon
+    this.get_votes_for_item =function (key) 
     {
         var result = [];
         for (var idx in this.friends){
@@ -685,7 +690,7 @@ var BB = {
                     rayv.UserData.myBook.votes[it].untried))
                     placeList.push(it);
             }
-            if (BB.filter == "all") { //noinspection JSUnnecessarySemicolon
+            if (BB.filter == "all") { 
                 {
                                 //add the other lists
                                 for (var fIdx in rayv.UserData.friends) {
@@ -873,7 +878,7 @@ var BB = {
         /**
          * populate the place list on main page
          */
-        populateMainList: function () //noinspection JSUnnecessarySemicolon
+        populateMainList: function () 
         {
             console.log("populateMainList");
             // if lat=0 & long=0 then we will use the map position, else GPS
@@ -1188,10 +1193,10 @@ var BB = {
         /**
          * success callback on get item detail page voted from server
          */
-        loadVotesInner: function () //noinspection JSUnnecessarySemicolon
+        loadVotesInner: function () 
         {
             var votes = [];
-            for (var idx in rayv.UserData.friends){ //noinspection JSUnnecessarySemicolon
+            for (var idx in rayv.UserData.friends){ 
                 {
                                 //noinspection JSUnfilteredForInLoop
                                 var friend = rayv.UserData.friends[idx];
