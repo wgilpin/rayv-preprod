@@ -2096,6 +2096,10 @@ var BB = {
                     'watchPositionError ERROR(' +
                     err.code + '): ' +
                         err.message);
+            navigator.geolocation.getCurrentPosition(
+                BB.firstWatchPositionSuccess,
+                BB.watchPositionError,
+                BB.watchPositionOptions);
         },
 
         /**
@@ -2402,6 +2406,7 @@ $(function () {
         BB.setupListeners();
         console.log("JS Init'd");
         $("#loading").html('.');
+
     }
 )
 ;
