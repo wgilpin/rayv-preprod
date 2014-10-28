@@ -302,7 +302,7 @@ class Item(db.Model):
           logging.error("could not memcache Item " + key, exc_info=True)
       return item
     except BadKeyError:
-      logging.error('get_item key not found '+key)
+      pass
     except BadRequestError:
       #this happens if we pass the key form another app in - which we do
       logging.info('get_item key Bad Request '+key)
