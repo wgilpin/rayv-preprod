@@ -940,34 +940,45 @@ var BB = {
 
         },
 
-        cuisine_setup_categories: function(){
-            console.info('cuisine_setup_categories');
+        cuisine_load_categories: function(){
             if (BB.cuisine_categories){
+                console.info('cuisine_load_categories');
                 return;
             }
+            console.info('cuisine_load_categories Loading...');
             BB.cuisine_categories = [];
             $.get('/getCuisines_ajax',
                 {},
                 function(data){
-                    var group = $( "#new-category-list" ),
-                        $el,
-                        obj = jQuery.parseJSON(data);
+                    var obj = jQuery.parseJSON(data);
                     for (var idx=0; idx<obj.categories.length; idx++){
-                        $el = $( "<a href='#'>" +
-                            obj.categories[idx] +
-                            "</a>" ).bind( "click", BB.cuisine_lookup_click );
-                        group.controlgroup( "container" )["append"]($el);
-                        $el.buttonMarkup();
+                        BB.cuisine_categories.push(obj.categories[idx])
                     }
-                    group.controlgroup( "refresh" );
-                    if (rayv.currentItem.category){
-                        $('#new-category-list').hide();
-                    }
-                    else{
-                        $('#new-category-list').show();
-                    }
-
+                    console.info('cuisine_load_categories Loaded');
                 })
+        },
+
+        cuisine_setup_categories_picker: function(){
+            console.info('cuisine_setup_categories_picker');
+            if ($("#new-category-list").find('a').length > 0){
+                return;
+            }
+            var group = $( "#new-category-list" ),
+                        $el;
+            for (var idx=0; idx<BB.cuisine_categories.length; idx++){
+                $el = $( "<a href='#'>" +
+                    BB.cuisine_categories[idx] +
+                    "</a>" ).bind( "click", BB.cuisine_lookup_click );
+                group.controlgroup( "container" )["append"]($el);
+                $el.buttonMarkup();
+            }
+            group.controlgroup( "refresh" );
+            if (rayv.currentItem.category){
+                $('#new-category-list').hide();
+            }
+            else{
+                $('#new-category-list').show();
+            }
         },
 
         cuisine_show_all_options: function(){
@@ -1004,7 +1015,7 @@ var BB = {
             if (rayv.currentItem.category){
                 $("#cuisine-lookup").hide();
             }
-            BB.cuisine_setup_categories()
+            BB.cuisine_setup_categories_picker()
         },
 
         /**
@@ -1783,7 +1794,7 @@ var BB = {
             $("#new-detail-name").val(decodeURIComponent(properTitle));
             $("#new-detail-address").val($(this).data('address'));
             $("#new-category").val('');
-            BB.cuisine_setup_categories();
+            BB.cuisine_setup_categories_picker();
             $("#new-detail-comment").val("");
 
             //set the likes radio
@@ -2386,7 +2397,7 @@ $(function () {
                 BB.watchPositionError,
                 BB.watchPositionOptions)
         }
-        BB.cuisine_setup_categories();
+        BB.cuisine_load_categories();
         BB.setupListeners();
         console.log("JS Init'd");
         $("#loading").html('.');
