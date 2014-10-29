@@ -76,7 +76,7 @@ rayv.currentItem = rayv.currentItem||{};
         rayv.currentItem.vote = obj.vote;
         rayv.currentItem.distance = obj.distance;
         rayv.currentItem.rotation = 0;
-        ray.currentItem.untried = obj.untried;
+        rayv.currentItem.untried = obj.untried;
     };
     /**
      * Clears the currentItem
