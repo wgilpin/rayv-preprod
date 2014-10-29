@@ -1,21 +1,24 @@
 CACHE MANIFEST
-# Cache manifest version 0.1.00
+# Cache manifest version 0.1.02
  static/css/codiqa.ext.css
  static/css/codiqa.ext.min.css
  static/css/jqm-neue.css
  static/css/jquery.mobile.icons.min.css
  static/css/jquery-mobile.css
- static/css/jquery-mobile-1.3.2.min.css
  static/css/shout.css
  static/images/ajax-loader.gif
  static/images/rayvcircle.gif
  static/images/splash.png
  static/images/no-image.png
- static/images/heart-2.png
  static/images/heart-small.png
- static/images/no-entry-2.png
- static/images/star-2.png
+ static/images/heart-sm.png
+ static/images/heart-lg.png
+ static/images/no-entry-sm.png
+ static/images/no-entry-lg.png
+ static/images/noentry.png
+ static/images/noentry-small.png
  static/images/star.png
+ static/images/star-lg.png
  static/images/icon-grid.png
  static/images/icon-add.png
  static/images/icon-map.png
