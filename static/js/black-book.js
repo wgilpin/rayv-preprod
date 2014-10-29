@@ -34,7 +34,7 @@ rayv.currentItem = rayv.currentItem||{};
     this.rotation = 0;
     this.telephone = null;
     this.distance = null;
-    var untried = null;
+    this.untried = null;
     /**
      * loads the current item given its key
      * @param [key] {string} - urlsafe key
@@ -76,7 +76,7 @@ rayv.currentItem = rayv.currentItem||{};
         rayv.currentItem.vote = obj.vote;
         rayv.currentItem.distance = obj.distance;
         rayv.currentItem.rotation = 0;
-        untried = obj.untried;
+        ray.currentItem.untried = obj.untried;
     };
     /**
      * Clears the currentItem
