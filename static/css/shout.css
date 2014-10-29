@@ -769,7 +769,7 @@ div {
 }
 
 .item-untried {
-    background: url('/static/images/start-lg.png') no-repeat;
+    background: url('/static/images/star-lg.png') no-repeat;
 }
 
 .item-like {
