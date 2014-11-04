@@ -1349,6 +1349,7 @@ var BB = {
                 var el = $("#new-img").children("img");
                 el.attr("src", rayv.currentItem.img);
                 el.attr("style", "");
+                $("#new-img").show();
             }
             else {
                 $("#new-img").hide();
