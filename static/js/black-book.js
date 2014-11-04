@@ -447,21 +447,17 @@ var BB = {
          */
         updateCurrentItemInCache: function () {
             if (rayv.currentItem.key in rayv.UserData.places) {
-                rayv.UserData.places[rayv.currentItem.key].address =
-                    rayv.currentItem.address;
-                rayv.UserData.places[rayv.currentItem.key].category =
-                    rayv.currentItem.category;
-                if ((rayv.UserData.places[rayv.currentItem.key].img !=
-                    rayv.currentItem.img) ||
-                    (rayv.UserData.places[rayv.currentItem.key].vote !=
-                        rayv.currentItem.vote)) {
+                var item = rayv.UserData.places[rayv.currentItem.key];
+                item.address = rayv.currentItem.address;
+                item.category = rayv.currentItem.category;
+                if ((item.img != rayv.currentItem.img) ||
+                    (item.vote != rayv.currentItem.vote)) {
                     console.log("Can't update in cache - reload");
                     return false;
                 }
-                rayv.UserData.myBook.votes[rayv.currentItem.key].vote =
-                        rayv.currentItem.vote == 'dislike' ? -1 : 1;
-                rayv.UserData.myBook.votes[rayv.currentItem.key].comment =
-                    rayv.currentItem.descr;
+                var vote = rayv.UserData.myBook.votes[rayv.currentItem.key];
+                vote.vote = rayv.currentItem.vote == 'dislike' ? -1 : 1;
+                vote.comment = rayv.currentItem.descr;
                 console.log("Updated in cache ");
                 return true;
             }
@@ -1717,11 +1713,14 @@ var BB = {
                     $('#item-untried').addClass('ui-btn-active');
                 }
                 else {
-                    if (rayv.currentItem.vote > 0) {
-                        $('#item-like').addClass('ui-btn-active');
-                    }
-                    else {
-                        $('#item-dislike').addClass('ui-btn-active');
+                    var vote = rayv.currentItem.vote;
+                    if (vote){
+                        if (vote > 0) {
+                            $('#item-like').addClass('ui-btn-active');
+                        }
+                        else {
+                            $('#item-dislike').addClass('ui-btn-active');
+                        }
                     }
                 }
                 var img = $("#item-img");
