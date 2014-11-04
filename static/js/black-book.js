@@ -1232,14 +1232,21 @@ var BB = {
         updateitem: function () {
             console.log("updateitem");
             rayv.currentItem.descr = $("#item-descr").val();
-            rayv.currentItem.vote = 1;
+            rayv.currentItem.vote = null;
             rayv.currentItem.untried = false;
             if ($('#item-dislike').hasClass('ui-btn-active')) {
                 rayv.currentItem.vote = -1;
             }
+            else if ($('#item-like').hasClass('ui-btn-active')) {
+                rayv.currentItem.vote = 1;
+            }
             else if ($('#item-untried').hasClass('ui-btn-active')) {
                 rayv.currentItem.untried = true;
                 rayv.currentItem.vote = 0;
+            }
+            if (!$.isNumeric(rayv.currentItem.vote)){
+                alert('You need to vote');
+                return;
             }
             BB.saveCurrentItem();
         },
