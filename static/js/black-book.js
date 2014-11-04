@@ -1714,7 +1714,7 @@ var BB = {
                 }
                 else {
                     var vote = rayv.currentItem.vote;
-                    if (vote){
+                    if ($.isNumeric(vote)){
                         if (vote > 0) {
                             $('#item-like').addClass('ui-btn-active');
                         }
