@@ -1502,6 +1502,7 @@ var BB = {
                         'src="' + oFREvent.target.result + '">');
                 $('#new-preview-box').show();
                 img.attr('src', oFREvent.target.result);
+                // show the preview
                 $("#new-img").show();
                 try {
                     $('#image-dialog').popup('close')
