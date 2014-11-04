@@ -82,6 +82,7 @@ def serialize_user_details(user_id, places, current_user):
   """
   try:
     #profile_in("serialize_user_details")
+    # get it from the cache
     user_dict = memcache_get_user_dict(user_id)
     if 'v' in user_dict:
       votes = user_dict['v']
@@ -89,12 +90,7 @@ def serialize_user_details(user_id, places, current_user):
       votes = Vote.get_user_votes(user_id)
       user_dict['v'] = votes
       memcache_put_user_dict(user_dict)
-    #if user_id == current_user:
-    #  for vote in votes:
-    #    logging.debug('VOTES %s = %s, u=%s'%(
-    #        votes[vote]['DEBUG-place_name'],
-    #        votes[vote]['vote'],
-    #        votes[vote]['untried']))
+    # we ignore any 'untried' votes from a friend
     if user_id != current_user:
       to_be_removed = []
       for vote in votes:
@@ -188,6 +184,7 @@ class user_profile(BaseHandler):
     user_obj = User().get_by_id(user['user_id'])
     user_obj.screen_name = self.request.get('screen_name')
     user_obj.put()
+    memcache_touch_user(self.user_id)
 
 def json_serial(o):
   """

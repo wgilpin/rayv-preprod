@@ -58,7 +58,8 @@ class User(webapp2_extras.appengine.auth.models.User):
 
   def profile(self):
     try:
-      res = db.GqlQuery("SELECT * FROM UserProfile WHERE userId = :1", self.key.id()).get()
+      res = db.GqlQuery(
+        "SELECT * FROM UserProfile WHERE userId = :1", self.key.id()).get()
       if res:
         return res
       raise LookupError
@@ -68,8 +69,10 @@ class User(webapp2_extras.appengine.auth.models.User):
       # put this User's UserId in the profile to link them
       new_profile.userId = self.key.id()
       new_profile.friends = []
-      new_profile.last_write = datetime.datetime.now()  # set when a change is made to your book
-      new_profile.last_read = datetime.datetime.now()  # set when we load this so we can check vs write
+      # last_write set when a change is made to your book
+      new_profile.last_write = datetime.datetime.now()
+      # last_read set when we load this so we can check vs write
+      new_profile.last_read = datetime.datetime.now()
       new_profile.put()
       return new_profile
 

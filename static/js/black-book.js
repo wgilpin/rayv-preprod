@@ -1659,7 +1659,6 @@ var BB = {
                 rayv.currentItem.loadFromKey();
                 $("#item-title").html(rayv.currentItem.place_name);
                 $("#item-address").html(rayv.currentItem.address);
-
                 $("#item-category").html(rayv.currentItem.category);
                 if (rayv.currentItem.telephone) {
                     var phone = $("#item-phone-link");
@@ -1695,6 +1694,7 @@ var BB = {
 
                 $("#item-descr").val(comment);
 
+                // friends' comments
                 $("#item-comments").html();
                 var votes = rayv.UserData.get_votes_for_item(
                     rayv.currentItem.key);
@@ -2283,7 +2283,8 @@ $(function () {
         }
 
         function beforePageShow(event, data) {
-            //some pages are ones you mustn't land on from outside as they need loading
+            //some pages are ones you mustn't land on from
+            // outside as they need loading
             console.log("beforePageShow " +
                 data.prevPage.attr("id") + ">" +
                 event.target.id);
@@ -2306,17 +2307,7 @@ $(function () {
                     BB.map_init();
                 }
             }
-//        function remove_old_place_searches() {
-//            var UIlist = Mark.up(BB.add_search_nearby_template, {});
-//            $("#new-page").append(UIlist).listview().trigger('create').trigger('updatelayout');
-//        }
-
-//        if (event.target.id == "new-page") {
-//            $("#search-location-loading").hide();
-//            //remove old results
-//            $("#new-page ul").remove();
-//            BB.process_template({}, remove_old_place_searches);
-//        }
+//
             if (event.target.id == "new-place") {
                 if (data.prevPage.attr("id") == "new-detail") {
                     //coming back from new page
