@@ -2120,7 +2120,7 @@ var BB = {
                 '/user_profile',
                 {'screen_name': $('#settings-screen-name').val()},
                 function (data) {
-
+                    alert('Saved');
                 });
         },
 
