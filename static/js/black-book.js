@@ -1502,7 +1502,7 @@ var BB = {
                         'src="' + oFREvent.target.result + '">');
                 $('#new-preview-box').show();
                 img.attr('src', oFREvent.target.result);
-                $("#item-img").show();
+                //$("#item-img").show();
                 $("#new-img").show();
                 try {
                     $('#image-dialog').popup('close')
@@ -1660,7 +1660,7 @@ var BB = {
                 // the image should be shown on the item page too
                 if (previousPage == "image-page")
                     $("#item-img").show();
-                $("#item-img").show();
+                //$("#item-img").show();
                 rayv.currentItem.loadFromKey();
                 $("#item-title").html(rayv.currentItem.place_name);
                 $("#item-address").html(rayv.currentItem.address);
