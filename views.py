@@ -617,10 +617,7 @@ class getItem_ajax(BaseHandler):
              "category": it.category.title,
              "lat": str(it.lat),
              "lng": str(it.lng),
-             "key": str(it.key()),
-             "distance": it.distance_from(
-               float(self.request.get("lat")),
-               float(self.request.get("lng")))
+             "key": str(it.key())
       }
       if it.photo:
         res["img"] = str(it.key())
@@ -771,8 +768,8 @@ class getMapList_Ajax(BaseHandler):
         include_maps_data=True,
         user_id=self.user_id,
         exclude_user_id=self.user_id)
-      r = self.render_template("new-place-list.htt", {"results": result})
-      return r
+      json.dump(result,
+                self.response.out)
     else:
       self.error(401)
 

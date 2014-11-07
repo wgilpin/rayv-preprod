@@ -109,34 +109,6 @@ def geoCodeAddress(address, search_centre):
   return pos
 
 
-# it is an item dictionary
-# origin is a LatLng
-def geo_distance(point, origin):
-  # deprecated for approx_distance
-  assert False;
-  # profile_in("distance_geo")
-  # Equirectangular approximation
-  # http://www.movable-type.co.uk/scripts/latlong.html
-  d_lng = abs(origin.lng - point.lng)
-  d_lat = abs(origin.lat - point.lat)
-  memcache_key = "D:%.5f:%.5f" % (d_lat * 1000, d_lng * 1000)
-  old = memcache.get(memcache_key)
-  if old:
-    profile_out("geo_distance")
-    return float(old)
-  lat1 = math.radians(origin.lat)
-  lon1 = math.radians(origin.lng)
-  lat2 = math.radians(point.lat)
-  lon2 = math.radians(point.lng)
-  R = 6371  # radius of the earth in km
-  x = (lon2 - lon1) * math.cos(0.5 * (lat2 + lat1))
-  y = lat2 - lat1
-  d = R * math.sqrt(x * x + y * y)
-  # to miles
-  d /= 1.609344
-  memcache.set(memcache_key, str(d))
-  # profile_out("geo_distance")
-  return d
 
 
 
@@ -274,8 +246,6 @@ def geoSearch(search_centre,
   return_data['count'] = len(local_results)
   # profile_out("geoSearch MAP Build")
 
-  def get_dist(item):
-    return item["distance"]
 
   if include_maps:
     # profile_in("geoSearch MAP")
@@ -324,9 +294,6 @@ def geoSearch(search_centre,
         if not skip_it:
           pt = LatLng(lat=place["geometry"]["location"]["lat"],
                       lng=place["geometry"]["location"]["lng"])
-          dist_gps = approx_distance(pt, my_location)
-          dist_map = approx_distance(pt, search_centre)
-          dist_str = prettify_distance(dist_gps)
           detail = {
             'lat': place["geometry"]["location"]["lat"],
             'lng': place["geometry"]["location"]["lng"],
@@ -334,9 +301,6 @@ def geoSearch(search_centre,
             'place_name': place["name"],
             'category': "Local Place",
             'address': place["vicinity"],
-            'distance': dist_str,
-            'distance_float': dist_gps,
-            'distance_map_float': dist_map,
             'voteRatio': -1,
             'invVoteRatio': -1,
             'is_map': True}
@@ -344,7 +308,6 @@ def geoSearch(search_centre,
     # profile_out("geoSearch MAP")
 
   # profile_in("geoSearch MAP Final")
-  local_results.sort(key=itemgetter('distance_map_float'))
   return_data['points'] = local_results
   # profile_out("geoSearch MAP Final")
   # profile_out("geoSearch")
@@ -352,15 +315,7 @@ def geoSearch(search_centre,
 
 
 
-def prettify_distance(d):
-  # profile_in("prettify_distance")
-  if d >= 1.0:
-    dist_str = "%.1f miles" % d
-  else:
-    yds = int(d * 90) * 20
-    dist_str = "%d yds" % yds
-  # profile_out("prettify_distance")
-  return dist_str
+
 
 
 class LatLng():
@@ -372,23 +327,7 @@ class LatLng():
     self.lng = lng
 
 
-def approx_distance(point, origin):
-  # todo: can this be moved client side?
-  # based on 1/60 rule
-  # delta lat. Degrees * 69 (miles)
-  try:
-    p_lat = point.lat
-    p_lng = point.lng
-  except AttributeError, e:
-    p_lat = point["lat"]
-    p_lng = point["lng"]
-  d_lat = (origin.lat - p_lat) * 69
-  # cos(lat) approx by 1/60
-  cos_lat = min(1, (90 - p_lat) / 60)
-  #delta lng = degrees * cos(lat) *69 miles
-  d_lng = (origin.lng - p_lng) * 69 * cos_lat
-  dist = sqrt(d_lat * d_lat + d_lng * d_lng)
-  return dist
+
 
 
 def itemKeyToJSONPoint(key):
@@ -457,22 +396,22 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
       'is_map': False}
     if hasattr(it, 'key'):
       memcache.add("JSON:" + str(it.key()), data)
-    if GPS_origin:
-      # If GPS_origin is None then we include no distnce info (done client side)
-      dist_from_GPS = approx_distance(it, GPS_origin)
-      if map_origin:
-        if GPS_origin.lat == map_origin.lat and \
-                GPS_origin.lng == map_origin.lng:
-          dist_from_map = dist_from_GPS
-        else:
-          dist_from_map = approx_distance(it, map_origin)
-      else:
-        dist_from_map = dist_from_GPS
-
-      dist_str = prettify_distance(dist_from_GPS)
-      data['distance'] = dist_str
-      data['distance_float'] = dist_from_GPS
-      data['distance_map_float'] = dist_from_map
+    # if GPS_origin:
+    #   # If GPS_origin is None then we include no distnce info (done client side)
+    #   dist_from_GPS = approx_distance(it, GPS_origin)
+    #   if map_origin:
+    #     if GPS_origin.lat == map_origin.lat and \
+    #             GPS_origin.lng == map_origin.lng:
+    #       dist_from_map = dist_from_GPS
+    #     else:
+    #       dist_from_map = approx_distance(it, map_origin)
+    #   else:
+    #     dist_from_map = dist_from_GPS
+    #
+    #   dist_str = prettify_distance(dist_from_GPS)
+    #   data['distance'] = dist_str
+    #   data['distance_float'] = dist_from_GPS
+    #   data['distance_map_float'] = dist_from_map
 
     return data
   except Exception, E:

@@ -1,28 +1,28 @@
 //var google={};
-var rayv = rayv||{};
+var rayv = rayv || {};
 /**
  * create a geo posn
  * @param lat
  * @param lng
  * @constructor
  */
-rayv.LatLng = function(lat, lng){
+rayv.LatLng = function (lat, lng) {
     this.lat = lat;
     this.lng = lng;
-    this.googleFormat = function(){
+    this.googleFormat = function () {
         return new google.maps.LatLng(this.lat, this.lng);
     };
-    this.loadFromGoogleFormat = function(g_fmt){
+    this.loadFromGoogleFormat = function (g_fmt) {
         this.lat = g_fmt.lat();
         this.lng = g_fmt.lng();
         return this;
     }
 };
 
-rayv.currentItem = rayv.currentItem||{};
-(function(){
+rayv.currentItem = rayv.currentItem || {};
+(function () {
     this.address = "";
-    this.position = new rayv.LatLng(0.0,0.0);
+    this.position = new rayv.LatLng(0.0, 0.0);
     this.place_name = "";
     this.descr = "";
     this.category = "";
@@ -44,10 +44,10 @@ rayv.currentItem = rayv.currentItem||{};
             key = this.key;
         }
         if (key) {
-            try{
+            try {
                 _innerLoad(rayv.UserData.places[key], false);
             }
-            catch(e) {
+            catch (e) {
                 console.error('loadFromKey')
             }
         }
@@ -87,7 +87,7 @@ rayv.currentItem = rayv.currentItem||{};
         rayv.currentItem.category = "";
         rayv.currentItem.website = "";
         rayv.currentItem.descr = "";
-        rayv.currentItem.position = new rayv.LatLng(0,0);
+        rayv.currentItem.position = new rayv.LatLng(0, 0);
         rayv.currentItem.key = null;
         rayv.currentItem.mine = "";
         rayv.currentItem.img = "";
@@ -98,10 +98,10 @@ rayv.currentItem = rayv.currentItem||{};
 }).apply(rayv.currentItem);
 
 //todo: put this in local storage
-rayv.UserData = rayv.UserData||{};
-(function(){
-    var my_id =0;
-    this.places ={};
+rayv.UserData = rayv.UserData || {};
+(function () {
+    var my_id = 0;
+    this.places = {};
     this.myBook = {};
     this.friends = {};
     /**
@@ -109,9 +109,8 @@ rayv.UserData = rayv.UserData||{};
      * only adds - no deletion here (as we don't ref count)
      * @param obj {object} has a .places element which is {list}
      */
-    var updatePlaceCache =function (obj) 
-    {
-        for (var idx in obj.places){
+    var updatePlaceCache = function (obj) {
+        for (var idx in obj.places) {
             //noinspection JSUnfilteredForInLoop
             var place = obj.places[idx];
             if (!(place.key in rayv.UserData.places)) {
@@ -124,7 +123,7 @@ rayv.UserData = rayv.UserData||{};
      * get All user data from the server
      * @param callback {function} callback on completion
      */
-    this.load =function (callback) {
+    this.load = function (callback) {
         var request = {};
         if (!BB.splash) {
             $("#list-loading").show();
@@ -160,7 +159,7 @@ rayv.UserData = rayv.UserData||{};
      * load, cache & display the thumbs for the current list, async
      * @param listULId {string} element ID of the list
      */
-    this.getThumbs =function (listULId) {
+    this.getThumbs = function (listULId) {
         $(listULId).find("li").each(function () {
             // get the data-key from the <a>
             var key = $(this).find('a').data('key');
@@ -202,13 +201,12 @@ rayv.UserData = rayv.UserData||{};
      * @param key {string} the key to the object
      * @returns {string} comment text
      */
-    this.get_most_relevant_comment =function (key) 
-    {
+    this.get_most_relevant_comment = function (key) {
         if (this.myBook.votes[key]) {
             return this.myBook.votes[key].comment
         }
         //not in my list
-        for (var idx in this.friends){
+        for (var idx in this.friends) {
             //noinspection JSUnfilteredForInLoop
             var friend = this.friends[idx];
             if (friend.votes[key]) {
@@ -236,10 +234,9 @@ rayv.UserData = rayv.UserData||{};
      * @param key {string} urlsafe place key
      * @returns {Array} of votes
      */
-    this.get_votes_for_item =function (key) 
-    {
+    this.get_votes_for_item = function (key) {
         var result = [];
-        for (var idx in this.friends){
+        for (var idx in this.friends) {
             //noinspection JSUnfilteredForInLoop
             var friend = this.friends[idx];
             var vote = {name: friend.name};
@@ -254,10 +251,6 @@ rayv.UserData = rayv.UserData||{};
 
 var BB = {
         isOnline: true,
-        list_item_template: null,
-        item_votes_template: null,
-        friend_comment_template: null,
-        add_search_nearby_template: null,
         //global timestamp = time of next list load - initially one minute ago
         nextListLoad: null,
         mapInfoWindows: [],
@@ -265,11 +258,11 @@ var BB = {
         creatorMapMarker: null,
         marker: null,
         navBarActive: false,
-        lastGPSPosition:  new rayv.LatLng(0,0),
+        lastGPSPosition: new rayv.LatLng(0, 0),
         // map_centred set if blue home button pressed, reset if dragged
         map_centred: false,
         lastGPSTime: 0,
-        lastMapPosition: {"position": new rayv.LatLng(0,0),
+        lastMapPosition: {"position": new rayv.LatLng(0, 0),
             "isSet": false,
             "zoomIn": false},
         theMap: null,
@@ -278,7 +271,7 @@ var BB = {
         iconPath: "/static/images/",
         filter: "mine",
         use_test_location: false,
-        test_position: new rayv.LatLng(0,0),
+        test_position: new rayv.LatLng(0, 0),
         imageRotation: 0,
         watchPositionOptions: {
             enableHighAccuracy: true,
@@ -288,7 +281,7 @@ var BB = {
         /**
          * hide all waiting spinners
          */
-        hide_waiting: function(){
+        hide_waiting: function () {
             $('.waiting').hide();
             BB.detail_saving = false;
             console.log('hide_waiting timeout');
@@ -298,7 +291,7 @@ var BB = {
          * @param selector {string} jQuery selector for the element
          * @returns {number} time id
          */
-        show_waiting: function(selector){
+        show_waiting: function (selector) {
             //show the ajax spinner & set time to turn off
             var timer = window.setTimeout(BB.hide_waiting, 20000);
             $(selector).show();
@@ -457,7 +450,7 @@ var BB = {
                 }
                 var vote = rayv.UserData.myBook.votes[rayv.currentItem.key];
                 vote.vote = rayv.currentItem.vote == 'dislike' ? -1 : 1;
-                vote.comment = rayv.currentItem.descr;
+                vote.comment = rayv.currentItem.descr;
                 console.log("Updated in cache ");
                 return true;
             }
@@ -473,18 +466,18 @@ var BB = {
         codeLatLng: function () {
             BB.geocoder.geocode({'latLng': BB.creatorMap.getCenter()},
                 function (results, status) {
-                if (status == google.maps.GeocoderStatus.OK) {
-                    if (results[1]) {
-                        var el = $("#dragged-address");
-                        el.text(results[0].formatted_address);
-                        el.show();
-                        $("#create-new-save-btn").removeClass("ui-disabled")
+                    if (status == google.maps.GeocoderStatus.OK) {
+                        if (results[1]) {
+                            var el = $("#dragged-address");
+                            el.text(results[0].formatted_address);
+                            el.show();
+                            $("#create-new-save-btn").removeClass("ui-disabled")
+                        }
+                    } else {
+                        $("#create-new-save-btn").addClass("ui-disabled");
+                        console.log("Geocoder failed due to: " + status);
                     }
-                } else {
-                    $("#create-new-save-btn").addClass("ui-disabled");
-                    console.log("Geocoder failed due to: " + status);
-                }
-            });
+                });
         },
 
         /**
@@ -589,7 +582,7 @@ var BB = {
                             BB.loadUserData();
                         }
                     },
-                    error: function() {
+                    error: function () {
                         hide_waiting();
                     }
                 });
@@ -672,7 +665,7 @@ var BB = {
             var LIPrototype =
                 "<li data-theme='c' " +
                 "data-icon='false'>" +
-                    "<a style='background-color:white;' onclick='";
+                "<a style='background-color:white;' onclick='";
 
             $(UIlist).find('li').remove();
             if (BB.isMapPage()) {
@@ -686,19 +679,19 @@ var BB = {
                     rayv.UserData.myBook.votes[it].untried))
                     placeList.push(it);
             }
-            if (BB.filter == "all") { 
+            if (BB.filter == "all") {
                 {
-                                //add the other lists
-                                for (var fIdx in rayv.UserData.friends) {
-                                    //noinspection JSUnfilteredForInLoop
-                                    var friend = rayv.UserData.friends[fIdx];
-                                    for (it in friend.votes) {
-                                        //noinspection JSUnfilteredForInLoop
-                                        if (placeList.indexOf(it) == -1) {
-                                            placeList.push(it)
-                                        }
-                                    }
-                                }
+                    //add the other lists
+                    for (var fIdx in rayv.UserData.friends) {
+                        //noinspection JSUnfilteredForInLoop
+                        var friend = rayv.UserData.friends[fIdx];
+                        for (it in friend.votes) {
+                            //noinspection JSUnfilteredForInLoop
+                            if (placeList.indexOf(it) == -1) {
+                                placeList.push(it)
+                            }
+                        }
+                    }
                 }
             }
             var detailList = [];
@@ -754,7 +747,7 @@ var BB = {
                         // it's a google place result - place_name, lat, long
                         click_fn =
                             BB.format(
-                                "javascript:loadMapItemForEdit(" +
+                                    "javascript:loadMapItemForEdit(" +
                                     "'{0}','{1}','{2}');",
                                 geoPt.place_name, geoPt.lat, geoPt.lng);
                         newListItemEnd = click_fn +
@@ -771,7 +764,9 @@ var BB = {
                             context.icon = Number(geoPtIdx) + 1;
                         }
                         // https://github.com/adammark/Markup.js/
-                        newListItem = Mark.up(BB.list_item_template, context);
+                        newListItem = templates.render(
+                            'list-item-template',
+                            context);
                     }
                     UIlist.append(newListItem);
 
@@ -820,22 +815,7 @@ var BB = {
                 return UIlist;
             }
 
-            if (BB.list_item_template == null) {
-                //load from file
-                $.get(
-                    'static/templates/list-item-template.htt',
-                    null,
-                    function (data) {
-                        BB.list_item_template = data;
-
-                        return inner_setup_list();
-                    }
-                )
-            }
-
-            else {
-                return inner_setup_list();
-            }
+            return inner_setup_list();
         },
 
         /**
@@ -874,8 +854,7 @@ var BB = {
         /**
          * populate the place list on main page
          */
-        populateMainList: function () 
-        {
+        populateMainList: function () {
             console.log("populateMainList");
             // if lat=0 & long=0 then we will use the map position, else GPS
             if (!BB.splash) {
@@ -898,12 +877,12 @@ var BB = {
             BB.theMap.setCenter(last);
 
             // update points with distance
-            var map_centre = new rayv.LatLng(0,0).
+            var map_centre = new rayv.LatLng(0, 0).
                 loadFromGoogleFormat(BB.theMap.getCenter());
             console.log("distances from Map: " +
                 map_centre.lat + ", " +
                 map_centre.lng);
-            for (var key in rayv.UserData.places){
+            for (var key in rayv.UserData.places) {
                 //noinspection JSUnfilteredForInLoop
                 var place = rayv.UserData.places[key];
                 var dist = BB.approx_distance(place, BB.lastGPSPosition);
@@ -936,8 +915,8 @@ var BB = {
 
         },
 
-        cuisine_load_categories: function(){
-            if (BB.cuisine_categories){
+        cuisine_load_categories: function () {
+            if (BB.cuisine_categories) {
                 console.info('cuisine_load_categories');
                 return;
             }
@@ -945,71 +924,71 @@ var BB = {
             BB.cuisine_categories = [];
             $.get('/getCuisines_ajax',
                 {},
-                function(data){
+                function (data) {
                     var obj = jQuery.parseJSON(data);
-                    for (var idx=0; idx<obj.categories.length; idx++){
+                    for (var idx = 0; idx < obj.categories.length; idx++) {
                         BB.cuisine_categories.push(obj.categories[idx])
                     }
                     console.info('cuisine_load_categories Loaded');
                 })
         },
 
-        cuisine_setup_categories_picker: function(){
+        cuisine_setup_categories_picker: function () {
             console.info('cuisine_setup_categories_picker');
-            if ($("#new-category-list").find('a').length > 0){
+            if ($("#new-category-list").find('a').length > 0) {
                 return;
             }
-            var group = $( "#new-category-list" ),
-                        $el;
+            var group = $("#new-category-list"),
+                $el;
             group.controlgroup();
-            for (var idx=0; idx<BB.cuisine_categories.length; idx++){
-                $el = $( "<a href='#'>" +
+            for (var idx = 0; idx < BB.cuisine_categories.length; idx++) {
+                $el = $("<a href='#'>" +
                     BB.cuisine_categories[idx] +
-                    "</a>" ).bind( "click", BB.cuisine_lookup_click );
-                group.controlgroup( "container" )["append"]($el);
+                    "</a>").bind("click", BB.cuisine_lookup_click);
+                group.controlgroup("container")["append"]($el);
                 $el.buttonMarkup();
             }
-            group.controlgroup( "refresh" );
-            if (rayv.currentItem.category){
+            group.controlgroup("refresh");
+            if (rayv.currentItem.category) {
                 $('#new-category-list').hide();
             }
-            else{
+            else {
                 $('#new-category-list').show();
             }
         },
 
-        cuisine_show_all_options: function(){
+        cuisine_show_all_options: function () {
             var lookup = $('#new-category-list');
             lookup.show();
-            lookup.find('a').each(function(){
+            lookup.find('a').each(function () {
                 $(this).show();
             });
         },
 
-        cuisine_keyup: function(){
+        cuisine_keyup: function () {
             var text = $('#new-category').val().toLowerCase();
             var lookup = $('#new-category-list');
             lookup.show();
-            lookup.find('a').each(function(){
-                if ($(this).text().toLowerCase().indexOf(text)>-1){
+            lookup.find('a').each(function () {
+                if ($(this).text().toLowerCase().indexOf(text) > -1) {
                     $(this).show();
                 }
-                else{
+                else {
                     $(this).hide();
                 }
             });
         },
 
-        cuisine_lookup_click: function(){
+        cuisine_lookup_click: function () {
             console.log('cuisine_lookup_click');
             $('#new-category').val($(this).text());
             $('#new-category-list').hide();
         },
 
         set_edit_page_category: function () {
-            console.log('set_edit_page_category = '+rayv.currentItem.category);
+            console.log('set_edit_page_category = ' + rayv.currentItem.category);
             $("#new-category").val(rayv.currentItem.category);
-            if (rayv.currentItem.category){
+            if (rayv.currentItem.category) {
                 $("#cuisine-lookup").hide();
             }
             BB.cuisine_setup_categories_picker()
@@ -1074,11 +1053,25 @@ var BB = {
          */
         loadPlacesListSuccessHandler: function (data) {
             console.log("loadPlacesListSuccessHandler");
-            BB.navBarEnable();
+            var obj = $.parseJSON(data);
+            var pts = obj.local.points;
+            for (var idx=0; idx < pts.length; idx++){
+                var pt = pts[idx];
+                var posn = new rayv.LatLng(pt.lat, pt.lng);
+                pt.dist_float = BB.approx_distance(
+                        posn,
+                        BB.lastGPSPosition);
+                var dist_str = BB.pretty_dist(pt.dist_float);
+                pt.distance = dist_str;
+            }
+            pts.sort(function(a, b){return a.dist_float - b.dist_float});
             var el = $("#new-place-list");
-            el.html(data);
+            el.html(templates.render(
+                'new-place-list-js',
+                {'points': obj.local.points}));
             el.trigger("create");
             el.find("ul").find("a").on("click", BB.new_places_list_click);
+            BB.navBarEnable();
             $("#new-place-list-loading").hide();
         },
 
@@ -1122,7 +1115,7 @@ var BB = {
         new_item_save_click: function () {
             // save a new item
             //called from new-detail-page
-            if (BB.detail_saving){
+            if (BB.detail_saving) {
                 console.log("new_item_save_click ignored");
                 return;
             }
@@ -1152,7 +1145,7 @@ var BB = {
 
             //rayv.currentItem.descr = $("#new-detail-comment").val();
             rayv.currentItem.category = $("#new-category").val();
-            if (!rayv.currentItem.category){
+            if (!rayv.currentItem.category) {
                 alert("You must pick a type of cuisine");
                 BB.detail_saving = false;
                 return;
@@ -1172,55 +1165,28 @@ var BB = {
         },
 
 
-
-
         /**
          * load the votes from friends into the UL on the detail page
          */
         loadVotes: function () {
-            /**
-             * load the list of votes for an item
-             */
-            //todo: use a template
-            if (BB.item_votes_template == null) {
-                //load from file
-                $.get(
-                    'static/templates/item-votes-list.htt',
-                    null,
-                    function (data) {
-                        BB.item_votes_template = data;
-                        BB.loadVotesInner();
-                    }
-                )
-            }
-            else {
-                BB.loadVotesInner()
-            }
-        },
-
-        /**
-         * success callback on get item detail page voted from server
-         */
-        loadVotesInner: function () 
-        {
             var votes = [];
-            for (var idx in rayv.UserData.friends){ 
+            for (var idx in rayv.UserData.friends) {
                 {
-                                //noinspection JSUnfilteredForInLoop
-                                var friend = rayv.UserData.friends[idx];
-                                for (var key in friend.votes){
-                                    //noinspection JSUnfilteredForInLoop
-                                    var vote = friend.votes[key];
-                                    if (vote == rayv.currentItem.key) {
-                                        vote.userName = friend.name;
-                                        votes.push(vote)
-                                    }
-                                }
+                    //noinspection JSUnfilteredForInLoop
+                    var friend = rayv.UserData.friends[idx];
+                    for (var key in friend.votes) {
+                        //noinspection JSUnfilteredForInLoop
+                        var vote = friend.votes[key];
+                        if (vote == rayv.currentItem.key) {
+                            vote.userName = friend.name;
+                            votes.push(vote)
+                        }
+                    }
                 }
             }
             var context = { votes: votes };
             // https://github.com/adammark/Markup.js/
-            var newVoteList = Mark.up(BB.item_votes_template, context);
+            var newVoteList = templates.render('item-votes-template', context);
             $("#item-votes-list-container").html(newVoteList);
             $("#item-votes").trigger("create");
             $("#item-votes-collapsible").show();
@@ -1244,7 +1210,7 @@ var BB = {
                 rayv.currentItem.untried = true;
                 rayv.currentItem.vote = 0;
             }
-            if (!$.isNumeric(rayv.currentItem.vote)){
+            if (!$.isNumeric(rayv.currentItem.vote)) {
                 alert('You need to vote');
                 return;
             }
@@ -1397,7 +1363,7 @@ var BB = {
         /**
          * open the web page associated with the place
          */
-        showItemWebPage: function (){
+        showItemWebPage: function () {
             window.location = rayv.currentItem.website;
         },
 
@@ -1419,7 +1385,7 @@ var BB = {
         dragMap: function () {
             // centered on the map
             BB.lastMapPosition.position =
-                new rayv.LatLng(0,0).loadFromGoogleFormat(BB.theMap.getCenter());
+                new rayv.LatLng(0, 0).loadFromGoogleFormat(BB.theMap.getCenter());
             BB.populateMainList("");
             BB.lastMapPosition.isSet = true;
             BB.lastMapPosition.zoomIn = false;
@@ -1470,7 +1436,6 @@ var BB = {
         },
 
 
-
         pageToList: function (event) {
             console.log("PAGE list");
 
@@ -1496,8 +1461,8 @@ var BB = {
             oFReader.onload = function (oFREvent) {
                 var img = $("#new-preview-box").children("div").children("img");
                 img.html(
-                    '<img height="150" ' +
-                    'id="new-image" ' +
+                        '<img height="150" ' +
+                        'id="new-image" ' +
                         'data-inline="true" ' +
                         'src="' + oFREvent.target.result + '">');
                 $('#new-preview-box').show();
@@ -1626,7 +1591,7 @@ var BB = {
             }
             else {
                 BB.creatorMap.setCenter(
-                     BB.lastGPSPosition.googleFormat());
+                    BB.lastGPSPosition.googleFormat());
             }
             $("#create-name").val($("#new-name").val());
             $("#dragged-address").hide();
@@ -1653,7 +1618,7 @@ var BB = {
         },
 
         pageToItem: function (event, previousPage) {
-            function pageTo_item_inner() {
+            if (rayv.currentItem.key) {
                 console.log("pageToItem");
                 //todo: check for new Item path
                 // if we have come from the image page,
@@ -1706,9 +1671,7 @@ var BB = {
                 var html = "";
                 votes.forEach(function (vote) {
                     if (vote.vote.comment.length > 0) {
-                        html += Mark.up(
-                            BB.friend_comment_template,
-                            vote);
+                        html += templates.render('friend-comment-template', vote);
                     }
                 });
                 $("#item-comments").html(html);
@@ -1723,7 +1686,7 @@ var BB = {
                 }
                 else {
                     var vote = rayv.currentItem.vote;
-                    if ($.isNumeric(vote)){
+                    if ($.isNumeric(vote)) {
                         if (vote > 0) {
                             $('#item-like').addClass('ui-btn-active');
                         }
@@ -1757,22 +1720,6 @@ var BB = {
                 $("#vote-cursor").val("");
                 $("#item-votes").html("");
                 BB.loadVotes()
-            }
-
-            if (rayv.currentItem.key) {
-                if (BB.friend_comment_template == null) {
-                    //load from file
-                    $.get(
-                        'static/templates/friend-comment-template.htt',
-                        null,
-                        function (template) {
-                            BB.friend_comment_template = template;
-                            pageTo_item_inner.call(this);
-                        })
-                }
-                else {
-                    pageTo_item_inner.call(this);
-                }
             }
         },
 
@@ -1822,22 +1769,6 @@ var BB = {
             rayv.currentItem.place_name = properTitle;
         },
 
-        process_template: function (data, callback) {
-            if (BB.add_search_nearby_template == null) {
-                //load from file
-                $.get(
-                    'static/templates/add-search-nearby-template.htt',
-                    null,
-                    function (template) {
-                        BB.add_search_nearby_template = template;
-                        callback(data);
-                    })
-            }
-            else {
-                callback(data);
-            }
-        },
-
         lookupAddressList: function (event) {
             var addr;
             $("#new-place-list-loading").show();
@@ -1848,8 +1779,17 @@ var BB = {
 
                     //safe_title = .replace(/\"/g, "&quot;").replace(/\'/g, "&lsquo;"),
                     // https://github.com/adammark/Markup.js/
+//                    Add Distance
+//                    for (var plIdx=0; plIdx<obj.local.points.length; plIdx++){
+//                        var pt = obj.local.points[plIdx];
+//                        pt.distance = BB.approx_distance(
+//                            LatLng(pt.lat,pt.lng),
+//                            BB.lastGPSPosition)
+//                    }
                     var context = {'items': obj.local.points};
-                    var UIlist = Mark.up(BB.add_search_nearby_template, context);
+                    var UIlist = templates.render(
+                        'add-search-nearby-template',
+                        context);
 
                     $("#new-place-list").
                         html(UIlist).listview().
@@ -1870,8 +1810,7 @@ var BB = {
                 $("#new-place-list-loading").hide();
                 //$.mobile.changePage("#new-address-list-page");
                 $("#new-place").find("ul").remove();
-                BB.process_template(
-                    jQuery.parseJSON(data), lookAddressList_inner)
+                lookAddressList_inner(jQuery.parseJSON(data));
             }
 
             function lookupAddressListErrorHandler() {
@@ -1882,7 +1821,7 @@ var BB = {
                 $("#new-page").find("ul").remove();
                 $("#create-new-address-box").show();
                 // string to be parsed
-                BB.process_template({items: []}, lookAddressList_inner);
+                lookAddressList_inner({items: []});
             }
 
             console.log("AJAX lookupAddressList");
@@ -1957,17 +1896,16 @@ var BB = {
 
         do_create_new_address: function () {
             var addr = $("#dragged-address").text();
-            if (addr.length > 0){
+            if (addr.length > 0) {
                 rayv.currentItem.clear();
                 rayv.currentItem.place_name = $("#create-name").val();
                 rayv.currentItem.address = addr;
                 rayv.currentItem.position =
-                    new rayv.LatLng(0,0).
+                    new rayv.LatLng(0, 0).
                         loadFromGoogleFormat(BB.creatorMap.getCenter());
                 BB.page_to_edit_item();
                 $.mobile.changePage("#new-detail");
-            }else
-            {
+            } else {
                 $("#create-new-save-btn").addClass("ui-disabled")
             }
 
@@ -2103,7 +2041,7 @@ var BB = {
             console.warn(
                     'watchPositionError ERROR(' +
                     err.code + '): ' +
-                        err.message);
+                    err.message);
             navigator.geolocation.getCurrentPosition(
                 BB.firstWatchPositionSuccess,
                 BB.watchPositionError,
@@ -2243,7 +2181,6 @@ var BB = {
     ;
 
 
-
 $(function () {
         function onPageShow(event, ui) {
             var previousPage = ui.prevPage.attr("id");
@@ -2345,30 +2282,6 @@ $(function () {
                 return $(elem).text().toUpperCase().indexOf(arg.toUpperCase()) >= 0;
             };
         });
-
-        //add a pipe to markup.js so we can do x-> 100%-x
-        Mark.pipes.subFrom = function (a, b) {
-            try {
-                return parseInt(b,10) - parseInt(a,10);
-            }
-            catch (e) {
-                return 0;
-            }
-        };
-
-
-        //add a pipe to markup.js to show x if x>y
-        Mark.pipes.above = function (a, b) {
-            try {
-                if (parseInt(a,10) > parseInt(b,10))
-                    return a;
-                else
-                    return "";
-            }
-            catch (e) {
-                return "";
-            }
-        };
 
 
         if (!navigator.geolocation) {

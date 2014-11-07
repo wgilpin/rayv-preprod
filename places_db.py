@@ -2,7 +2,7 @@ import json
 import logging
 from operator import itemgetter
 import urllib2
-from geo import findDbPlacesNearLoc, itemToJSONPoint, LatLng, approx_distance
+from geo import findDbPlacesNearLoc, itemToJSONPoint, LatLng
 from models import Vote
 import settings
 
@@ -68,7 +68,6 @@ class PlacesDB():
 
       sorted_results = points["points"]
       # this is sorted as the client doesnt for map items
-      sorted_results.sort(key=itemgetter('distance_map_float'))
       points["points"] = sorted_results
     result = {"local": points}
     return result
@@ -141,11 +140,9 @@ class PlacesDB():
         else:
           address = r['vicinity']
         post_code = r['postal_code'].split(' ')[0] if 'postal_code' in r else ''
-        distance = approx_distance(r['geometry']['location'], origin)
         detail = {'place_name': r['name'],
                   'address': address,
                   'post_code': post_code,
-                  'distance_map_float': distance,
                   "lat": r['geometry']['location']['lat'],
                   "lng": r['geometry']['location']['lng']}
         addresses.append(detail)

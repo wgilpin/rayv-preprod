@@ -1,0 +1,37 @@
+<ul data-role="listview" data-divider-theme="b" data-inset="true">
+    {{points}}
+        <li data-theme='c' data-icon='false'>
+            <a href='#new-detail'
+               data-transition='slide'
+               data-shout-is-map="{{is_map}}"
+               data-title="{{place_name}}"
+               data-shout-key="{{key}}"
+               data-address="{{address}}"
+               data-category="{{category}}"
+               data-lat="{{lat}}"
+               data-lng="{{lng}}"
+                <div class="list-item-container">
+                    <div class="item-img-container">
+                        <img class="item-pic"
+                             src="{{thumbnail}}">
+                    </div>
+                    <div class="list-item-text-container list-item-container-spacer">
+
+                        <div class="list-item-title">
+                            {{place_name}}
+                        </div>
+                        <div class="list-item-category">
+                            {{if category}}{{category}}{{else}}&emsp;{{/if}}
+                        </div>
+                        <div class="list-item-dist">
+                            {{distance}}
+                        </div>
+
+                    </div>
+                </div>
+            </a>
+        </li>
+    {{/points}}
+</ul>
+
+
