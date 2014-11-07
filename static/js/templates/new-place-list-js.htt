@@ -3,7 +3,7 @@
         <li data-theme='c' data-icon='false'>
             <a href='#new-detail'
                data-transition='slide'
-               data-shout-is-map="{{is_map}}"
+               data-shout-is-map="true"
                data-title="{{place_name}}"
                data-shout-key="{{key}}"
                data-address="{{address}}"

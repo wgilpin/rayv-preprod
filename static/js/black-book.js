@@ -1270,13 +1270,12 @@ var BB = {
             }
             $("#new-detail-name").val(rayv.currentItem.place_name);
             $("#new-detail-address").val(rayv.currentItem.address);
-            //CATEGORY logic
             BB.set_edit_page_category();
-
-            //END CATEGORY LOGIC
-            $("#new-detail-comment").val(
-                rayv.UserData.get_most_relevant_comment(rayv.currentItem.key));
-
+            // add my comment if there is one
+            if (rayv.UserData.myBook.votes[rayv.currentItem.key]) {
+               $("#new-detail-comment").val(
+                   rayv.UserData.myBook.votes[rayv.currentItem.key].comment);
+            };
             //set the likes radio
             if (rayv.currentItem.untried) {
                 $('#new-item-votes li').
