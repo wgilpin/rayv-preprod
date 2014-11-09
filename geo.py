@@ -6,6 +6,7 @@ import urllib
 import urllib2
 from google.appengine.api import memcache
 from google.appengine.ext import db
+import time
 from caching import memcache_get_user_dict
 import geohash
 from models import Item, getProp, get_category
@@ -374,6 +375,11 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
       category = get_category(str(Item.category.get_value_for_datastore(it)))
     else:
       category = None
+    edit_time = getProp(it,'edited')
+    if edit_time:
+      edit_time_unix = int(time.mktime(edit_time.timetuple())) * 1000
+    else:
+      edit_time_unix = 0
     data = {
       'lat': getProp(it, 'lat'),
       'lng': getProp(it, 'lng'),
@@ -386,6 +392,7 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
       'untried': False,
       'vote': 'null',
       'img': image_url,
+      'edited': edit_time_unix,
       'thumbnail': thumbnail_url,
       'up': it.votes.filter("vote =", 1).count() if hasattr(it, 'votes') else 0,
       'down': it.votes.filter("vote =", -1).count() if

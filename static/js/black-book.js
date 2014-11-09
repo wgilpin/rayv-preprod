@@ -45,7 +45,7 @@ rayv.currentItem = rayv.currentItem || {};
         }
         if (key) {
             try {
-                _innerLoad(rayv.UserData.places[key], false);
+                _innerLoad(rayv.UserData.places.get(key), false);
             }
             catch (e) {
                 console.error('loadFromKey')
@@ -70,6 +70,8 @@ rayv.currentItem = rayv.currentItem || {};
         rayv.currentItem.telephone = obj.telephone;
         rayv.currentItem.website = obj.website;
         rayv.currentItem.position = new rayv.LatLng(obj.lat, obj.lng);
+        rayv.currentItem.lat = obj.lat;
+        rayv.currentItem.lng = obj.lng;
         rayv.currentItem.key = obj.key;
         rayv.currentItem.mine = obj.mine;
         rayv.currentItem.img = obj.img;
@@ -97,13 +99,190 @@ rayv.currentItem = rayv.currentItem || {};
     }
 }).apply(rayv.currentItem);
 
+ImageStore = function () {
+    var images = [];
+    this.is_empty = function(){
+        return images.length == 0;
+    };
+    this.load_image = function (key, src) {
+        var image;
+        if (images[key]) {
+            image = images[key];
+        }
+        else {
+            image = new Image()
+        }
+        image.src = src;
+        image.className = 'item-pic';
+        images[key] = image;
+    };
+    this.refresh_image = function(key, src){
+        if (images[key]){
+            return;
+        }
+        this.load_image(key, src);
+    };
+    this.get_image = function (key) {
+        return images[key];
+    };
+    this.assign_image = function (img_el, key){
+        if (images[key]){
+            $(img_el).replaceWith(images[key])
+        }
+        else{
+            console.error('ImageStore.assign_image: '+key)
+        }
+    }
+};
+
+DictStore = function (dict_name) {
+    this.dict_name = dict_name;
+    var has_local_storage = !(typeof window.localStorage == 'undefined');
+    var mem_data = null;
+    this.make_key = function (k) {
+        return this.dict_name + ':' + k;
+    };
+
+    this.is_empty = function () {
+        // try a load first
+        if (mem_data && mem_data.length > 0) {
+            return false;
+        }
+        this.load();
+        // if, after a load, still empty then it's Really Empty
+        if (!mem_data || mem_data.length == 0) {
+            return true;
+        }
+        ;
+        return false;
+    };
+    /**
+     * load from localStorage
+     */
+    this.load = function () {
+        mem_data = {};
+        var item_key_starts_at = this.dict_name.length + 1;
+        for (var i = 0; i < window.localStorage.length; i++) {
+            var key = window.localStorage.key(i);
+            if (key.indexOf(this.dict_name) == 0) {
+
+                var stored = window.localStorage.getItem(key);
+                if (stored) {
+                    var k = key.substring(item_key_starts_at);
+                    var obj = JSON.parse(stored);
+                    mem_data[k] = obj;
+                }
+                ;
+            }
+        }
+    };
+    /**
+     * Store in mem & localStorage
+     * @param k {string} key
+     * @param v {Object} value - must be serialisable
+     */
+    this.set = function (k, v) {
+        if (!mem_data) {
+            this.load();
+        }
+        mem_data[k] = v;
+        if (has_local_storage) {
+            var json_val = JSON.stringify(v);
+            window.localStorage.setItem(this.make_key(k), json_val);
+        }
+    };
+    /**
+     * get value from local storage
+     * @param k {string} key
+     * @returns {Object}
+     */
+    this.get = function (k) {
+        if (!mem_data) {
+            this.load();
+        }
+        if (mem_data.hasOwnProperty(k)) {
+            return mem_data[k];
+        }
+        return null;
+    };
+    this.exists = function (k) {
+        if (!mem_data) {
+            this.load();
+        }
+        if (mem_data.hasOwnProperty(k)) {
+            return true;
+        }
+        return false;
+    };
+    this.clear = function () {
+        if (has_local_storage) {
+            for (k in mem_data) {
+                window.localStorage.removeItem(this.make_key(k));
+            }
+        }
+        mem_data = {};
+    };
+    this.forEach = function (fn) {
+        for (k in mem_data) {
+            fn(mem_data[k]);
+        }
+    }
+
+};
+
+ObjectStore = function (obj_name) {
+    this.obj_name = obj_name;
+    var has_local_storage = !(typeof window.localStorage == 'undefined');
+    var obj = null;
+    /**
+     * load from localStorage
+     */
+    this.load = function () {
+        obj = JSON.parse(localStorage.getItem(this.obj_name + ':'));
+    };
+    /**
+     * Store in mem & localStorage
+     * @param k {string} key
+     * @param v {Object} value - must be serialisable
+     */
+    this.set = function (v) {
+        if (!obj) {
+            this.load();
+        }
+        obj = v;
+        if (has_local_storage) {
+            var json_val = JSON.stringify(v);
+            window.localStorage.setItem(this.obj_name + ':', json_val);
+        }
+    };
+    this.get = function () {
+        if (!obj) {
+            this.load();
+        }
+        return obj;
+    };
+
+};
+
 //todo: put this in local storage
 rayv.UserData = rayv.UserData || {};
 (function () {
-    var my_id = 0;
-    this.places = {};
-    this.myBook = {};
-    this.friends = {};
+    this.places = new DictStore('PLACE');
+    this.myBook = new ObjectStore('MYBOOK');
+    this.friends = new DictStore('FRIEND');
+    this.lastUpdate = new ObjectStore('LASTUPDATE');
+
+    this.init = function () {
+        var LSsupport = !(typeof window.localStorage == 'undefined');
+        if (LSsupport) {
+            console.log("localStorage and sessionStorage are available");
+            this.has_local_storage = true;
+            this.storage = window.localStorage;
+        }
+        rayv.UserData.my_id = new ObjectStore('my_id');
+        rayv.UserData.my_id.set(0);
+    };
+
     /**
      * adds places to the cache
      * only adds - no deletion here (as we don't ref count)
@@ -113,9 +292,10 @@ rayv.UserData = rayv.UserData || {};
         for (var idx in obj.places) {
             //noinspection JSUnfilteredForInLoop
             var place = obj.places[idx];
-            if (!(place.key in rayv.UserData.places)) {
+            if (!rayv.UserData.places.exists(place.key)) {
                 // dict indexed by place key
-                rayv.UserData.places[place.key] = place
+                rayv.UserData.places.set(place.key, place);
+                BB.images.refresh_image(place.key, place.thumbnail);
             }
         }
     };
@@ -125,8 +305,19 @@ rayv.UserData = rayv.UserData || {};
      */
     this.load = function (callback) {
         var request = {};
-        if (!BB.splash) {
-            $("#list-loading").show();
+        var last_update = rayv.UserData.lastUpdate.get();
+        if (rayv.UserData.places.is_empty()){
+            rayv.UserData.places.load();
+        }
+        BB.preload_images();
+        if (last_update && !rayv.UserData.places.is_empty()) {
+            request.since = last_update;
+            callback();
+        }
+        else {
+            if (!BB.splash) {
+                $("#list-loading").show();
+            }
         }
         $.get("/getFullUserRecord",
             request,
@@ -135,18 +326,19 @@ rayv.UserData = rayv.UserData || {};
                 var obj = $.parseJSON(data);
                 my_id = obj.id;
                 // first one is me
-                rayv.UserData.myBook = obj.friendsData[0];
-                delete rayv.UserData.places;
-                rayv.UserData.places = {};
+                rayv.UserData.myBook.set(obj.friendsData[0]);
+                rayv.UserData.lastUpdate.set((new Date()).getTime());
+                if (!request.since) {
+                    rayv.UserData.places.clear();
+                }
+                ;
                 updatePlaceCache(obj);
-                delete rayv.UserData.friends;
-                rayv.UserData.friends = {};
+                rayv.UserData.friends.clear();
                 var skippedFirstAsThatOneIsMe = false;
                 obj.friendsData.forEach(function (data) {
                     if (skippedFirstAsThatOneIsMe) {
                         // dictionary indexed by user id
-                        rayv.UserData.friends[data.id] =
-                            data;
+                        rayv.UserData.friends.set(data.id, data);
                     }
                     else {
                         skippedFirstAsThatOneIsMe = true;
@@ -164,7 +356,7 @@ rayv.UserData = rayv.UserData || {};
             // get the data-key from the <a>
             var key = $(this).find('a').data('key');
             // lookup the place for that key
-            var place = rayv.UserData.places[key];
+            var place = rayv.UserData.places.get(key);
             // if no cached image
             if (place.imageData) {
                 // replace the existing image with cached one
@@ -202,18 +394,19 @@ rayv.UserData = rayv.UserData || {};
      * @returns {string} comment text
      */
     this.get_most_relevant_comment = function (key) {
-        if (this.myBook.votes[key]) {
-            return this.myBook.votes[key].comment
+        var myBook = this.myBook.get();
+        if (myBook.votes[key]) {
+            return myBook.votes[key].comment
         }
         //not in my list
-        for (var idx in this.friends) {
+        var comment = "";
+        this.friends.forEach(function (friend) {
             //noinspection JSUnfilteredForInLoop
-            var friend = this.friends[idx];
             if (friend.votes[key]) {
-                return friend.votes[key].comment
+                comment = friend.votes[key].comment
             }
-        }
-        return "";
+        });
+        return comment;
     };
 
     /**
@@ -223,8 +416,9 @@ rayv.UserData = rayv.UserData || {};
      */
     this.get_my_comment = function (key) {
         // my comment;
-        if (this.myBook.votes[key]) {
-            return this.myBook.votes[key].comment
+        var myBook = this.myBook.get();
+        if (myBook.votes[key]) {
+            return myBook.votes[key].comment
         }
         return '';
     };
@@ -236,18 +430,18 @@ rayv.UserData = rayv.UserData || {};
      */
     this.get_votes_for_item = function (key) {
         var result = [];
-        for (var idx in this.friends) {
+        this.friends.forEach(function (friend) {
             //noinspection JSUnfilteredForInLoop
-            var friend = this.friends[idx];
             var vote = {name: friend.name};
             if (friend.votes[key]) {
                 vote.vote = friend.votes[key];
                 result.push(vote);
             }
-        }
+        });
         return result;
     }
 }).apply(rayv.UserData);
+
 
 var BB = {
         isOnline: true,
@@ -278,6 +472,12 @@ var BB = {
             maximumAge: 30000 //30 seconds
         },
         detail_saving: false,
+        images: new ImageStore(),
+        preload_images: function(){
+            rayv.UserData.places.forEach(function(place){
+                BB.images.load_image(place.key, place.thumbnail);
+            })
+        },
         /**
          * hide all waiting spinners
          */
@@ -367,14 +567,16 @@ var BB = {
                     for (var frIdx in obj.dirty_list.friends) {
                         //these friends are dirty
                         //noinspection JSUnfilteredForInLoop
-                        rayv.UserData.friends[obj.dirty_list.
-                            friends[frIdx].id] = obj.dirty_list.friends[frIdx];
+                        rayv.UserData.friends.set(
+                            obj.dirty_list.friends[frIdx].id,
+                            obj.dirty_list.friends[frIdx]);
                     }
                     for (var plIdx in obj.dirty_list.places) {
                         //these places are dirty
                         //noinspection JSUnfilteredForInLoop
-                        rayv.UserData.places[obj.dirty_list.
-                            places[plIdx].key] = obj.dirty_list.places[plIdx];
+                        rayv.UserData.places.set(
+                            obj.dirty_list.places[plIdx].key,
+                            obj.dirty_list.places[plIdx]);
                     }
                 }
 
@@ -439,25 +641,37 @@ var BB = {
          * @returns {boolean} updated
          */
         updateCurrentItemInCache: function () {
-            if (rayv.currentItem.key in rayv.UserData.places) {
-                var item = rayv.UserData.places[rayv.currentItem.key];
-                item.address = rayv.currentItem.address;
-                item.category = rayv.currentItem.category;
-                if ((item.img != rayv.currentItem.img) ||
-                    (item.vote != rayv.currentItem.vote)) {
-                    console.log("Can't update in cache - reload");
-                    return false;
-                }
-                var vote = rayv.UserData.myBook.votes[rayv.currentItem.key];
-                vote.vote = rayv.currentItem.vote == 'dislike' ? -1 : 1;
-                vote.comment = rayv.currentItem.descr;
-                console.log("Updated in cache ");
-                return true;
-            }
-            else {
-                console.log("New item for cache - reload");
+            var item = rayv.currentItem;
+            item.address = rayv.currentItem.address;
+            item.category = rayv.currentItem.category;
+            if ((item.img != rayv.currentItem.img) ||
+                (item.vote != rayv.currentItem.vote)) {
+                console.log("Can't update in cache - reload");
                 return false;
             }
+            var myBook = rayv.UserData.myBook.get();
+            var vote = myBook.votes[rayv.currentItem.key];
+            if (!vote) {
+                myBook.votes[rayv.currentItem.key] = {
+                    vote: 0,
+                    comment: '',
+                    untried: false
+                };
+                vote = myBook.votes[rayv.currentItem.key];
+            }
+            ;
+            if (rayv.currentItem.vote == 'dislike') {
+                vote.vote = -1;
+            }
+            if (rayv.currentItem.vote == 'like') {
+                vote.vote = 1;
+            }
+            vote.untried = vote.vote == 0;
+            vote.comment = rayv.currentItem.descr;
+            rayv.UserData.myBook.set(myBook);
+            console.log("Updated in cache ");
+            //rayv.UserData.places.set(rayv.currentItem.key, rayv.currentItem);
+            return true;
         },
 
         /**
@@ -538,11 +752,12 @@ var BB = {
                                 "XMLHttpRequest");
                             xhr.setRequestHeader("pragma", "no-cache");
                             // File uploaded
-                            xhr.addEventListener("load", function () {
+                            xhr.addEventListener("load", function (res) {
                                 // clear the form as per #86
                                 $('#new-shout-form')[0].reset();
                                 BB.hide_waiting();
                                 $.mobile.changePage("#list-page");
+                                rayv.currentItem.key = res;
                                 if (BB.updateCurrentItemInCache()) {
                                     BB.populateMainList("");
                                 }
@@ -573,7 +788,11 @@ var BB = {
                     contentType: false,
                     processData: false,
                     type: 'POST',
-                    success: function () {
+                    success: function (res) {
+                        var it = JSON.parse(res);
+                        BB.set_distance_for_place(it);
+                        rayv.UserData.places.set(it.key, it);
+                        rayv.currentItem.loadFromKey(it.key);
                         $.mobile.changePage("#list-page");
                         if (BB.updateCurrentItemInCache()) {
                             BB.populateMainList("");
@@ -583,7 +802,7 @@ var BB = {
                         }
                     },
                     error: function () {
-                        hide_waiting();
+                        BB.hide_waiting();
                     }
                 });
                 console.log("AJAX saverayv.currentItem");
@@ -662,41 +881,33 @@ var BB = {
          */
         setupList: function (UIlist) {
             console.log('setupList');
-            var LIPrototype =
-                "<li data-theme='c' " +
-                "data-icon='false'>" +
-                "<a style='background-color:white;' onclick='";
-
             $(UIlist).find('li').remove();
             if (BB.isMapPage()) {
                 BB.clearMapMarkers();
             }
             var placeList = [];
 
-            for (var it in rayv.UserData.myBook.votes) {
+            var votes = rayv.UserData.myBook.get().votes;
+            for (var it in votes) {
                 //noinspection JSUnfilteredForInLoop
                 if ((BB.filter != 'untried') || (BB.filter == 'untried' &&
-                    rayv.UserData.myBook.votes[it].untried))
+                    votes[it].untried))
                     placeList.push(it);
             }
             if (BB.filter == "all") {
-                {
-                    //add the other lists
-                    for (var fIdx in rayv.UserData.friends) {
+                //add the other lists
+                rayv.UserData.friends.forEach(function (friend) {
+                    for (it in friend.votes) {
                         //noinspection JSUnfilteredForInLoop
-                        var friend = rayv.UserData.friends[fIdx];
-                        for (it in friend.votes) {
-                            //noinspection JSUnfilteredForInLoop
-                            if (placeList.indexOf(it) == -1) {
-                                placeList.push(it)
-                            }
+                        if (placeList.indexOf(it) == -1) {
+                            placeList.push(it)
                         }
                     }
-                }
+                });
             }
             var detailList = [];
             placeList.forEach(function (place) {
-                var geoPt = rayv.UserData.places[place];
+                var geoPt = rayv.UserData.places.get(place);
                 detailList.push(geoPt);
             });
 
@@ -745,16 +956,10 @@ var BB = {
                         newListItemEnd;
                     if (geoPt.is_map) {
                         // it's a google place result - place_name, lat, long
-                        click_fn =
-                            BB.format(
-                                    "javascript:loadMapItemForEdit(" +
-                                    "'{0}','{1}','{2}');",
-                                geoPt.place_name, geoPt.lat, geoPt.lng);
-                        newListItemEnd = click_fn +
-                            "' href='#new-detail' data-transition='slide'>" +
-                            geoPt.place_name +
-                            " [" + geoPt.distance + "]</a></li>";
-                        newListItem = LIPrototype + newListItemEnd;
+                        newListItem = templates.render(
+                            'list-geo-item-template',
+                            {'geoPt': geoPt}
+                        );
                     }
                     else {
                         // it's a db item
@@ -798,6 +1003,12 @@ var BB = {
                     }
                 }
                 $(UIlist).find("A").on("click", BB.ItemLoadPage);
+                $(UIlist).find('a').each(function(){
+                    BB.images.assign_image(
+                        $(this).find('#div_left').find('img'),
+                        $(this).data('key')
+                    );
+                })
                 //FLIGHT
                 // Get cached thumbs
                 rayv.UserData.getThumbs(UIlist);
@@ -882,16 +1093,14 @@ var BB = {
             console.log("distances from Map: " +
                 map_centre.lat + ", " +
                 map_centre.lng);
-            for (var key in rayv.UserData.places) {
-                //noinspection JSUnfilteredForInLoop
-                var place = rayv.UserData.places[key];
+            rayv.UserData.places.forEach(function (place) {
                 var dist = BB.approx_distance(place, BB.lastGPSPosition);
                 place.distance = BB.pretty_dist(dist);
                 place.dist_float = dist;
                 var map_centre_dist = BB.approx_distance(place, map_centre);
                 place.map_dist_float = map_centre_dist;
                 place.map_distance = BB.pretty_dist(map_centre_dist);
-            }
+            });
             BB.navBarEnable();
 
             if (BB.isMapPage()) {
@@ -1047,7 +1256,14 @@ var BB = {
             // go to the page
         },
 
-        /**
+        set_distance_for_place: function (pt) {
+            var posn = new rayv.LatLng(pt.lat, pt.lng);
+            pt.dist_float = BB.approx_distance(
+                posn,
+                BB.lastGPSPosition);
+            var dist_str = BB.pretty_dist(pt.dist_float);
+            pt.distance = dist_str;
+        }, /**
          * ajax callback on loaded list of possible places to Add
          * @param data {object} server data
          */
@@ -1055,16 +1271,13 @@ var BB = {
             console.log("loadPlacesListSuccessHandler");
             var obj = $.parseJSON(data);
             var pts = obj.local.points;
-            for (var idx=0; idx < pts.length; idx++){
+            for (var idx = 0; idx < pts.length; idx++) {
                 var pt = pts[idx];
-                var posn = new rayv.LatLng(pt.lat, pt.lng);
-                pt.dist_float = BB.approx_distance(
-                        posn,
-                        BB.lastGPSPosition);
-                var dist_str = BB.pretty_dist(pt.dist_float);
-                pt.distance = dist_str;
+                BB.set_distance_for_place(pt);
             }
-            pts.sort(function(a, b){return a.dist_float - b.dist_float});
+            pts.sort(function (a, b) {
+                return a.dist_float - b.dist_float
+            });
             var el = $("#new-place-list");
             el.html(templates.render(
                 'new-place-list-js',
@@ -1170,23 +1383,19 @@ var BB = {
          */
         loadVotes: function () {
             var votes = [];
-            for (var idx in rayv.UserData.friends) {
-                {
+            rayv.UserData.friends.forEach(function (friend) {
+                for (var key in friend.votes) {
                     //noinspection JSUnfilteredForInLoop
-                    var friend = rayv.UserData.friends[idx];
-                    for (var key in friend.votes) {
-                        //noinspection JSUnfilteredForInLoop
-                        var vote = friend.votes[key];
-                        if (vote == rayv.currentItem.key) {
-                            vote.userName = friend.name;
-                            votes.push(vote)
-                        }
+                    var vote = friend.votes[key];
+                    if (vote == rayv.currentItem.key) {
+                        vote.userName = friend.name;
+                        votes.push(vote)
                     }
                 }
-            }
+            });
             var context = { votes: votes };
             // https://github.com/adammark/Markup.js/
-            var newVoteList = templates.render('item-votes-template', context);
+            var newVoteList = templates.render('item-votes-list', context);
             $("#item-votes-list-container").html(newVoteList);
             $("#item-votes").trigger("create");
             $("#item-votes-collapsible").show();
@@ -1262,7 +1471,8 @@ var BB = {
             //todo: check for new Item path
             console.log("cat: " + $("#item-category").val());
             rayv.currentItem.loadFromKey();
-            if (rayv.currentItem.key in rayv.UserData.myBook.votes) {
+            var myBook = rayv.UserData.myBook.get();
+            if (rayv.currentItem.key in myBook.votes) {
                 $("#new-item-delete").show();
             }
             else {
@@ -1272,10 +1482,11 @@ var BB = {
             $("#new-detail-address").val(rayv.currentItem.address);
             BB.set_edit_page_category();
             // add my comment if there is one
-            if (rayv.UserData.myBook.votes[rayv.currentItem.key]) {
-               $("#new-detail-comment").val(
-                   rayv.UserData.myBook.votes[rayv.currentItem.key].comment);
-            };
+            if (myBook.votes[rayv.currentItem.key]) {
+                $("#new-detail-comment").val(
+                    myBook.votes[rayv.currentItem.key].comment);
+            }
+            ;
             //set the likes radio
             if (rayv.currentItem.untried) {
                 $('#new-item-votes li').
@@ -1707,7 +1918,7 @@ var BB = {
                         "src", '/static/images/no-image.png');
                     img.children("img").attr("style", "");
                 }
-                if (rayv.currentItem.key in rayv.UserData.myBook.votes) {
+                if (rayv.currentItem.key in rayv.UserData.myBook.get().votes) {
                     $("#item-delete").show();
                 }
                 else {
@@ -1942,7 +2153,7 @@ var BB = {
         itemDelete: function () {
             //delete the current item
             //is it in my list?
-            if (rayv.currentItem.key in rayv.UserData.myBook.votes) {
+            if (rayv.currentItem.key in rayv.UserData.myBook.get().votes) {
                 if (confirm("Remove place from your list?")) {
                     $.ajax(
                         {url: '/item/del/' + rayv.currentItem.key,
@@ -2114,7 +2325,7 @@ var BB = {
             img_input.change(BB.imagePreview);
             $("div").find("[data-controltype='camerainput']").hide();
             //vote buttons
-            $("#refresh-btn").on("click", BB.loadUserData);
+            $("#refresh-btn").on("click", BB.fullLoadUserData);
 
             $("#create-new-save-btn").on("click", BB.do_create_new_address);
             $("#create-new-address-btn").on(
@@ -2170,11 +2381,17 @@ var BB = {
              }*/
         },
 
+
         loadUserData: function () {
             rayv.UserData.load(
                 function () {
                     BB.populateMainList("");
                 });
+        },
+
+        fullLoadUserData: function () {
+            rayv.UserData.lastUpdate.set(0);
+            BB.loadUserData();
         }
     }
     ;

@@ -10,7 +10,7 @@ from auth_model import UserProfile, User
 from caching import memcache_get_user_dict, memcache_touch_user, memcache_put_user_dict, memcache_touch_place
 from dataloader import load_data
 from geo import getPlaceDetailFromGoogle, geoCodeAddress, \
-  adjust_votes_for_JSON_pt
+  adjust_votes_for_JSON_pt, itemToJSONPoint
 from models import Item, DBImage, Vote, Category
 from geo import LatLng, itemKeyToJSONPoint
 from places_db import PlacesDB
@@ -71,7 +71,7 @@ class getBook(BaseHandler):
 
 
 
-
+#TODO: change to ndb! Then drop the memcache crazies, and do Since properly
 def serialize_user_details(user_id, places, current_user):
   """ give the list of votes & places for a user
   @param user_id: int: which user
@@ -131,6 +131,8 @@ class getFullUserRecord(BaseHandler):
       user = memcache_get_user_dict(my_id)
       if user:
         # logged in
+        if 'since' in self.request.params:
+          since = int(self.request.params['since'])
         # is it for a specific user?
         for_1_user = long(self.request.get("forUser")) if \
                   "forUser" in self.request.params \
@@ -161,6 +163,12 @@ class getFullUserRecord(BaseHandler):
               friends_data.append(serialize_user_details(
                 friend, places, my_id))
           result["friendsData"] = friends_data
+        if 'since' in self.request.params:
+          places_since = []
+          for plIdx in places:
+            if places[plIdx]['edited'] > since:
+              places_since.append(places[plIdx])
+          places = places_since
         result["places"] = places
         # encode using a custom encoder for datetime
 
@@ -382,7 +390,7 @@ class updateItem(BaseHandler):
 
       # CategoryStatsDenormalised.addPost(self.user_id,master_cat)
       # TODO this should be ajax
-      self.response.out.write("OK")
+      self.response.out.write(str(it.key()))
 
     else:
       self.display_message("Unable to save item")
@@ -540,9 +548,13 @@ class UpdateItemFromAnotherAppAPI(BaseHandler):
 class newOrUpdateItem(BaseHandler):
   def post(self):
     if logged_in():
-      update_item_internal(self, self.user_id, allow_update=True)
-
-      self.response.out.write("OK")
+      it = update_item_internal(self, self.user_id, allow_update=True)
+      it_json = itemToJSONPoint(it)
+      it_json['vote'] = self.request.params['voteScore']
+      if self.request.params['untried'] == 'true':
+        it_json['untried'] = True
+        it_json['voteScore'] = 0
+      json.dump(it_json, self.response.out)
     else:
       self.display_message("Unable to save item")
 

@@ -204,6 +204,7 @@ class Item(db.Model):
   thumbsUp = db.IntegerProperty(default=0)
   googleID = db.TextProperty(default="")  #Maps ID
   created = db.DateTimeProperty(auto_now_add=True)
+  edited = db.DateTimeProperty(auto_now=True)
   website = db.StringProperty(default='', required=False)
 
   def prop(self, name):

@@ -1,0 +1,7 @@
+<li data-theme='c' data-icon='false'>
+    <a style='background-color:white;'
+        onclick='javascript:loadMapItemForEdit("{{geoPt.place_name}}, {{geoPt.lat}}, {{geoPt.lng}}");'
+        href='#new-detail'
+        data-transition='slide'>{{geoPt.place_name}} [{{geoPt.distance}}"]
+    </a>
+</li>
