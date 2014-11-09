@@ -31,6 +31,7 @@ $(function () {
     templates.load('add-search-nearby-template');
     templates.load('list-item-template');
     templates.load('new-place-list-js');
+    templates.load('list-geo-item-template');
 
     //add a pipe to markup.js so we can do x-> 100%-x
     Mark.pipes.subFrom = function (a, b) {
