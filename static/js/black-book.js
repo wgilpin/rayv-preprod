@@ -101,6 +101,9 @@ rayv.currentItem = rayv.currentItem || {};
 
 ImageStore = function () {
     var images = [];
+    this.is_empty = function(){
+        return images.length == 0;
+    };
     this.load_image = function (key, src) {
         var image;
         if (images[key]) {
@@ -110,16 +113,24 @@ ImageStore = function () {
             image = new Image()
         }
         image.src = src;
+        image.className = 'item-pic';
+        images[key] = image;
+    };
+    this.refresh_image = function(key, src){
+        if (images[key]){
+            return;
+        }
+        this.load_image(key, src);
     };
     this.get_image = function (key) {
         return images[key];
     };
-    this.assign_image = function (img_id, key){
+    this.assign_image = function (img_el, key){
         if (images[key]){
-            $('#'+img_id).replaceWith(images[key])
+            $(img_el).replaceWith(images[key])
         }
         else{
-            console.error('ImageStore.assign_image: '+img_id+', '+key)
+            console.error('ImageStore.assign_image: '+key)
         }
     }
 };
@@ -284,6 +295,7 @@ rayv.UserData = rayv.UserData || {};
             if (!rayv.UserData.places.exists(place.key)) {
                 // dict indexed by place key
                 rayv.UserData.places.set(place.key, place);
+                BB.images.refresh_image(place.key, place.thumbnail);
             }
         }
     };
@@ -294,6 +306,10 @@ rayv.UserData = rayv.UserData || {};
     this.load = function (callback) {
         var request = {};
         var last_update = rayv.UserData.lastUpdate.get();
+        if (rayv.UserData.places.is_empty()){
+            rayv.UserData.places.load();
+        }
+        BB.preload_images();
         if (last_update && !rayv.UserData.places.is_empty()) {
             request.since = last_update;
             callback();
@@ -457,6 +473,11 @@ var BB = {
         },
         detail_saving: false,
         images: new ImageStore(),
+        preload_images: function(){
+            rayv.UserData.places.forEach(function(place){
+                BB.images.load_image(place.key, place.thumbnail);
+            })
+        },
         /**
          * hide all waiting spinners
          */
@@ -982,10 +1003,11 @@ var BB = {
                     }
                 }
                 $(UIlist).find("A").on("click", BB.ItemLoadPage);
-                $(UIlist).find('a').forEach(function(){
-                    var img = $(this).find('div_left').find(img).replaceWith(
-                        BB.images.get_image($(this).data('key'))
-                    )
+                $(UIlist).find('a').each(function(){
+                    BB.images.assign_image(
+                        $(this).find('#div_left').find('img'),
+                        $(this).data('key')
+                    );
                 })
                 //FLIGHT
                 // Get cached thumbs
