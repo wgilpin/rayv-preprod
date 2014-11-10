@@ -7,16 +7,56 @@
     {{ if items|notempty}}
     {{ items }}
     <li data-theme='c' data-icon='false'>
-        <a class='found-address' href='#new-detail'
-           data-title='{{ place_name }}'
-           data-address='{{ address }}'
-           data-lat='{{ lat }}'
-           data-lng='{{ lng }}'
-           data-key='{{ key }}'>
-        <div class='search-title'>{{ place_name }}</div>
-            <div class='search-address'>{{ address }}</div>
-        </a>
-    </li>
+    <a
+
+            data-key='{{ pt.key }}'
+            href='#item-page' data-transition='slide'>
+        <div class="list-item-container">
+            <div id='div_left'>
+                <img src="{{pt.thumbnail}}" class="item-pic">
+            </div>
+            <div id='div_right'>
+                {{if pt.vote|notequals>null}}
+                    {{if pt.vote|more>0}}
+                        <div class="item-like item-votes"></div>
+                    {{/if}}
+                    {{if pt.vote|less>0}}
+                        <div class="item-dislike item-votes"></div>
+                    {{/if}}
+                    {{if pt.vote|equals>0 }}
+                        <div class="item-untried item-votes"></div>
+                    {{/if}}
+                {{else }}
+                    <div class="item-no-vote item-votes"></div>
+                {{/if }}
+                <div class="item-like-sm">
+                    <div class="item-like-score">{{pt.up}}</div>
+                </div>
+                {{if pt.down|more>0}}
+                    <div class="item-dislike-sm ">
+                        <div class="item-dislike-score">{{pt.down}}</div>
+                    </div>
+                {{/if}}
+
+            </div>
+            <div id='div_middle'>
+                <div class="list-item-title truncate">
+                    {{ pt.place_name }}
+                </div>
+                <div class="list-item-category">
+                    {{ pt.category }}
+                </div>
+                <div class="list-item-dist">
+                    {{ pt.distance }}
+                    {{ if icon}}
+                    <img class="list-item-number" width="18" height="18"
+                         src="/static/images/{{ icon }}.png">
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </a>
+</li>
     {{/items}}
     {{/if}}
 </ul>

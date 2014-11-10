@@ -875,27 +875,11 @@ var BB = {
             });
 
             function compare_by_distance(a, b) {
-                if (!(a && b)){
-                    console.error('compare_by_distance: '+a+', '+b);
-                    return 0;
-                }
-                if (a.dist_float < b.dist_float)
-                    return -1;
-                if (a.dist_float > b.dist_float)
-                    return 1;
-                return 0;
+                return a.dist_float - b.dist_float;
             }
 
             function compare_by_map_distance(a, b) {
-                if (!(a && b)){
-                    console.error('compare_by_map_distance: '+a+', '+b);
-                    return 0;
-                }
-                if (a.map_dist_float < b.map_dist_float)
-                    return -1;
-                if (a.map_dist_float > b.map_dist_float)
-                    return 1;
-                return 0;
+                return a.map_dist_float - b.map_dist_float;
             }
 
             if (BB.isMapPage()) {
@@ -1222,11 +1206,12 @@ var BB = {
             // go to the page
         },
 
-        set_distance_for_place: function (pt) {
+        set_distance_for_place: function (pt, from /* opt */) {
+            calc_dist_from = from ? from : BB.lastGPSPosition;
             var posn = new rayv.LatLng(pt.lat, pt.lng);
             pt.dist_float = BB.approx_distance(
                 posn,
-                BB.lastGPSPosition);
+                calc_dist_from);
             var dist_str = BB.pretty_dist(pt.dist_float);
             pt.distance = dist_str;
         }, /**
@@ -1237,9 +1222,16 @@ var BB = {
             console.log("loadPlacesListSuccessHandler");
             var obj = $.parseJSON(data);
             var pts = obj.local.points;
+            var search_center;
+            try {
+                search_center = new rayv.LatLng(obj.search.lat, obj.search.lng);
+            }
+            catch (e){
+                search_center = BB.lastGPSPosition;
+            }
             for (var idx = 0; idx < pts.length; idx++) {
                 var pt = pts[idx];
-                BB.set_distance_for_place(pt);
+                BB.set_distance_for_place(pt, search_center);
             }
             pts.sort(function (a, b) {
                 return a.dist_float - b.dist_float
@@ -1962,15 +1954,20 @@ var BB = {
 
                     BB.check_for_dirty_data(obj);
 
-                    //safe_title = .replace(/\"/g, "&quot;").replace(/\'/g, "&lsquo;"),
-                    // https://github.com/adammark/Markup.js/
-//                    Add Distance
-//                    for (var plIdx=0; plIdx<obj.local.points.length; plIdx++){
-//                        var pt = obj.local.points[plIdx];
-//                        pt.distance = BB.approx_distance(
-//                            LatLng(pt.lat,pt.lng),
-//                            BB.lastGPSPosition)
-//                    }
+                    var search_center;
+                    try {
+                        search_center = new rayv.LatLng(obj.search.lat, obj.search.lng);
+                    }
+                    catch (e){
+                        search_center = BB.lastGPSPosition;
+                    }
+                    for (var idx = 0; idx < obj.local.points.length; idx++) {
+                        var pt = obj.local.points[idx];
+                        BB.set_distance_for_place(pt, search_center);
+                    }
+                    obj.local.points.sort(function(a,b){
+                        return a.dist_float - b.dist_float;
+                    });
                     var context = {'items': obj.local.points};
                     var UIlist = templates.render(
                         'add-search-nearby-template',

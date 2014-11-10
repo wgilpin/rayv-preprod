@@ -266,6 +266,7 @@ class getAddresses_ajax(BaseHandler):
       names[0],
       self.user_id)
     if results:
+      results['search'] = {'lat': lat,'lng':lng}
       check_for_dirty_data(self.user_id, results)
       json.dump(results,
                 self.response.out,

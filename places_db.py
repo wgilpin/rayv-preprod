@@ -44,7 +44,7 @@ class PlacesDB():
       search_text=text_to_search,
       filter=search_filter,
       uid=user_id,
-      position=calc_dist_from,
+      position=LatLng(lat, lng),
       place_names=list_of_place_names,
       ignore_votes=True)
     if include_maps_data:
@@ -118,10 +118,9 @@ class PlacesDB():
     :return: dict - {"item_count": int, "items": []}
     """
     url = ("https://maps.googleapis.com/maps/api/place/nearbysearch/"
-          "json?radius=%d&types=%s&location=%f,%f&name=%s&sensor=false&key=%s")\
+          "json?rankby=distance&types=%s&location=%f,%f&name=%s&sensor=false&key=%s")\
           % \
-          (radius,
-           settings.config['place_types'],
+          (settings.config['place_types'],
            lat,
            lng,
            name,
