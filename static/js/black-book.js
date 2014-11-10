@@ -601,14 +601,6 @@ var BB = {
          * @returns {boolean} updated
          */
         updateCurrentItemInCache: function () {
-            var item = rayv.currentItem;
-            item.address = rayv.currentItem.address;
-            item.category = rayv.currentItem.category;
-            if ((item.img != rayv.currentItem.img) ||
-                (item.vote != rayv.currentItem.vote)) {
-                console.log("Can't update in cache - reload");
-                return false;
-            }
             var myBook = rayv.UserData.myBook.get();
             var vote = myBook.votes[rayv.currentItem.key];
             if (!vote) {
@@ -630,7 +622,6 @@ var BB = {
             vote.comment = rayv.currentItem.descr;
             rayv.UserData.myBook.set(myBook);
             console.log("Updated in cache ");
-            //rayv.UserData.places.set(rayv.currentItem.key, rayv.currentItem);
             return true;
         },
 
@@ -640,15 +631,17 @@ var BB = {
         codeLatLng: function () {
             BB.geocoder.geocode({'latLng': BB.creatorMap.getCenter()},
                 function (results, status) {
+                    $("#create-new-save-btn").addClass("ui-disabled");
                     if (status == google.maps.GeocoderStatus.OK) {
                         if (results[1]) {
                             var el = $("#dragged-address");
                             el.text(results[0].formatted_address);
                             el.show();
-                            $("#create-new-save-btn").removeClass("ui-disabled")
+                            if ($('#create-name').val().length > 0){
+                                $("#create-new-save-btn").removeClass("ui-disabled")
+                            }
                         }
                     } else {
-                        $("#create-new-save-btn").addClass("ui-disabled");
                         console.log("Geocoder failed due to: " + status);
                     }
                 });
@@ -687,7 +680,6 @@ var BB = {
                 var it = res;//JSON.parse(res);
                 BB.set_distance_for_place(it);
                 rayv.UserData.places.set(it.key, it);
-                BB.images.load_image(it.key, it.thumbnail);
                 rayv.currentItem.loadFromKey(it.key);
                 $.mobile.changePage("#list-page");
                 if (BB.updateCurrentItemInCache()) {
@@ -1760,6 +1752,15 @@ var BB = {
             BB.codeLatLng();
 
         },
+
+        create_name_validate: function(e){
+            var addr = $("#dragged-address").text();
+            if (addr.length > 0 && $('#create-name').val().length > 0) {
+                $("#create-new-save-btn").removeClass("ui-disabled")
+            } else {
+                $("#create-new-save-btn").addClass("ui-disabled")
+            }
+        },
         pageToCreateAddress: function () {
             //init map
             if (!BB.creatorMap) {
@@ -2080,7 +2081,7 @@ var BB = {
 
         do_create_new_address: function () {
             var addr = $("#dragged-address").text();
-            if (addr.length > 0) {
+            if (addr.length > 0 && $('#create-name').val().length > 0) {
                 rayv.currentItem.clear();
                 rayv.currentItem.place_name = $("#create-name").val();
                 rayv.currentItem.address = addr;
@@ -2341,6 +2342,7 @@ var BB = {
             search_box.removeClass('ui-body-a').addClass('ui-body-b');
             $("#test-loc-set").change(BB.set_test_location);
             $('#item-descr').keypress(BB.comment_validate);
+            $('#create-name').keypress(BB.create_name_validate);
             $("#settings-save-profile").click(BB.save_profile);
             $("#new-search-title-btn").click(BB.add_search_name);
             $("#new-search-name-btn").click(BB.lookupMyAddress);

@@ -144,42 +144,45 @@ class DBImage(db.Model):
   remoteURL = db.StringProperty(required=False)
 
 
+  def make_thumb(self):
+    window_ratio = 65.0 / 55.0
+    height = images.Image(image_data=self.picture).height
+    width = images.Image(image_data=self.picture).width
+    image_ratio = float(width) / float(height)
+    logging.info("thumb " + str(image_ratio))
+    if image_ratio > window_ratio:
+      # wide
+      new_height = 55
+      new_width = int(55.0 * image_ratio)
+      self.thumb = images.resize(self.picture,
+                                 new_width,
+                                 new_height,
+                                 output_encoding=images.JPEG,
+                                 quality=55,
+                                 correct_orientation=CORRECT_ORIENTATION)
+      self.thumb = images.crop(self.thumb,
+                               left_x=0.5 - 32.0 / new_width,
+                               top_y=0.0,
+                               right_x=0.5 + 32.0 / new_width,
+                               bottom_y=1.0)
+    else:
+      new_width = 65
+      new_height = int(65.0 / image_ratio)
+      self.thumb = images.resize(self.picture,
+                                 new_width, new_height,
+                                 output_encoding=images.JPEG,
+                                 quality=55,
+                                 correct_orientation=CORRECT_ORIENTATION)
+      self.thumb = images.crop(self.thumb,
+                               left_x=0.0,
+                               top_y=0.5 - 27.0 / new_height,
+                               right_x=1.0,
+                               bottom_y=0.5 + 27.0 / new_height)
+
   def get_thumb(self):
     # get or make a thumbnail
     if not self.thumb:
-      window_ratio = 65.0 / 55.0
-      height = images.Image(image_data=self.picture).height
-      width = images.Image(image_data=self.picture).width
-      image_ratio = float(width) / float(height)
-      logging.info("thumb " + str(image_ratio))
-      if image_ratio > window_ratio:
-        # wide
-        new_height = 55
-        new_width = int(55.0 * image_ratio)
-        self.thumb = images.resize(self.picture,
-                                   new_width,
-                                   new_height,
-                                   output_encoding=images.JPEG,
-                                   quality=55,
-                                   correct_orientation=CORRECT_ORIENTATION)
-        self.thumb = images.crop(self.thumb,
-                                 left_x=0.5 - 32.0 / new_width,
-                                 top_y=0.0,
-                                 right_x=0.5 + 32.0 / new_width,
-                                 bottom_y=1.0)
-      else:
-        new_width = 65
-        new_height = int(65.0 / image_ratio)
-        self.thumb = images.resize(self.picture,
-                                   new_width, new_height,
-                                   output_encoding=images.JPEG,
-                                   quality=55,
-                                   correct_orientation=CORRECT_ORIENTATION)
-        self.thumb = images.crop(self.thumb,
-                                 left_x=0.0,
-                                 top_y=0.5 - 27.0 / new_height,
-                                 right_x=1.0,
-                                 bottom_y=0.5 + 27.0 / new_height)
+      self.make_thumb()
       self.put()
     return self.thumb
 

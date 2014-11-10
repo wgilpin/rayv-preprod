@@ -401,20 +401,24 @@ def update_photo(it, request_handler):
     raw_file = request_handler.request.get('new-photo')
     rot = request_handler.request.get("rotation")
     if len(raw_file) > 0:
-      if it.photo:  # the item has an image already?
-        img = it.photo  # - yes: use it
-        img.thumb = None  # but reset the thumb as it's invalid now
-      else:
-        img = DBImage()  # - no: create it
+      # a new image saved
+
+      img = DBImage()  # - no: create it
 
       if rot and (rot <> u'0'):  # is a rotation requested?
         angle = int(rot) * 90
         raw_file = images.rotate(raw_file, angle)
       # exif = raw_file.get_original_metadata()
       img.picture = db.Blob(raw_file)
+      img.make_thumb()
       img.owner = request_handler.user_id
       img.put()
+      print 'update_photo Ins:',str(img.key())
+      if it.photo:  # the item has an image already?
+        print 'update_photo Del:',str(it.photo.key())
+        db.delete(it.photo)
     else:
+      # no new image - rotate an existing image?
       img = None  # no image supplied
       if rot and (rot != u'0'):  # is a rotation requested?
         old_img = it.photo
@@ -549,11 +553,11 @@ class newOrUpdateItem(BaseHandler):
   def post(self):
     if logged_in():
       it = update_item_internal(self, self.user_id, allow_update=True)
-      it_json = itemToJSONPoint(it)
-      it_json['vote'] = self.request.params['voteScore']
-      if self.request.params['untried'] == 'true':
-        it_json['untried'] = True
-        it_json['voteScore'] = 0
+      it_json = itemToJSONPoint(it, uid_for_votes=self.user_id)
+      # it_json['vote'] = self.request.params['voteScore']
+      # if self.request.params['untried'] == 'true':
+      #   it_json['untried'] = True
+      #   it_json['voteScore'] = 0
       json.dump(it_json, self.response.out)
     else:
       self.display_message("Unable to save item")
@@ -672,10 +676,10 @@ class getItemVotes_ajax(BaseHandler):
 class ImageHandler(BaseHandler):
   def get(self, key):
     try:
-      item = db.get(key)
-      if item.photo:
+      photo = db.get(key)
+      if photo:
         self.response.headers['Content-Type'] = 'image/png'
-        self.response.out.write(item.photo.picture)
+        self.response.out.write(photo.picture)
     except:
       logging.error('ImageHandler '+key, exc_info=True)
 
@@ -684,10 +688,10 @@ class ImageHandler(BaseHandler):
 class ThumbHandler(BaseHandler):
   def get(self, key):
     try:
-      item = db.get(key)
-      if item and item.photo:
+      photo = db.get(key)
+      if photo:
         self.response.headers['Content-Type'] = 'image/png'
-        self.response.out.write(item.photo.get_thumb())
+        self.response.out.write(photo.get_thumb())
       else:
         default_thumb = memcache.get('DEFAULT-THUMB')
         if not default_thumb:

@@ -147,18 +147,12 @@ def findDbPlacesNearLoc(my_location,
         # we only want ones that match the search text
         if not search_text in it.place_name.lower():
           continue
-      jsonPt = itemToJSONPoint(it, position)
       if not ignore_votes:
-        vote = it.votes.filter("voter =", uid).get()
-        if vote:
-          # if the user has voted for this item, and the user is excluded, next
-          jsonPt["mine"] = True;
-          jsonPt["vote"] = vote.vote
-          jsonPt["descr"] = vote.comment
-          if vote.untried:
-            jsonPt["untried"] = True
-        else:
-          pass
+        jsonPt = itemToJSONPoint(it, position, uid_for_votes=uid)
+      else:
+        jsonPt = itemToJSONPoint(it, position)
+
+
       search_results.append(adjust_votes_for_JSON_pt(jsonPt))
       place_names.append(it.place_name)
 
@@ -349,7 +343,7 @@ def itemKeyToJSONPoint(key):
     logging.exception('itemKeyToJSONPoint', exc_info=True)
 
 
-def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
+def itemToJSONPoint(it, GPS_origin=None, map_origin=None, uid_for_votes=None):
   """
   create a json object for the web.
   :param it: Item
@@ -361,8 +355,8 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
   try:
     if getProp(it, 'photo'):
       if it.photo.picture:
-        image_url = '/img/' + str(it.key())
-        thumbnail_url = '/thumb/' + str(it.key())
+        image_url = '/img/' + str(it.photo.key())
+        thumbnail_url = '/thumb/' + str(it.photo.key())
       else:
         image_url = ''
         thumbnail_url = ''
@@ -403,22 +397,15 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None):
       'is_map': False}
     if hasattr(it, 'key'):
       memcache.add("JSON:" + str(it.key()), data)
-    # if GPS_origin:
-    #   # If GPS_origin is None then we include no distnce info (done client side)
-    #   dist_from_GPS = approx_distance(it, GPS_origin)
-    #   if map_origin:
-    #     if GPS_origin.lat == map_origin.lat and \
-    #             GPS_origin.lng == map_origin.lng:
-    #       dist_from_map = dist_from_GPS
-    #     else:
-    #       dist_from_map = approx_distance(it, map_origin)
-    #   else:
-    #     dist_from_map = dist_from_GPS
-    #
-    #   dist_str = prettify_distance(dist_from_GPS)
-    #   data['distance'] = dist_str
-    #   data['distance_float'] = dist_from_GPS
-    #   data['distance_map_float'] = dist_from_map
+      if uid_for_votes:
+        vote = it.votes.filter("voter =", uid_for_votes).get()
+        if vote:
+          # if the user has voted for this item, and the user is excluded, next
+          data["mine"] = True;
+          data["vote"] = int(vote.vote)
+          data["descr"] = vote.comment
+          if vote.untried:
+            data["untried"] = True
 
     return data
   except Exception, E:

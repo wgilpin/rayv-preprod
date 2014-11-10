@@ -189,6 +189,8 @@
     overflow: hidden;
     height: 40px;
     text-align: center;
+    color: #696969;
+    font-weight: bold;
 }
 
 .wrap-left{
