@@ -99,41 +99,6 @@ rayv.currentItem = rayv.currentItem || {};
     }
 }).apply(rayv.currentItem);
 
-ImageStore = function () {
-    var images = [];
-    this.is_empty = function(){
-        return images.length == 0;
-    };
-    this.load_image = function (key, src) {
-        var image;
-        if (images[key]) {
-            image = images[key];
-        }
-        else {
-            image = new Image()
-        }
-        image.src = src;
-        image.className = 'item-pic';
-        images[key] = image;
-    };
-    this.refresh_image = function(key, src){
-        if (images[key]){
-            return;
-        }
-        this.load_image(key, src);
-    };
-    this.get_image = function (key) {
-        return images[key];
-    };
-    this.assign_image = function (img_el, key){
-        if (images[key]){
-            $(img_el).replaceWith(images[key])
-        }
-        else{
-            console.error('ImageStore.assign_image: '+key)
-        }
-    }
-};
 
 DictStore = function (dict_name) {
     this.dict_name = dict_name;
@@ -295,7 +260,6 @@ rayv.UserData = rayv.UserData || {};
             if (!rayv.UserData.places.exists(place.key)) {
                 // dict indexed by place key
                 rayv.UserData.places.set(place.key, place);
-                BB.images.refresh_image(place.key, place.thumbnail);
             }
         }
     };
@@ -308,8 +272,7 @@ rayv.UserData = rayv.UserData || {};
         var last_update = rayv.UserData.lastUpdate.get();
         if (rayv.UserData.places.is_empty()){
             rayv.UserData.places.load();
-        }
-        BB.preload_images();
+        };
         if (last_update && !rayv.UserData.places.is_empty()) {
             request.since = last_update;
             callback();
@@ -472,12 +435,6 @@ var BB = {
             maximumAge: 30000 //30 seconds
         },
         detail_saving: false,
-        images: new ImageStore(),
-        preload_images: function(){
-            rayv.UserData.places.forEach(function(place){
-                BB.images.load_image(place.key, place.thumbnail);
-            })
-        },
         /**
          * hide all waiting spinners
          */
@@ -1003,12 +960,7 @@ var BB = {
                     }
                 }
                 $(UIlist).find("A").on("click", BB.ItemLoadPage);
-                $(UIlist).find('a').each(function(){
-                    BB.images.assign_image(
-                        $(this).find('#div_left').find('img'),
-                        $(this).data('key')
-                    );
-                })
+                
                 //FLIGHT
                 // Get cached thumbs
                 rayv.UserData.getThumbs(UIlist);

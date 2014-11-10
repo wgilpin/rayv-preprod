@@ -5,7 +5,7 @@
             href='#item-page' data-transition='slide'>
         <div class="list-item-container">
             <div id='div_left'>
-                <img class="item-pic">
+                <img src="{{pt.thumbnail}}" class="item-pic">
             </div>
             <div id='div_right'>
                 {{if pt.vote|notequals>null}}
