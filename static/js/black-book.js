@@ -610,8 +610,8 @@ var BB = {
                     untried: false
                 };
                 vote = myBook.votes[rayv.currentItem.key];
-            }
-            ;
+            };
+            vote.vote = rayv.currentItem.vote;
             if (rayv.currentItem.vote == 'dislike') {
                 vote.vote = -1;
             }
@@ -806,7 +806,7 @@ var BB = {
          */
         loadMapItemForEdit: function (place_name, posn) {
             console.log('loadMapItemForEdit');
-            $('#new-item-votes').find('li').removeClass('ui-btn-hover-b').
+            $('#new-detail-vote').find('li').removeClass('ui-btn-hover-b').
                 addClass('ui-btn-up-b').removeClass('ui-btn-active');
             $('#new-item-like').addClass('ui-btn-active');
             $("#new-category").val('');
@@ -1294,17 +1294,17 @@ var BB = {
             var hasVote = false;
             rayv.currentItem.untried = false;
             rayv.currentItem.vote = 1;
-            if ($('#new-item-dislike').hasClass('ui-btn-active')) {
+            if ($('#new-item-dislike a').hasClass('ui-btn-active')) {
                 rayv.currentItem.vote = -1;
                 rayv.currentItem.untried = false;
                 hasVote = true;
             }
-            if ($('#new-item-untried').hasClass('ui-btn-active')) {
+            if ($('#new-item-untried a').hasClass('ui-btn-active')) {
                 rayv.currentItem.untried = true;
                 rayv.currentItem.vote = 0;
                 hasVote = true;
             }
-            if ($('#new-item-like').hasClass('ui-btn-active')) {
+            if ($('#new-item-like a').hasClass('ui-btn-active')) {
                 hasVote = true;
             }
             if (!hasVote) {
@@ -1446,27 +1446,18 @@ var BB = {
             }
             ;
             //set the likes radio
+             $('#new-detail-vote a').
+                        removeClass('ui-btn-hover-b').
+                        addClass('ui-btn-up-b').
+                        removeClass('ui-btn-active');
             if (rayv.currentItem.untried) {
-                $('#new-item-votes li').
-                    removeClass('ui-btn-hover-b').
-                    addClass('ui-btn-up-b').
-                    removeClass('ui-btn-active');
                 $('#new-item-untried').addClass('ui-btn-active');
             }
             else {
                 if (rayv.currentItem.vote >= 0) {
-                    $('#new-item-votes').find('li').
-                        removeClass('ui-btn-hover-b').
-                        addClass('ui-btn-up-b').
-                        removeClass('ui-btn-active');
                     $('#new-item-like').addClass('ui-btn-active');
                 }
                 else {
-                    $('#new-item-votes').
-                        find('li').
-                        removeClass('ui-btn-hover-b').
-                        addClass('ui-btn-up-b').
-                        removeClass('ui-btn-active');
                     $('#new-item-dislike').addClass('ui-btn-active');
                 }
             }
