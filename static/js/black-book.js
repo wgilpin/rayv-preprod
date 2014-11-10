@@ -31,6 +31,7 @@ rayv.currentItem = rayv.currentItem || {};
     this.website = "";
     this.mine = "";
     this.img = null;
+    this.thumbnail = null;
     this.rotation = 0;
     this.telephone = null;
     this.distance = null;
@@ -75,6 +76,7 @@ rayv.currentItem = rayv.currentItem || {};
         rayv.currentItem.key = obj.key;
         rayv.currentItem.mine = obj.mine;
         rayv.currentItem.img = obj.img;
+        rayv.currentItem.thumbnail = obj.thumbnail;
         rayv.currentItem.vote = obj.vote;
         rayv.currentItem.distance = obj.distance;
         rayv.currentItem.rotation = 0;
@@ -93,6 +95,7 @@ rayv.currentItem = rayv.currentItem || {};
         rayv.currentItem.key = null;
         rayv.currentItem.mine = "";
         rayv.currentItem.img = "";
+        rayv.currentItem.thumbnail = "";
         rayv.currentItem.vote = "";
         rayv.currentItem.distance = "";
         rayv.currentItem.rotation = "";
@@ -676,8 +679,24 @@ var BB = {
                 fd.append("rotation", rayv.currentItem.rotation);
                 fd.append("key", rayv.currentItem.key);
                 return fd;
-            }
+            };
 
+            function save_success_handler (res) {
+                // clear the form as per #86
+                $('#new-shout-form')[0].reset();
+                var it = res;//JSON.parse(res);
+                BB.set_distance_for_place(it);
+                rayv.UserData.places.set(it.key, it);
+                BB.images.load_image(it.key, it.thumbnail);
+                rayv.currentItem.loadFromKey(it.key);
+                $.mobile.changePage("#list-page");
+                if (BB.updateCurrentItemInCache()) {
+                    BB.populateMainList("");
+                }
+                else {
+                    BB.loadUserData();
+                }
+            };
             /**
              * save with an image upload
              */
@@ -702,28 +721,29 @@ var BB = {
                             // Add file data
                             var f = canvasResize('dataURLtoBlob', data);
                             f.name = file.name;
-                            var fd = build_form(f);
-                            var xhr = new XMLHttpRequest();
-                            xhr.open('POST', '/item', true);
-                            xhr.setRequestHeader("X-Requested-With",
-                                "XMLHttpRequest");
-                            xhr.setRequestHeader("pragma", "no-cache");
-                            // File uploaded
-                            xhr.addEventListener("load", function (res) {
-                                // clear the form as per #86
-                                $('#new-shout-form')[0].reset();
-                                BB.hide_waiting();
-                                $.mobile.changePage("#list-page");
-                                rayv.currentItem.key = res;
-                                if (BB.updateCurrentItemInCache()) {
-                                    BB.populateMainList("");
-                                }
-                                else {
-                                    BB.loadUserData();
+                            $.ajax({
+                                url: '/item',
+                                data: build_form(f),
+                                dataType: 'json',
+                                cache: false,
+                                contentType: false,
+                                processData: false,
+                                type: 'POST',
+                                success: save_success_handler,
+                                error: function () {
+                                    BB.hide_waiting();
                                 }
                             });
-                            // Send data
-                            xhr.send(fd);
+//                            var fd = build_form(f);
+//                            var xhr = new XMLHttpRequest();
+//                            xhr.open('POST', '/item', true);
+//                            xhr.setRequestHeader("X-Requested-With",
+//                                "XMLHttpRequest");
+//                            xhr.setRequestHeader("pragma", "no-cache");
+//                            // File uploaded
+//                            xhr.addEventListener("load", save_success_handler);
+//                            // Send data
+//                            xhr.send(fd);
                         }
 
                     });
@@ -741,23 +761,12 @@ var BB = {
                 $.ajax({
                     url: '/item',
                     data: build_form(null),
+                    dataType: 'json',
                     cache: false,
                     contentType: false,
                     processData: false,
                     type: 'POST',
-                    success: function (res) {
-                        var it = JSON.parse(res);
-                        BB.set_distance_for_place(it);
-                        rayv.UserData.places.set(it.key, it);
-                        rayv.currentItem.loadFromKey(it.key);
-                        $.mobile.changePage("#list-page");
-                        if (BB.updateCurrentItemInCache()) {
-                            BB.populateMainList("");
-                        }
-                        else {
-                            BB.loadUserData();
-                        }
-                    },
+                    success: save_success_handler,
                     error: function () {
                         BB.hide_waiting();
                     }
@@ -865,10 +874,19 @@ var BB = {
             var detailList = [];
             placeList.forEach(function (place) {
                 var geoPt = rayv.UserData.places.get(place);
+                if (geoPt){
                 detailList.push(geoPt);
+                }
+                else{
+                    console.error('placeList has a null');
+                }
             });
 
             function compare_by_distance(a, b) {
+                if (!(a && b)){
+                    console.error('compare_by_distance: '+a+', '+b);
+                    return 0;
+                }
                 if (a.dist_float < b.dist_float)
                     return -1;
                 if (a.dist_float > b.dist_float)
@@ -877,6 +895,10 @@ var BB = {
             }
 
             function compare_by_map_distance(a, b) {
+                if (!(a && b)){
+                    console.error('compare_by_map_distance: '+a+', '+b);
+                    return 0;
+                }
                 if (a.map_dist_float < b.map_dist_float)
                     return -1;
                 if (a.map_dist_float > b.map_dist_float)
