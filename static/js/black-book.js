@@ -2273,6 +2273,9 @@ var BB = {
             }
 
         },
+        goto_external: function(){
+            window.location.hash = "";
+        },
 
         /**
          * event listeners
@@ -2338,6 +2341,7 @@ var BB = {
             $("#new-search-name-btn").click(BB.lookupMyAddress);
             $('#new-category').keyup(BB.cuisine_keyup);
             $('#cuisine-lookup').click(BB.cuisine_lookup_click);
+            $('#item-web-link').click(BB.goto_external);
 
 
             /*window.onerror = function errorHandler(msg, url, line) {
