@@ -1294,17 +1294,17 @@ var BB = {
             var hasVote = false;
             rayv.currentItem.untried = false;
             rayv.currentItem.vote = 1;
-            if ($('#new-item-dislike a').hasClass('ui-btn-active')) {
+            if ($('#new-item-dislike').hasClass('ui-btn-active')) {
                 rayv.currentItem.vote = -1;
                 rayv.currentItem.untried = false;
                 hasVote = true;
             }
-            if ($('#new-item-untried a').hasClass('ui-btn-active')) {
+            if ($('#new-item-untried').hasClass('ui-btn-active')) {
                 rayv.currentItem.untried = true;
                 rayv.currentItem.vote = 0;
                 hasVote = true;
             }
-            if ($('#new-item-like a').hasClass('ui-btn-active')) {
+            if ($('#new-item-like').hasClass('ui-btn-active')) {
                 hasVote = true;
             }
             if (!hasVote) {
