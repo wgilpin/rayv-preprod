@@ -7,10 +7,16 @@
     {{ if items|notempty}}
     {{ items }}
     <li data-theme='c' data-icon='false'>
-    <a
-
+    <a class="found-address"
+            data-shout-is-map="false"
+            data-title="{{place_name}}"
+            data-shout-key="{{key}}"
+            data-address="{{address}}"
+            data-category="{{category}}"
+            data-lat="{{lat}}"
+            data-lng="{{lng}}"
             data-key='{{ key }}'
-            href='#item-page' data-transition='slide'>
+            href='#new-detail' data-transition='slide'>
         <div class="list-item-container">
             <div id='div_left'>
                 <img src="{{thumbnail}}" class="item-pic">
