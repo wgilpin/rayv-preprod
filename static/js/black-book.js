@@ -273,9 +273,10 @@ rayv.UserData = rayv.UserData || {};
     this.load = function (callback) {
         var request = {};
         var last_update = rayv.UserData.lastUpdate.get();
-        if (rayv.UserData.places.is_empty()){
+        if (rayv.UserData.places.is_empty()) {
             rayv.UserData.places.load();
-        };
+        }
+        ;
         if (last_update && !rayv.UserData.places.is_empty()) {
             request.since = last_update;
             callback();
@@ -610,7 +611,8 @@ var BB = {
                     untried: false
                 };
                 vote = myBook.votes[rayv.currentItem.key];
-            };
+            }
+            ;
             vote.vote = rayv.currentItem.vote;
             if (rayv.currentItem.vote == 'dislike') {
                 vote.vote = -1;
@@ -637,7 +639,7 @@ var BB = {
                             var el = $("#dragged-address");
                             el.text(results[0].formatted_address);
                             el.show();
-                            if ($('#create-name').val().length > 0){
+                            if ($('#create-name').val().length > 0) {
                                 $("#create-new-save-btn").removeClass("ui-disabled")
                             }
                         }
@@ -674,7 +676,7 @@ var BB = {
                 return fd;
             };
 
-            function save_success_handler (res) {
+            function save_success_handler(res) {
                 // clear the form as per #86
                 $('#new-shout-form')[0].reset();
                 var it = res;//JSON.parse(res);
@@ -866,10 +868,10 @@ var BB = {
             var detailList = [];
             placeList.forEach(function (place) {
                 var geoPt = rayv.UserData.places.get(place);
-                if (geoPt){
-                detailList.push(geoPt);
+                if (geoPt) {
+                    detailList.push(geoPt);
                 }
-                else{
+                else {
                     console.error('placeList has a null');
                 }
             });
@@ -958,7 +960,7 @@ var BB = {
                     }
                 }
                 $(UIlist).find("A").on("click", BB.ItemLoadPage);
-                
+
                 //FLIGHT
                 // Get cached thumbs
                 rayv.UserData.getThumbs(UIlist);
@@ -1226,7 +1228,7 @@ var BB = {
             try {
                 search_center = new rayv.LatLng(obj.search.lat, obj.search.lng);
             }
-            catch (e){
+            catch (e) {
                 search_center = BB.lastGPSPosition;
             }
             for (var idx = 0; idx < pts.length; idx++) {
@@ -1446,10 +1448,10 @@ var BB = {
             }
             ;
             //set the likes radio
-             $('#new-detail-vote a').
-                        removeClass('ui-btn-hover-b').
-                        addClass('ui-btn-up-b').
-                        removeClass('ui-btn-active');
+            $('#new-detail-vote a').
+                removeClass('ui-btn-hover-b').
+                addClass('ui-btn-up-b').
+                removeClass('ui-btn-active');
             if (rayv.currentItem.untried) {
                 $('#new-item-untried').addClass('ui-btn-active');
             }
@@ -1738,7 +1740,7 @@ var BB = {
 
         },
 
-        create_name_validate: function(e){
+        create_name_validate: function (e) {
             var addr = $("#dragged-address").text();
             if (addr.length > 0 && $('#create-name').val().length > 0) {
                 $("#create-new-save-btn").removeClass("ui-disabled")
@@ -1951,14 +1953,14 @@ var BB = {
                     try {
                         search_center = new rayv.LatLng(obj.search.lat, obj.search.lng);
                     }
-                    catch (e){
+                    catch (e) {
                         search_center = BB.lastGPSPosition;
                     }
                     for (var idx = 0; idx < obj.local.points.length; idx++) {
                         var pt = obj.local.points[idx];
                         BB.set_distance_for_place(pt, search_center);
                     }
-                    obj.local.points.sort(function(a,b){
+                    obj.local.points.sort(function (a, b) {
                         return a.dist_float - b.dist_float;
                     });
                     var context = {'items': obj.local.points};
@@ -2273,9 +2275,10 @@ var BB = {
             }
 
         },
-        goto_external: function(){
+        goto_external: function () {
             window.location.hash = "";
         },
+
 
         /**
          * event listeners
@@ -2342,6 +2345,20 @@ var BB = {
             $('#new-category').keyup(BB.cuisine_keyup);
             $('#cuisine-lookup').click(BB.cuisine_lookup_click);
             $('#item-web-link').click(BB.goto_external);
+            var app_cache = window.applicationCache;
+            if (app_cache) {
+                $(app_cache).bind(
+                    "updateready",
+                    function (event) {
+                        // This gets fired when new cache files have been downloaded
+                        // and are ready to replace the *existing* cache. The old
+                        // cache will need to be swapped out.
+                        console.info("New cache available");
+                        // Swap out the old cache.
+                        app_cache.swapCache();
+                    }
+                );
+            }
 
 
             /*window.onerror = function errorHandler(msg, url, line) {
