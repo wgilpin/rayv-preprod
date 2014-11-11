@@ -834,7 +834,7 @@ var BB = {
 
         /**
          * setup a list of places
-         * @param UIlist {string} list selector #map-list or #main-list
+         * @param UIlist {string} list selector #map-list or #pagelist
          * @returns {*}
          */
         setupList: function (UIlist) {
@@ -1599,9 +1599,11 @@ var BB = {
             console.log("PAGE list");
 
             if (BB.navBarActive) {
-
                 BB.populateMainList("");
                 $("#list-loading").hide();
+                var search = $("#main-search")
+                search.off('keyup change', BB.list_text_filter);
+                search.on('keyup change', BB.list_text_filter);
             }
             else
                 event.preventDefault();
