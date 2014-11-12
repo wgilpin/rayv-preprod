@@ -596,6 +596,18 @@ var BB = {
             }
         },
 
+        vote_is_like: function (vote){
+            if (vote=='like' || vote==1){
+                return true;
+            }
+            return false;
+        },
+        vote_is_dislike: function (vote){
+            if (vote=='dislike' || vote==-1){
+                return true;
+            }
+            return false;
+        },
 
         /**
          * we have changed the current item, update the cache
@@ -614,10 +626,10 @@ var BB = {
             }
             ;
             vote.vote = rayv.currentItem.vote;
-            if (rayv.currentItem.vote == 'dislike') {
+            if (BB.vote_is_dislike(rayv.currentItem.vote)) {
                 vote.vote = -1;
             }
-            if (rayv.currentItem.vote == 'like') {
+            if (BB.vote_is_like(rayv.currentItem.vote)) {
                 vote.vote = 1;
             }
             vote.untried = vote.vote == 0;
@@ -761,8 +773,10 @@ var BB = {
                     processData: false,
                     type: 'POST',
                     success: save_success_handler,
-                    error: function () {
+                    error: function (data) {
                         BB.hide_waiting();
+                        console.error('saveSinglePart: '+data);
+                        alert('Sorry, save failed for some reason. Please try again');
                     }
                 });
                 console.log("AJAX saverayv.currentItem");
@@ -2353,9 +2367,10 @@ var BB = {
                         // This gets fired when new cache files have been downloaded
                         // and are ready to replace the *existing* cache. The old
                         // cache will need to be swapped out.
-                        console.info("New cache available");
+                        console.info("New cache available - RELOAD");
                         // Swap out the old cache.
                         app_cache.swapCache();
+                        window.location = '/';
                     }
                 );
             }

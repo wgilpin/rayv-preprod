@@ -438,6 +438,12 @@ def update_photo(it, request_handler):
 
 
 def update_votes(item, request_handler, user_id):
+  """
+  save the vote for an item
+  :param item: {Item}
+  :param request_handler: {BaseHandler} for the request
+  :param user_id: {int}
+  """
   try:
     old_votes = item.votes.filter("voter =", user_id)
     for v in old_votes:
@@ -555,6 +561,8 @@ class newOrUpdateItem(BaseHandler):
     if logged_in():
       it = update_item_internal(self, self.user_id, allow_update=True)
       it_json = itemToJSONPoint(it, uid_for_votes=self.user_id)
+      # adjust the votes so my own is not added to the up/down score
+      adjust_votes_for_JSON_pt(it_json)
       # it_json['vote'] = self.request.params['voteScore']
       # if self.request.params['untried'] == 'true':
       #   it_json['untried'] = True
