@@ -2370,7 +2370,7 @@ var BB = {
                         console.info("New cache available - RELOAD");
                         // Swap out the old cache.
                         app_cache.swapCache();
-                        window.location = '/';
+                        window.location.reload();
                     }
                 );
             }

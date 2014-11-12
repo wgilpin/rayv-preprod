@@ -35,9 +35,11 @@
                 {{else }}
                     <div class="item-no-vote item-votes"></div>
                 {{/if }}
+                {{if up|more>0}}
                 <div class="item-like-sm">
                     <div class="item-like-score">{{up}}</div>
                 </div>
+                {{/if}}
                 {{if down|more>0}}
                     <div class="item-dislike-sm ">
                         <div class="item-dislike-score">{{down}}</div>
