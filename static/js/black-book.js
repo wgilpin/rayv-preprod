@@ -596,14 +596,14 @@ var BB = {
             }
         },
 
-        vote_is_like: function (vote){
-            if (vote=='like' || vote==1){
+        vote_is_like: function (vote) {
+            if (vote == 'like' || vote == 1) {
                 return true;
             }
             return false;
         },
-        vote_is_dislike: function (vote){
-            if (vote=='dislike' || vote==-1){
+        vote_is_dislike: function (vote) {
+            if (vote == 'dislike' || vote == -1) {
                 return true;
             }
             return false;
@@ -775,7 +775,7 @@ var BB = {
                     success: save_success_handler,
                     error: function (data) {
                         BB.hide_waiting();
-                        console.error('saveSinglePart: '+data);
+                        console.error('saveSinglePart: ' + data);
                         alert('Sorry, save failed for some reason. Please try again');
                     }
                 });
@@ -862,22 +862,51 @@ var BB = {
             var placeList = [];
 
             var votes = rayv.UserData.myBook.get().votes;
-            for (var it in votes) {
-                //noinspection JSUnfilteredForInLoop
-                if ((BB.filter != 'untried') || (BB.filter == 'untried' &&
-                    votes[it].untried))
-                    placeList.push(it);
-            }
-            if (BB.filter == "all") {
-                //add the other lists
-                rayv.UserData.friends.forEach(function (friend) {
-                    for (it in friend.votes) {
+
+            switch (BB.filter) {
+                case 'wishlist':
+                    //add the other lists
+                    rayv.UserData.friends.forEach(function (friend) {
+                        for (it in friend.votes) {
+                            //noinspection JSUnfilteredForInLoop
+                            if (placeList.indexOf(it) == -1 &&
+                                votes[it]==null) {
+                                // it is in a friends list, but not in mine
+                                placeList.push(it)
+                            }
+                        }
+                    });
+                    // FALL THROUGH
+                case 'untried':
+                    for (var it in votes) {
+                        //noinspection JSUnfilteredForInLoop
+                        if (votes[it].untried) {
+                            if (placeList.indexOf(it) == -1) {
+                                placeList.push(it)
+                            }
+                        }
+                    }
+                    break;
+
+                case 'all':
+                    //add the other lists
+                    rayv.UserData.friends.forEach(function (friend) {
+                        for (it in friend.votes) {
+                            //noinspection JSUnfilteredForInLoop
+                            if (placeList.indexOf(it) == -1) {
+                                placeList.push(it)
+                            }
+                        }
+                    });
+                    // FALL THROUGH
+                case 'mine':
+                    for (var it in votes) {
                         //noinspection JSUnfilteredForInLoop
                         if (placeList.indexOf(it) == -1) {
                             placeList.push(it)
                         }
                     }
-                });
+                    break;
             }
             var detailList = [];
             placeList.forEach(function (place) {
@@ -1658,6 +1687,7 @@ var BB = {
         pageToMap: function () {
             console.log("PAGE map");
             if (BB.navBarActive) {
+                BB.set_map_column_filter("all");
                 $("#map-list-loading").show();
                 $("#map-search-btn").hide();
                 $("#map-search").val("");
@@ -1918,6 +1948,11 @@ var BB = {
             BB.filter = BB.get_list_column_filter();
             BB.populateMainList("", 0, 0);
         },
+        clickMapColumnHeader: function () {
+            // click a column header on the list page
+            BB.filter = BB.get_map_column_filter();
+            BB.populateMainList("", 0, 0);
+        },
 
 // proper case function (JScript 5.5+)
         toProperCase: function (s) {
@@ -2162,11 +2197,32 @@ var BB = {
         },
 
         /**
+         * set the main list filter
+         * @param val
+         */
+        set_map_column_filter: function (val) {
+            var filter = $("#map-filter-radio");
+            filter.find("input[type='radio']").attr("checked", null);
+            filter.find("input[type='radio'][value='" + val + "']").attr(
+                "checked", "checked");
+            filter.find("input[type='radio']").
+                checkboxradio().
+                checkboxradio("refresh");
+        },
+
+        /**
          * Which filter is selected for the main list?
          * @returns {string} the name of the filter
          */
         get_list_column_filter: function () {
             return $("#filter-radio").find("input:checked").val();
+        },
+        /**
+         * Which filter is selected for the MAP list?
+         * @returns {string} the name of the filter
+         */
+        get_map_column_filter: function () {
+            return $("#map-filter-radio").find("input:checked").val();
         },
 
         set_test_location: function () {
@@ -2322,11 +2378,10 @@ var BB = {
             $("#enter-new-addr-btn").on("click", BB.lookupManualAddress);
             $("#new-address-my-locn-btn").on("click", BB.lookupMyAddress);
             $("#forgot-btn").attr("data-ajax", "false");
-            $("#column-headers").find("span").on("click", BB.clickColumnHeader);
             BB.set_list_column_filter('mine');
             $("#filter-radio").on("change", BB.clickColumnHeader);
+            $("#map-filter-radio").on("change", BB.clickMapColumnHeader);
             $("#sort-dist").addClass("list-sort-selected");
-            $("#col-mine").addClass("list-filter-selected");
             $("#new-place-name-box").on('change input', BB.place_search_by_name);
             $("#new-place-near").on('keyup', BB.set_search_to_near_place);
             $("#new-search-place-btn").click(BB.lookupManualAddress);

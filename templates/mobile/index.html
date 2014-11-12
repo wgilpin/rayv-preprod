@@ -50,7 +50,7 @@
                 <img src="/static/images/ajax-loader.gif">
             </div>
         </div>
-        <div id="filter-radio" data-role="fieldcontain" data-controltype="radiobuttons">
+        <div id="filter-radio" class="filter-radio"  data-role="fieldcontain" data-controltype="radiobuttons">
             <fieldset data-role="controlgroup" data-type="horizontal" data-mini="true">
                 <input id="radio1" name="" value="mine" type="radio">
                 <label for="radio1">
@@ -63,6 +63,10 @@
                 <input id="radio3" name="" value="untried" type="radio">
                 <label for="radio3">
                     Untried
+                </label>
+                <input id="radio4" name="" value="wishlist" type="radio">
+                <label for="radio4">
+                    Wish List
                 </label>
             </fieldset>
         </div>
@@ -293,6 +297,26 @@
             <div style="width: 46px; height:46px;margin-left: auto ;margin-right: auto ;">
                 <img src="/static/images/ajax-loader.gif">
             </div>
+        </div>
+        <div id="map-filter-radio" class="filter-radio" data-role="fieldcontain" data-controltype="radiobuttons">
+            <fieldset data-role="controlgroup" data-type="horizontal" data-mini="true">
+                <input id="map-radio1" name="" value="mine" type="radio">
+                <label for="map-radio1">
+                    Mine
+                </label>
+                <input id="map-radio2" name="" value="all" type="radio">
+                <label for="map-radio2">
+                    All
+                </label>
+                <input id="map-radio3" name="" value="untried" type="radio">
+                <label for="map-radio3">
+                    Untried
+                </label>
+                <input id="map-radio4" name="" value="wishlist" type="radio">
+                <label for="map-radio4">
+                    Wish List
+                </label>
+            </fieldset>
         </div>
         <div id="map-div" data-controltype="htmlblock">
         </div>

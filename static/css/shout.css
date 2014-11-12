@@ -638,17 +638,17 @@ div {
     left: 41px;
 }
 
-#filter-radio {
+.filter-radio {
     padding: 0;
     width: 100%;
 }
 
-#filter-radio fieldset div {
+.filter-radio fieldset div {
     width: 100%;
 }
 
-#filter-radio fieldset div div {
-    width: 33%;
+.filter-radio fieldset div div {
+    width: 25%;
 }
 
 [data-role="tabbar"] .ui-icon {
