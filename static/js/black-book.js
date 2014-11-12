@@ -864,7 +864,7 @@ var BB = {
             var votes = rayv.UserData.myBook.get().votes;
 
             switch (BB.filter) {
-                case 'wishlist':
+                case  'wishlist':
                     //add the other lists
                     rayv.UserData.friends.forEach(function (friend) {
                         for (it in friend.votes) {
