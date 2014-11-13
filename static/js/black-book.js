@@ -864,6 +864,16 @@ var BB = {
             var votes = rayv.UserData.myBook.get().votes;
 
             switch (BB.filter) {
+                case 'untried':
+                    for (var it in votes) {
+                        //noinspection JSUnfilteredForInLoop
+                        if (votes[it].untried) {
+                            if (placeList.indexOf(it) == -1) {
+                                placeList.push(it)
+                            }
+                        }
+                    }
+                    // FALL THROUGH
                 case  'wishlist':
                     //add the other lists
                     rayv.UserData.friends.forEach(function (friend) {
@@ -876,17 +886,8 @@ var BB = {
                             }
                         }
                     });
-                    // FALL THROUGH
-                case 'untried':
-                    for (var it in votes) {
-                        //noinspection JSUnfilteredForInLoop
-                        if (votes[it].untried) {
-                            if (placeList.indexOf(it) == -1) {
-                                placeList.push(it)
-                            }
-                        }
-                    }
                     break;
+
 
                 case 'all':
                     //add the other lists
