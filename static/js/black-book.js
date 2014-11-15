@@ -1360,6 +1360,7 @@ var BB = {
             }
             if (!hasVote) {
                 alert('Please vote!');
+                BB.detail_saving = false;
                 return;
             }
 
@@ -1373,7 +1374,17 @@ var BB = {
                 return;
             }
             rayv.currentItem.address = $("#new-detail-address").val();
+            if (rayv.currentItem.address.length == 0){
+                alert('Please enter address');
+                BB.detail_saving = false;
+                return;
+            }
             rayv.currentItem.place_name = $("#new-detail-name").val();
+            if (rayv.currentItem.place_name.length == 0){
+                alert('Please enter place name');
+                BB.detail_saving = false;
+                return;
+            }
             rayv.currentItem.descr = $("#new-detail-comment").val();
 
             if (rayv.currentItem.key == "") {

@@ -344,12 +344,11 @@ class register(BaseHandler):
     msg = 'An email has been sent to your account'
 
     message = EmailMessage(
-      sender='shoutaboutemail@gmail.com',
+      sender=settings.config['system_email'],
       to=email,
-      subject="Shout! Registration",
+      subject="Rayv Registration",
       body="Click here to confirm your email address " + verification_url
     )
-
     message.send()
 
     self.display_message(msg.format(url=verification_url))

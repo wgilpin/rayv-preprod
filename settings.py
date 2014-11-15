@@ -21,6 +21,7 @@ config = {
   'google_api_key': 'AIzaSyDiTThta8R7EFuFo8cGfPHxIGYoFkc77Bw',
   'all_are_friends': True,
   'TIMING_DELTA': 5 * 60 * 1000, # 5 mins in ms
+  'system_email': 'wgilpin+rayv@gmail.com'
 }
 
 auth.default_config['token_max_age'] = 86400 * 7 * 8  # 8 weeks login auth token timeout

@@ -88,7 +88,7 @@ class ForgotPasswordHandler(BaseHandler):
                                             signup_token=token, _full=True)
 
             msg = 'Please visit this link to reset your password <a href="{url}">{url}</a>'.format(url=verification_url)
-            mail.send_mail(sender="Shout Support <shoutaboutemail@gmail.com>",
+            mail.send_mail(sender=settings.config['system_email'],
               to=user.email_address,
               subject="Password Reset",
               body=msg)
