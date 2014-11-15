@@ -1778,7 +1778,7 @@ var BB = {
          * The cache is assumed to be dirty
          */
         imageLoadErrorHandler: function () {
-            console.error('imageLoadErrorHandler');
+            console.info('imageLoadErrorHandler');
             var key = $(this).parent().parent().parent().data('key');
             $.get(
                 '/item/'+key,
@@ -1817,6 +1817,7 @@ var BB = {
         },
         pageToCreateAddress: function () {
             //init map
+            console.log('pageToCreateAddress');
             if (!BB.creatorMap) {
                 var mapOptions = {
                     zoom: 15,
@@ -1832,7 +1833,7 @@ var BB = {
                 BB.creatorMap.setCenter(
                     BB.lastGPSPosition.googleFormat());
             }
-            $("#create-name").val($("#new-name").val());
+            $("#create-name").val($("#new-place-name-box").val());
             $("#dragged-address").hide();
             $("#create-new-save-btn").addClass("ui-disabled")
         },
