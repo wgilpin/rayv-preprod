@@ -1834,7 +1834,9 @@ var BB = {
                     BB.lastGPSPosition.googleFormat());
             }
             $("#create-name").val($("#new-place-name-box").val());
-            $("#dragged-address").hide();
+            var $addr = $("#dragged-address");
+            $addr.text('');
+            $addr.hide();
             $("#create-new-save-btn").addClass("ui-disabled")
         },
 
