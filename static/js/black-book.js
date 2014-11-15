@@ -1115,6 +1115,7 @@ var BB = {
             try {
                 $('div[data-role=listview]').listview().listview('refresh').
                     trigger('updatelayout');
+                $("#splash").hide();
             } catch (e) {
             }
 
