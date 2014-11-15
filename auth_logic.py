@@ -94,7 +94,8 @@ class ForgotPasswordHandler(BaseHandler):
               body=msg)
 
         params = {
-            'message2': "An email has been sent to that address. Please read it for instructions"
+            'message2': "If that account exists, an email was sent. "
+                        "Please read it for instructions"
         }
         self.render_template('login.html', params)
 
