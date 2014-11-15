@@ -356,11 +356,29 @@ class register(BaseHandler):
 
 
 class updateItem(BaseHandler):
-  def post(self):
+  def get(self, key):
+    """
+    " get a single item
+    """
+    if logged_in():
+      try:
+        it = Item.get_item(key)
+        it_json = itemToJSONPoint(it, uid_for_votes=self.user_id)
+        # adjust the votes so my own is not added to the up/down score
+        adjust_votes_for_JSON_pt(it_json)
+        json.dump(it_json, self.response.out)
+      except:
+        logging.error('updateItem GET Exception',exc_info=True)
+
+    else:
+      logging.error('updateItem GET: '+key)
+      self.display_message("Unable to get item")
+
+  def post(self, key):
     if logged_in():
       it = None
       try:
-        it = Item.get_item(self.request.get('key'))
+        it = Item.get_item(key)
       except Exception:
         logging.exception("updateItem ", exc_info=True)
         # not found

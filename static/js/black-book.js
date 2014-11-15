@@ -661,6 +661,12 @@ var BB = {
                 });
         },
 
+        update_item_from_server: function (item) {
+            BB.set_distance_for_place(item);
+            rayv.UserData.places.set(item.key, item);
+            rayv.currentItem.loadFromKey(item.key);
+            return BB.updateCurrentItemInCache();
+        },
         /**
          * save to server
          */
@@ -692,11 +698,8 @@ var BB = {
                 // clear the form as per #86
                 $('#new-shout-form')[0].reset();
                 var it = res;//JSON.parse(res);
-                BB.set_distance_for_place(it);
-                rayv.UserData.places.set(it.key, it);
-                rayv.currentItem.loadFromKey(it.key);
                 $.mobile.changePage("#list-page");
-                if (BB.updateCurrentItemInCache()) {
+                if (BB.update_item_from_server(it)) {
                     BB.populateMainList("");
                 }
                 else {
@@ -736,10 +739,10 @@ var BB = {
                                 processData: false,
                                 type: 'POST',
                                 success: save_success_handler,
-                                error: function (a,b,c) {
+                                error: function (a, b, c) {
                                     BB.hide_waiting();
                                     console.error(
-                                            'saveMultiPart /item: '+b+', '+c);
+                                            'saveMultiPart /item: ' + b + ', ' + c);
                                 }
                             });
 //                            var fd = build_form(f);
@@ -872,13 +875,13 @@ var BB = {
                         for (it in friend.votes) {
                             //noinspection JSUnfilteredForInLoop
                             if (placeList.indexOf(it) == -1 &&
-                                votes[it]==null) {
+                                votes[it] == null) {
                                 // it is in a friends list, but not in mine
                                 placeList.push(it)
                             }
                         }
                     });
-                    // FALL THROUGH
+                // FALL THROUGH
                 case 'wishlist':
                     for (var it in votes) {
                         //noinspection JSUnfilteredForInLoop
@@ -899,7 +902,7 @@ var BB = {
                             }
                         }
                     });
-                    // FALL THROUGH
+                // FALL THROUGH
                 case 'mine':
                     for (var it in votes) {
                         //noinspection JSUnfilteredForInLoop
@@ -1003,7 +1006,8 @@ var BB = {
                          BB.mapInfoWindows.push(infoWindow);*/
                     }
                 }
-                $(UIlist).find("A").on("click", BB.ItemLoadPage);
+                $(UIlist).find("a").on("click", BB.ItemLoadPage);
+                $(UIlist).find("a").find('img').error(BB.imageLoadErrorHandler);
 
                 //FLIGHT
                 // Get cached thumbs
@@ -1767,6 +1771,23 @@ var BB = {
             rayv.currentItem.key = $(this).data('key');
             console.log("key set ItemLoadPage");
             $.mobile.changePage("#item-page")
+        },
+
+        /**
+         * on error handler for list images
+         * The cache is assumed to be dirty
+         */
+        imageLoadErrorHandler: function () {
+            console.error('imageLoadErrorHandler');
+            var key = $(this).parent().parent().parent().data('key');
+            $.get(
+                '/item/'+key,
+                {},
+                function(res){
+                    BB.update_item_from_server(res)
+
+                },
+                'json');
         },
 
         dragCreatorMap: function () {
