@@ -1,4 +1,5 @@
 import webapp2
+from webapp2_extras.routes import RedirectRoute
 import admin
 from auth_logic import SignupHandler, VerificationHandler, SetPasswordHandler, LoginHandler, LogoutHandler, \
   ForgotPasswordHandler, AuthenticatedHandler
@@ -50,5 +51,6 @@ urls = [
   webapp2.Route('/admin/sync_to_prod', admin.SyncToProd),
   webapp2.Route('/admin/update_photos', admin.updatePhotoFromGoogle),
   webapp2.Route('/admin/put_place_api', views.UpdateItemFromAnotherAppAPI),
+  RedirectRoute('/admin/cleanup_votes', redirect_to='/migrate_datastore?no=12'),
 
 ]

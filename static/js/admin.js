@@ -34,9 +34,29 @@ Admin.updatePhotos = function(){
         },
         dataType: "json"
     });
+};
+
+Admin.cleanup_after_delete = function(){
+    $.ajax({
+        url:'/admin/cleanup_votes',
+        method:'GET',
+        data:{},
+        success:function(d){
+            alert('Done')
+        },
+        error:function(jqXHR, textStatus, errorThrown){
+            alert('Failed - see server logs');
+            console.error('cleanup_after_delete: '+
+                jqXHR+', '+
+                textStatus+', '+
+                errorThrown);
+        },
+        dataType: "json"
+    });
 }
 
 $(function(){
     $("#admin-send").click(Admin.send);
     $("#admin-photos").click(Admin.updatePhotos);
+    $("#admin-clean-votes").click(Admin.cleanup_after_delete);
 })

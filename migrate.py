@@ -1,3 +1,4 @@
+import json
 import urllib2
 from datetime import datetime
 from google.appengine.ext import db
@@ -12,7 +13,7 @@ __author__ = 'Will'
 
 class migrate(BaseHandler):
   def remove_orphan_votes(self):
-    # remove orphan votes
+    # remove orphan votes after an item is deleted
     votes = Vote.all()
     for v in votes:
       try:
@@ -22,6 +23,7 @@ class migrate(BaseHandler):
         self.response.out.write('Delete 1')
       except Exception:
         self.response.out.write("FAIL ", exc_info=True)
+
 
   def add_websites(self):
     # add websites
@@ -265,7 +267,9 @@ class migrate(BaseHandler):
         self.response.out.write("11 - images got from google into db OK")
       elif self.request.get("no") == "12":
         self.remove_orphan_votes()
-        self.response.out.write("12 - votes clean - MEMCACHE")
+        self.response.out.write(json.dumps({
+          'status':'OK',
+          'detail':'12 - votes clean - MEMCACHE'}))
       elif self.request.get("no") == "13":
         self.add_websites()
         self.response.out.write("13 - websites got from google OK")
