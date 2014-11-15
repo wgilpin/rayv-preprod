@@ -15,7 +15,7 @@ urls = [
   webapp2.Route('/', views.MainHandler, name='home'),
   webapp2.Route('/signup', SignupHandler),
   webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>',
-                handler=VerificationHandler, name='verification'),
+                handler=views.passwordVerificationHandler, name='verification'),
   webapp2.Route('/password', SetPasswordHandler),
   webapp2.Route('/login', views.login, name='login'),
   webapp2.Route('/forgot', ForgotPasswordHandler, name='forgot'),
