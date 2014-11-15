@@ -19,7 +19,8 @@ config = {
   'place_types': 'food|restaurant|bar|cafe|meal_delivery|meal_takeaway',
   'ALLOWED_INCLUDE_ROOTS': "/templates",
   'google_api_key': 'AIzaSyDiTThta8R7EFuFo8cGfPHxIGYoFkc77Bw',
-  'all_are_friends': True
+  'all_are_friends': True,
+  'TIMING_DELTA': 5 * 60 * 1000, # 5 mins in ms
 }
 
 auth.default_config['token_max_age'] = 86400 * 7 * 8  # 8 weeks login auth token timeout
@@ -29,3 +30,4 @@ ALLOWED_APP_IDS = ('shout-about', 'rayv-prod')
 API_TARGET_APP_ID = 'rayv-app'
 
 FAKE_ATTR = 'True'
+

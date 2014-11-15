@@ -132,7 +132,9 @@ class getFullUserRecord(BaseHandler):
       if user:
         # logged in
         if 'since' in self.request.params:
-          since = int(self.request.params['since'])
+          # move since back in time to allow for error
+          since = int(self.request.params['since']) - \
+                  settings.config['TIMING_DELTA'];
         # is it for a specific user?
         for_1_user = long(self.request.get("forUser")) if \
                   "forUser" in self.request.params \

@@ -277,7 +277,7 @@ rayv.UserData = rayv.UserData || {};
             rayv.UserData.places.load();
         }
         ;
-        if (last_update && !rayv.UserData.places.is_empty()) {
+        if (last_update > 0 && !rayv.UserData.places.is_empty()) {
             request.since = last_update;
             callback();
         }
@@ -736,8 +736,10 @@ var BB = {
                                 processData: false,
                                 type: 'POST',
                                 success: save_success_handler,
-                                error: function () {
+                                error: function (a,b,c) {
                                     BB.hide_waiting();
+                                    console.error(
+                                            'saveMultiPart /item: '+b+', '+c);
                                 }
                             });
 //                            var fd = build_form(f);
