@@ -11,7 +11,7 @@ from caching import memcache_get_user_dict, memcache_touch_user, memcache_put_us
 from dataloader import load_data
 from geo import getPlaceDetailFromGoogle, geoCodeAddress, \
   adjust_votes_for_JSON_pt, itemToJSONPoint
-from models import Item, DBImage, Vote, Category
+from models import Item, DBImage, Vote, Category, getProp
 from geo import LatLng, itemKeyToJSONPoint
 from places_db import PlacesDB
 from profiler import profile_in, profile_out
@@ -29,7 +29,7 @@ def logged_in():
   @return: bool
   """
   user = session_auth = auth.get_auth()
-  if session_auth.get_user_by_session():
+  if session_auth.get_user_by_session(save_session=True):
     return user
   else:
     return False
@@ -100,7 +100,7 @@ def serialize_user_details(user_id, places, current_user):
         del votes[idx]
 
     last_write = user_dict['p'].last_write if \
-      hasattr(user_dict['p'],'last_write') else None
+      getProp(user_dict['p'],'last_write') else None
     result = {"votes": votes,
               "id": user_id,
               # todo is it first_name?
@@ -303,9 +303,10 @@ class MainHandler(BaseHandler):
   def get(self):
     if logged_in():
       con = {"cats": Category.all()}
-
+      logging.info('MainHandler: Logged in')
       self.render_template("index.html", con)
     else:
+      logging.info('MainHandler: Not logged in')
       self.render_template("login.html")
 
 

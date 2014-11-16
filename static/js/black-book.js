@@ -220,7 +220,11 @@ ObjectStore = function (obj_name) {
         obj = v;
         if (has_local_storage) {
             var json_val = JSON.stringify(v);
-            window.localStorage.setItem(this.obj_name + ':', json_val);
+            try{
+                window.localStorage.setItem(this.obj_name + ':', json_val);
+            }catch(e){
+                alert('Please ensure your browser is not in Private mode')
+            }
         }
     };
     this.get = function () {
@@ -661,12 +665,23 @@ var BB = {
                 });
         },
 
-        update_item_from_server: function (item) {
+        /**
+         * handler for updating an item
+         * Called from the image error handle
+         * if the item has no image, it doesn't update
+         * @param item {Object}
+         * @returns {boolean} Was an update saved?
+         */
+        update_item_from_server: function (item){
+            if (item.thumbnail == "") {
+                return false;
+            }
             BB.set_distance_for_place(item);
             rayv.UserData.places.set(item.key, item);
             rayv.currentItem.loadFromKey(item.key);
             return BB.updateCurrentItemInCache();
         },
+
         /**
          * save to server
          */
