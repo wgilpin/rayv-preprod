@@ -2414,6 +2414,13 @@ var BB = {
         },
 
 
+        /***
+         * clear the local storager then logout
+         */
+        logout: function () {
+            window.localStorage.clear();
+            window.location = '/logout';
+        },
         /**
          * event listeners
          */
@@ -2478,6 +2485,7 @@ var BB = {
             $('#new-category').keyup(BB.cuisine_keyup);
             $('#cuisine-lookup').click(BB.cuisine_lookup_click);
             $('#item-web-link').click(BB.goto_external);
+            $('#logout-btn').click(BB.logout);
             var app_cache = window.applicationCache;
             if (app_cache) {
                 $(app_cache).bind(
