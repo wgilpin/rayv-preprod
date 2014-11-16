@@ -142,6 +142,7 @@ class PlacesDB():
         detail = {'place_name': r['name'],
                   'address': address,
                   'post_code': post_code,
+                  'place_id': r['place_id'],
                   "lat": r['geometry']['location']['lat'],
                   "lng": r['geometry']['location']['lng']}
         addresses.append(detail)

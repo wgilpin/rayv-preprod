@@ -1292,7 +1292,7 @@ var BB = {
                 'new-place-list-js',
                 {'points': obj.local.points}));
             el.trigger("create");
-            el.find("ul").find("a").on("click", BB.new_places_list_click);
+            el.find("ul").find("a").on("click", BB.item_create_lookup_full_address);
             BB.navBarEnable();
             $("#new-place-list-loading").hide();
         },
@@ -1999,11 +1999,7 @@ var BB = {
                 });
         },
 
-        /**
-         * load a place for edit when it comes from a geo search on Add New
-         */
-        item_create: function () {
-            console.log('item_create');
+        item_create_lookup_full_address: function (){
             var properTitle = BB.toProperCase($(this).data('title'));
             $("#new-detail-name").val(decodeURIComponent(properTitle));
             $("#new-detail-address").val($(this).data('address'));
@@ -2018,23 +2014,46 @@ var BB = {
                 removeClass('ui-btn-active');
             $('#new-item-like').addClass('ui-btn-active');
             $("#new-preview-box").hide();
-
-            rayv.currentItem.address = $(this).data('address');
             rayv.currentItem.key = $(this).data('key');
             rayv.currentItem.position = new rayv.LatLng(
                 $(this).data('lat'),
                 $(this).data('lng'));
             rayv.currentItem.place_name = properTitle;
+            var id = $(this).data('place_id');
+            var request = {
+              placeId: id
+            };
+            if (!BB.creatorMap){
+                BB.pageToCreateAddress();
+            }
+            var service = new google.maps.places.PlacesService(BB.creatorMap);
+            service.getDetails(request, BB.item_create);
+        },
+        /**
+         * load a place for edit when it comes from a geo search on Add New
+         */
+        item_create: function (place, status) {
+            if (status == google.maps.places.PlacesServiceStatus.OK) {
+                rayv.currentItem.address = place.formatted_address;
+                $("#new-detail-address").val(place.formatted_address);
+            }
+            else{
+                rayv.currentItem.address = $(this).data('address');
+            }
+            console.log('item_create');
+            $.mobile.changePage('#new-detail')
         },
 
+        /**
+         * Look up the places near an address
+         * @param event
+         */
         lookupAddressList: function (event) {
             var addr;
             $("#new-place-list-loading").show();
             function lookAddressList_inner(obj) {
                 try {
-
                     BB.check_for_dirty_data(obj);
-
                     var search_center;
                     try {
                         search_center = new rayv.LatLng(obj.search.lat, obj.search.lng);
@@ -2053,12 +2072,13 @@ var BB = {
                     var UIlist = templates.render(
                         'add-search-nearby-template',
                         context);
-
                     $("#new-place-list").
                         html(UIlist).listview().
                         trigger('create').
                         trigger('updatelayout');
-                    $(".found-address").on("click", BB.item_create);
+                    $(".found-address").on(
+                        "click",
+                        BB.item_create_lookup_full_address);
                     $("#manual-address-lookup").val(rayv.currentItem.address);
                 }
                 catch (e) {
@@ -2095,7 +2115,7 @@ var BB = {
             request.addr = addr;
             // get the place name from the new screen
             request.place_name = $("#new-place-name-box").val();
-            if (event.currentTarget.id == "new-search-place-btn") {
+            if (event || event.currentTarget.id == "new-search-place-btn") {
                 //near address
                 request.near_me = 0;
             } else {

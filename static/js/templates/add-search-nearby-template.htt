@@ -13,10 +13,11 @@
             data-shout-key="{{key}}"
             data-address="{{address}}"
             data-category="{{category}}"
+            data-place_id="{{place_id}}"
             data-lat="{{lat}}"
             data-lng="{{lng}}"
             data-key='{{ key }}'
-            href='#new-detail' data-transition='slide'>
+            href='#' data-transition='slide'>
         <div class="list-item-container">
             <div id='div_left'>
                 <img src="{{thumbnail}}" class="item-pic">

@@ -1,13 +1,14 @@
 <ul data-role="listview" data-divider-theme="b" data-inset="true">
     {{points}}
         <li data-theme='c' data-icon='false'>
-            <a href='#new-detail'
+            <a href='#'
                data-transition='slide'
                data-shout-is-map="true"
                data-title="{{place_name}}"
                data-shout-key="{{key}}"
                data-address="{{address}}"
                data-category="{{category}}"
+               data-place_id="{{place_id}}"
                data-lat="{{lat}}"
                data-lng="{{lng}}"
                 <div class="list-item-container">
