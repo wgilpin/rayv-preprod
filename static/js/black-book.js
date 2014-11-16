@@ -1015,7 +1015,7 @@ var BB = {
                      BB.mapInfoWindows.push(infoWindow);*/
                 }
             }
-            consol.log("inner list loaded")
+            console.log("inner list loaded")
             $(UIlist).find("a").on("click", BB.ItemLoadPage);
             $(UIlist).find("a").find('img').error(BB.imageLoadErrorHandler);
 
