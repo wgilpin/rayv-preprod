@@ -582,10 +582,6 @@ class newOrUpdateItem(BaseHandler):
       it_json = itemToJSONPoint(it, uid_for_votes=self.user_id)
       # adjust the votes so my own is not added to the up/down score
       adjust_votes_for_JSON_pt(it_json)
-      # it_json['vote'] = self.request.params['voteScore']
-      # if self.request.params['untried'] == 'true':
-      #   it_json['untried'] = True
-      #   it_json['voteScore'] = 0
       json.dump(it_json, self.response.out)
     else:
       self.display_message("Unable to save item")

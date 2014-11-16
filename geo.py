@@ -421,7 +421,7 @@ def adjust_votes_for_JSON_pt(json_pt):
   :param json_pt: dict: the jsonPt
   :return: dict: the amended jsonPt
   """
-  if hasattr(json_pt, 'adjusted'):
+  if 'adjusted' in json_pt:
     #already done
     return json_pt
   try:
