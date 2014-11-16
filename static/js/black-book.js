@@ -673,7 +673,7 @@ var BB = {
          * @returns {boolean} Was an update saved?
          */
         update_item_from_server: function (item) {
-            if (item.thumbnail == "") {
+            if (item.thumbnail.length == 0) {
                 return false;
             }
             BB.set_distance_for_place(item);
