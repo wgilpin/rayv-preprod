@@ -966,9 +966,7 @@ var BB = {
             for (var geoPtIdx in detailList) {
                 //noinspection JSUnfilteredForInLoop
                 var geoPt = detailList[geoPtIdx],
-                    newListItem,
-                    click_fn,
-                    newListItemEnd;
+                    newListItem;
                 if (geoPt.is_map) {
                     // it's a google place result - place_name, lat, long
                     newListItem = templates.render(
@@ -1017,12 +1015,12 @@ var BB = {
                      BB.mapInfoWindows.push(infoWindow);*/
                 }
             }
+            consol.log("inner list loaded")
             $(UIlist).find("a").on("click", BB.ItemLoadPage);
             $(UIlist).find("a").find('img').error(BB.imageLoadErrorHandler);
 
-            //FLIGHT
             // Get cached thumbs
-            rayv.UserData.getThumbs(UIlist);
+            //rayv.UserData.getThumbs(UIlist);
             try {
                 $(UIlist).find('div[data-role=collapsible]').collapsible();
                 try {
