@@ -220,9 +220,9 @@ ObjectStore = function (obj_name) {
         obj = v;
         if (has_local_storage) {
             var json_val = JSON.stringify(v);
-            try{
+            try {
                 window.localStorage.setItem(this.obj_name + ':', json_val);
-            }catch(e){
+            } catch (e) {
                 alert('Please ensure your browser is not in Private mode')
             }
         }
@@ -672,7 +672,7 @@ var BB = {
          * @param item {Object}
          * @returns {boolean} Was an update saved?
          */
-        update_item_from_server: function (item){
+        update_item_from_server: function (item) {
             if (item.thumbnail == "") {
                 return false;
             }
@@ -875,12 +875,12 @@ var BB = {
          */
         setupList: function (UIlist) {
             console.log('setupList');
+            $("#list-loading").show();
             $(UIlist).find('li').remove();
             if (BB.isMapPage()) {
                 BB.clearMapMarkers();
             }
             var placeList = [];
-
             var votes = rayv.UserData.myBook.get().votes;
 
             switch (BB.filter) {
@@ -938,27 +938,22 @@ var BB = {
                 }
             });
 
-            function compare_by_distance(a, b) {
-                return a.dist_float - b.dist_float;
-            }
-
-            function compare_by_map_distance(a, b) {
-                return a.map_dist_float - b.map_dist_float;
-            }
-
             if (BB.isMapPage()) {
-                detailList.sort(compare_by_map_distance);
+                detailList.sort(function (a, b) {
+                    return a.map_dist_float - b.map_dist_float
+                });
                 console.log("list sorted by map distance")
             }
             else {
-                detailList.sort(compare_by_distance);
+                detailList.sort(function (a, b) {
+                    return a.dist_float - b.dist_float;
+                });
                 console.log("list sorted by gps distance")
             }
 
-
-            function inner_setup_list() {
-                console.log("inner_setup_list");
-                $(UIlist).find('li').remove();
+            console.log("inner_setup_list");
+            $(UIlist).find('li').remove();
+            if (BB.isMapPage()) {
                 // marker for us
                 BB.marker = new google.maps.Marker({
                     position: BB.lastGPSPosition.googleFormat(),
@@ -967,81 +962,80 @@ var BB = {
                     //infoWindowIndex: geoPtIdx
                 });
                 BB.mapMarkers.push(BB.marker);
-                for (var geoPtIdx  in detailList) {
-                    //noinspection JSUnfilteredForInLoop
-                    var geoPt = detailList[geoPtIdx],
-                        newListItem,
-                        click_fn,
-                        newListItemEnd;
-                    if (geoPt.is_map) {
-                        // it's a google place result - place_name, lat, long
-                        newListItem = templates.render(
-                            'list-geo-item-template',
-                            {'geoPt': geoPt}
-                        );
-                    }
-                    else {
-                        // it's a db item
-
-                        var context = { pt: geoPt, isMap: BB.isMapPage() };
-                        if (geoPtIdx < 6 && BB.isMapPage()) {
-                            context.icon = Number(geoPtIdx) + 1;
-                        }
-                        // https://github.com/adammark/Markup.js/
-                        newListItem = templates.render(
-                            'list-item-template',
-                            context);
-                    }
-                    UIlist.append(newListItem);
-
-                    //todo: infoWindow?
-                    if (BB.isMapPage() && (geoPtIdx < 7)) {
-                        var n = Number(geoPtIdx) + 1;
-                        var marker = new google.maps.Marker({
-                            position: new google.maps.LatLng(
-                                geoPt.lat, geoPt.lng),
-                            map: BB.theMap,
-                            title: geoPt.place_name,
-                            icon: BB.iconPath + n + ".png",
-                            key: geoPt.key
-                        });
-                        BB.mapMarkers.push(marker);
-                        google.maps.event.addListener(marker, 'click',
-                            function () {
-                                //todo: what this?
-                                if (this.key) {
-                                    rayv.currentItem.loadFromKey(this.key);
-                                    BB.showAnotherItemOnMap();
-                                }
-                            }
-                        );
-                        /*var infoWindow = new google.maps.InfoWindow({
-                         content: geoPt.title
-                         });
-                         BB.mapInfoWindows.push(infoWindow);*/
-                    }
-                }
-                $(UIlist).find("a").on("click", BB.ItemLoadPage);
-                $(UIlist).find("a").find('img').error(BB.imageLoadErrorHandler);
-
-                //FLIGHT
-                // Get cached thumbs
-                rayv.UserData.getThumbs(UIlist);
-                try {
-                    $(UIlist).find('div[data-role=collapsible]').collapsible();
-                    try {
-                        UIlist.listview().listview('refresh');
-                        UIlist.trigger('updatelayout');
-                    } catch (e) {
-                    }
-                }
-                catch (e) {
-                    BB.log(e);
-                }
-                return UIlist;
             }
+            for (var geoPtIdx in detailList) {
+                //noinspection JSUnfilteredForInLoop
+                var geoPt = detailList[geoPtIdx],
+                    newListItem,
+                    click_fn,
+                    newListItemEnd;
+                if (geoPt.is_map) {
+                    // it's a google place result - place_name, lat, long
+                    newListItem = templates.render(
+                        'list-geo-item-template',
+                        {'geoPt': geoPt}
+                    );
+                }
+                else {
+                    // it's a db item
 
-            return inner_setup_list();
+                    var context = { pt: geoPt, isMap: BB.isMapPage() };
+                    if (geoPtIdx < 6 && BB.isMapPage()) {
+                        context.icon = Number(geoPtIdx) + 1;
+                    }
+                    // https://github.com/adammark/Markup.js/
+                    newListItem = templates.render(
+                        'list-item-template',
+                        context);
+                }
+                UIlist.append(newListItem);
+
+                //todo: infoWindow?
+                if (BB.isMapPage() && (geoPtIdx < 7)) {
+                    var n = Number(geoPtIdx) + 1;
+                    var marker = new google.maps.Marker({
+                        position: new google.maps.LatLng(
+                            geoPt.lat, geoPt.lng),
+                        map: BB.theMap,
+                        title: geoPt.place_name,
+                        icon: BB.iconPath + n + ".png",
+                        key: geoPt.key
+                    });
+                    BB.mapMarkers.push(marker);
+                    google.maps.event.addListener(marker, 'click',
+                        function () {
+                            //todo: what this?
+                            if (this.key) {
+                                rayv.currentItem.loadFromKey(this.key);
+                                BB.showAnotherItemOnMap();
+                            }
+                        }
+                    );
+                    /*var infoWindow = new google.maps.InfoWindow({
+                     content: geoPt.title
+                     });
+                     BB.mapInfoWindows.push(infoWindow);*/
+                }
+            }
+            $(UIlist).find("a").on("click", BB.ItemLoadPage);
+            $(UIlist).find("a").find('img').error(BB.imageLoadErrorHandler);
+
+            //FLIGHT
+            // Get cached thumbs
+            rayv.UserData.getThumbs(UIlist);
+            try {
+                $(UIlist).find('div[data-role=collapsible]').collapsible();
+                try {
+                    UIlist.listview().listview('refresh');
+                    UIlist.trigger('updatelayout');
+                } catch (e) {
+                }
+            }
+            catch (e) {
+                BB.log(e);
+            }
+            $("#list-loading").hide();
+            return UIlist;
         },
 
         /**
@@ -1389,13 +1383,13 @@ var BB = {
                 return;
             }
             rayv.currentItem.address = $("#new-detail-address").val();
-            if (rayv.currentItem.address.length == 0){
+            if (rayv.currentItem.address.length == 0) {
                 alert('Please enter address');
                 BB.detail_saving = false;
                 return;
             }
             rayv.currentItem.place_name = $("#new-detail-name").val();
-            if (rayv.currentItem.place_name.length == 0){
+            if (rayv.currentItem.place_name.length == 0) {
                 alert('Please enter place name');
                 BB.detail_saving = false;
                 return;
@@ -1807,9 +1801,9 @@ var BB = {
             console.info('imageLoadErrorHandler');
             var key = $(this).parent().parent().parent().data('key');
             $.get(
-                '/item/'+key,
+                    '/item/' + key,
                 {},
-                function(res){
+                function (res) {
                     BB.update_item_from_server(res)
 
                 },
@@ -2014,7 +2008,7 @@ var BB = {
                 });
         },
 
-        item_create_lookup_full_address: function (){
+        item_create_lookup_full_address: function () {
             var properTitle = BB.toProperCase($(this).data('title'));
             $("#new-detail-name").val(decodeURIComponent(properTitle));
             $("#new-detail-address").val($(this).data('address'));
@@ -2036,9 +2030,9 @@ var BB = {
             rayv.currentItem.place_name = properTitle;
             var id = $(this).data('place_id');
             var request = {
-              placeId: id
+                placeId: id
             };
-            if (!BB.creatorMap){
+            if (!BB.creatorMap) {
                 BB.pageToCreateAddress();
             }
             var service = new google.maps.places.PlacesService(BB.creatorMap);
@@ -2052,7 +2046,7 @@ var BB = {
                 rayv.currentItem.address = place.formatted_address;
                 $("#new-detail-address").val(place.formatted_address);
             }
-            else{
+            else {
                 rayv.currentItem.address = $(this).data('address');
             }
             console.log('item_create');
