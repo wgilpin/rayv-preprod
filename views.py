@@ -125,7 +125,17 @@ def serialize_user_details(user_id, places, current_user):
 class getFullUserRecord(BaseHandler):
   def get(self):
     """ get the entire user record, including friends' places """
-    my_id = self.user_id
+    try:
+      user = self.user_model.get_by_auth_id(self.user.auth_ids[0])
+      if user.blocked:
+        raise Exception('Blocked')
+      my_id = self.user_id
+    except:
+      logging.error('getFullUserRecord: User Exception')
+      json.dump({'result':'FAIL'},
+                  self.response.out,
+                  default=json_serial)
+      return
     if my_id:
       #profile_in("getFullUserRecord")
       user = memcache_get_user_dict(my_id)
@@ -746,11 +756,16 @@ class login(BaseHandler):
     try:
       logging.debug("Login Started")
       username = self.request.get('username')
+      user = self.user_model.get_by_auth_id(username)
+      if user and user.blocked:
+          logging.info('views.login: Blocked user '+username)
+          return self.render_template("login.html", {"message": "Login Denied"})
       password = self.request.get('password')
       self.auth.get_user_by_password(username, password, remember=True,
                                      save_session=True)
-      logging.debug("Login Done")
-      return self.redirect("/")
+      con = {"cats": Category.all()}
+      logging.info('Login: Logged in')
+      return self.render_template("index.html", con)
     except (InvalidAuthIdError, InvalidPasswordError) :
       logging.info(
         'Login failed for userId %s because of %s',

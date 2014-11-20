@@ -132,7 +132,7 @@ def get_category(key):
     cat = Category().get(key)
     return cat
   except:
-    logging.error("get_category failed for key " + key, exc_info=True)
+    logging.info("get_category failed for key " + key, exc_info=True)
     return None
 
 

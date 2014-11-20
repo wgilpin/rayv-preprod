@@ -295,6 +295,9 @@ rayv.UserData = rayv.UserData || {};
             function (data) {
                 //populate the list
                 var obj = $.parseJSON(data);
+                if (obj.result && obj.result == 'FAIL'){
+                    $.mobile.changePage('#login-page')
+                }
                 my_id = obj.id;
                 // first one is me
                 rayv.UserData.myBook.set(obj.friendsData[0]);

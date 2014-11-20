@@ -37,20 +37,24 @@ class SignupHandler(BaseHandler):
         self.render_template('signup.html')
 
     def post(self):
-        user_name = self.request.get('username')
+        username = self.request.get('username')
+        user = self.user_model.get_by_auth_id(username)
+        if user and user.blocked:
+            logging.info('SignupHandler: Blocked user '+username)
+            return self.display_message('Unable to sign up')
         email = self.request.get('email')
         name = self.request.get('name')
         password = self.request.get('password')
         last_name = self.request.get('lastname')
 
         unique_properties = ['email_address']
-        user_data = self.user_model.create_user(user_name,
+        user_data = self.user_model.create_user(username,
                                                 unique_properties,
                                                 email_address=email, name=name, password_raw=password,
                                                 last_name=last_name, verified=False)
         if not user_data[0]: #user_data is a tuple
             self.display_message('Unable to create userId for email %s because of \
-        duplicate keys %s' % (user_name, user_data[1]))
+        duplicate keys %s' % (username, user_data[1]))
             return
 
         user = user_data[1]
@@ -81,6 +85,9 @@ class ForgotPasswordHandler(BaseHandler):
         if not user:
             logging.info('Could not find any userId entry for username %s', username)
         else:
+            if user.blocked:
+              logging.info('ForgotPasswordHandler: Blocked user '+username)
+              self.abort(403)
             user_id = user.get_id()
             token = self.user_model.create_signup_token(user_id)
 
@@ -122,7 +129,11 @@ class VerificationHandler(BaseHandler):
         user, ts = self.user_model.get_by_auth_token(int(user_id), signup_token,
                                                      'signup')
 
-        if not user:
+        if user:
+          if user.blocked:
+              logging.info('VerificationHandler: Blocked user ')
+              self.abort(403)
+        else:
             logging.info('Could not find any userId with id "%s" signup token "%s"',
                          user_id, signup_token)
             self.abort(404)
@@ -179,6 +190,10 @@ class LoginHandler(BaseHandler):
 
     def post(self):
         username = self.request.get('username')
+        user = self.user_model.get_by_auth_id(username)
+        if user and user.blocked:
+            logging.info('LoginHandler: Blocked user '+username)
+            self._serve_page(True)
         password = self.request.get('password')
         try:
             u = self.auth.get_user_by_password(username, password, remember=True,

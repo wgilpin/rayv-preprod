@@ -4,6 +4,7 @@ from datetime import datetime
 from google.appengine.ext import db
 from google.appengine.ext.db import ReferencePropertyResolveError
 from auth_logic import BaseHandler
+from auth_model import User
 import geohash
 from models import Item, Vote, DBImage
 from views import logged_in, getPlaceDetailFromGoogle
@@ -276,6 +277,9 @@ class migrate(BaseHandler):
       elif self.request.get("no") == "14":
         self.add_edited()
         self.response.out.write("14 - last edit times added")
+      elif self.request.get("no") == "add-blocked":
+        self.add_blocked_to_user()
+        self.response.out.write("Use blocked - added")
       else:
         self.response.out.write("No Migration")
     else:
@@ -301,3 +305,10 @@ class migrate(BaseHandler):
         dirty = True
       if dirty:
         it.put()
+
+  def add_blocked_to_user(self):
+    users = User.query()
+    for u in users:
+      if not u.blocked:
+        u.blocked = False
+        u.put()
