@@ -22,6 +22,11 @@ urls = [
   webapp2.Route('/authenticated', AuthenticatedHandler, name='authenticated'),
   webapp2.Route('/register', views.register, name='register'),
   webapp2.Route('/logout', views.logout),
+  webapp2.Route('/api/login', views.loginAPI),
+  webapp2.Route('/api/items', views.itemsAPI),
+  webapp2.Route('/api/friends', views.friendsAPI),
+  webapp2.Route('/api/friend/<id:\d+>/votes', views.friendsVotesAPI),
+
 
   webapp2.Route('/getItems_Ajax', views.getItems_Ajax, name='getItems_Ajax'),
   webapp2.Route('/getMapList_Ajax', views.getMapList_Ajax),

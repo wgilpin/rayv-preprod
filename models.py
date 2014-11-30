@@ -345,10 +345,11 @@ class Vote(db.Model):
       entry = {}
       user_vote_list = Vote.all().filter("voter =", user_id)
       for user_vote in user_vote_list:
-        vote_detail = {"vote": user_vote.vote,
+        vote_detail = {"key": str(user_vote.item.key()),
+                       "vote": user_vote.vote,
                        "untried": user_vote.untried,
                        "comment": user_vote.comment,
-                       "DEBUG-place_name": user_vote.item.place_name,
+                       "place_name": user_vote.item.place_name,
         }
         entry[str(user_vote.item.key())] = vote_detail
       return entry

@@ -24,18 +24,6 @@ from base_handler import BaseHandler
 __author__ = 'Will'
 
 
-def logged_in():
-  """ True if logged in
-  @return: bool
-  """
-  user = session_auth = auth.get_auth()
-  if session_auth.get_user_by_session(save_session=True):
-    return user
-  else:
-    return False
-
-
-
 
 class getItems_Ajax(BaseHandler):
   def get(self):
@@ -43,9 +31,10 @@ class getItems_Ajax(BaseHandler):
     @return:
     """
     profile_in("getItems_Ajax")
-    if logged_in():
-      result = PlacesDB.get_item_list(self.request, False, self.user_id)
-      check_for_dirty_data(self.user_id, result)
+    user = self.check_auth()
+    if user:
+      result = PlacesDB.get_item_list(self.request, False, user.get_id())
+      check_for_dirty_data(user.get_id(), result)
       json.dump(result,
                 self.response.out)
     else:
@@ -55,9 +44,10 @@ class getItems_Ajax(BaseHandler):
 
 class getBook(BaseHandler):
   def get(self):
-    if logged_in():
+    user = self.check_auth()
+    if user:
       voter_id = self.request.get("voter") if \
-        "voter" in self.request.params else str(self.user_id)
+        "voter" in self.request.params else str(user.get_id())
       vote_list = Vote.all().filter("voter =", voter_id)
       result = []
       for vote in vote_list:
@@ -72,7 +62,26 @@ class getBook(BaseHandler):
 
 
 #TODO: change to ndb! Then drop the memcache crazies, and do Since properly
-def serialize_user_details(user_id, places, current_user):
+def get_user_votes(current_user_id, user_id):
+  user_dict = memcache_get_user_dict(user_id)
+  if 'v' in user_dict:
+    votes = user_dict['v']
+  else:
+    votes = Vote.get_user_votes(user_id)
+    user_dict['v'] = votes
+    memcache_put_user_dict(user_dict)
+  # we ignore any 'untried' votes from a friend
+  if user_id != current_user_id:
+    to_be_removed = []
+    for vote in votes:
+      if votes[vote]['untried']:
+        to_be_removed.append(vote)
+    for idx in to_be_removed:
+      del votes[idx]
+  return user_dict, votes
+
+
+def serialize_user_details(user_id, places, current_user, request):
   """ give the list of votes & places for a user
   @param user_id: int: which user
   @param places: dict: list of places indexed by key (BY VALUE)
@@ -83,24 +92,12 @@ def serialize_user_details(user_id, places, current_user):
   try:
     #profile_in("serialize_user_details")
     # get it from the cache
-    user_dict = memcache_get_user_dict(user_id)
-    if 'v' in user_dict:
-      votes = user_dict['v']
-    else:
-      votes = Vote.get_user_votes(user_id)
-      user_dict['v'] = votes
-      memcache_put_user_dict(user_dict)
-    # we ignore any 'untried' votes from a friend
-    if user_id != current_user:
-      to_be_removed = []
-      for vote in votes:
-        if votes[vote]['untried']:
-          to_be_removed.append(vote)
-      for idx in to_be_removed:
-        del votes[idx]
+    user_dict, votes = get_user_votes(current_user, user_id)
 
-    last_write = user_dict['p'].last_write if \
-      getProp(user_dict['p'],'last_write') else None
+    if getProp(user_dict['p'], 'last_write'):
+      last_write = user_dict['p'].last_write
+    else:
+      last_write = None
     result = {"votes": votes,
               "id": user_id,
               # todo is it first_name?
@@ -108,7 +105,7 @@ def serialize_user_details(user_id, places, current_user):
               'last_write': last_write}
     for place_key in votes:
       if not place_key in places:
-        place_json = itemKeyToJSONPoint(place_key)
+        place_json = itemKeyToJSONPoint(place_key, request)
         if user_id == current_user:
           place_json['vote'] = votes[place_key]['vote']
           place_json['untried'] = votes[place_key]['untried']
@@ -121,21 +118,93 @@ def serialize_user_details(user_id, places, current_user):
     logging.error("serialize_user_details Exception", exc_info=True)
     profile_out("serialize_user_details")
 
+class friendsVotesAPI(BaseHandler):
+  def get(self, id):
+    """
+    Get the votes for a friend
+    :param id: string
+    :return: json
+    """
+    try:
+      user = self.check_auth()
+    
+    except:
+      logging.error('friendsAPI: User Exception')
+      json.dump({'result':'FAIL'},
+                  self.response.out,
+                  default=json_serial)
+    friend_id = int(id)
+    user_dict, votes = get_user_votes(user.get_id(), friend_id)
+    #votes is a dict, we want a array
+    res = {
+      'id': friend_id,
+      'votes': votes.values()
+    }
+    json.dump(res, self.response.out, default=json_serial)
+    return
+
+
+class friendsAPI(BaseHandler):
+  def get(self):
+    """
+    get the users friends
+    :return:
+    """
+    try:
+      user = self.check_auth()
+      my_id = user.get_id()
+
+    except Exception, e:
+      logging.error('friendsAPI: User Exception')
+      json.dump({'result':'FAIL'},
+                  self.response.out,
+                  default=json_serial)
+      return
+    friends_data = []
+    if settings.config['all_are_friends']:
+      for user in User.query():
+        if user.get_id() == my_id:
+          continue  # don't add myself again
+        friends_data.append(user.get_id())
+    else:
+      prof = user['p']
+      for friend in prof.friends:
+        friends_data.append(friend.userId)
+    json.dump(friends_data, self.response.out, default=json_serial)
+    return
+
+class itemsAPI(BaseHandler):
+  def get(self):
+    """
+    A list of keys is supplied in 'key_list', returns detail list
+    :return: json: {items: list of places}
+    """
+    user = self.check_auth()
+    if user and 'key_list' in self.request.params:
+      res = []
+      key_list = json.loads(self.request.params['key_list'])
+      for key in key_list:
+        res.append(itemKeyToJSONPoint(key))
+      json.dump({'items':res}, self.response.out, default=json_serial)
+      return
+    self.abort(403)
 
 class getFullUserRecord(BaseHandler):
   def get(self):
     """ get the entire user record, including friends' places """
     try:
-      user = self.user_model.get_by_auth_id(self.user.auth_ids[0])
+      user = self.check_auth()
       if user.blocked:
         raise Exception('Blocked')
-      my_id = self.user_id
+      my_id = user.get_id()
+
     except:
       logging.error('getFullUserRecord: User Exception')
       json.dump({'result':'FAIL'},
                   self.response.out,
                   default=json_serial)
       return
+
     if my_id:
       #profile_in("getFullUserRecord")
       user = memcache_get_user_dict(my_id)
@@ -156,10 +225,10 @@ class getFullUserRecord(BaseHandler):
           first_user = for_1_user
           result["for_1_user"] = for_1_user
         else:
-          first_user = self.user_id
+          first_user = my_id
         places = {}
         # load the data for the 1 user  - me or specified
-        friends_data = [serialize_user_details(first_user, places, my_id)]
+        friends_data = [serialize_user_details(first_user, places, my_id, self.request)]
         # was it for all users? If so we've only done ourselves
         if not for_1_user:
           # for all users
@@ -169,11 +238,11 @@ class getFullUserRecord(BaseHandler):
               if userProf.userId == my_id:
                 continue  # don't add myself again
               friends_data.append(serialize_user_details(
-                userProf.userId, places, my_id))
+                userProf.userId, places, my_id, self.request))
           else:
             for friend in prof.friends:
               friends_data.append(serialize_user_details(
-                friend, places, my_id))
+                friend, places, my_id, self.request))
           result["friendsData"] = friends_data
         if 'since' in self.request.params:
           places_since = []
@@ -185,9 +254,10 @@ class getFullUserRecord(BaseHandler):
         # encode using a custom encoder for datetime
 
 
-        json.dump(result,
-                  self.response.out,
-                  default=json_serial)
+        json_str = json.dumps(
+          result,
+          default=json_serial)
+        self.response.out.write(json_str)
         #profile_out("getFullUserRecord")
         return
     self.error(401)
@@ -195,16 +265,16 @@ class getFullUserRecord(BaseHandler):
 
 class user_profile(BaseHandler):
   def get(self):
-    user = auth.get_auth().get_user_by_session()
-    user_obj = User().get_by_id(user['user_id'])
+    user = self.check_auth()
+    user_obj = User().get_by_id(user.get_id())
     json.dump({'screen_name': user_obj.screen_name}, self.response.out)
 
   def post(self):
-    user = auth.get_auth().get_user_by_session()
-    user_obj = User().get_by_id(user['user_id'])
+    user = self.check_auth()
+    user_obj = User().get_by_id(user.get_id())
     user_obj.screen_name = self.request.get('screen_name')
     user_obj.put()
-    memcache_touch_user(self.user_id)
+    memcache_touch_user(user.get_id())
 
 def json_serial(o):
   """
@@ -268,6 +338,7 @@ class getAddresses_ajax(BaseHandler):
       if addressResult['status'] == "OK":
         lat = addressResult['results'][0]['geometry']['location']['lat']
         lng = addressResult['results'][0]['geometry']['location']['lng']
+    user = self.check_auth()
     results = PlacesDB.map_and_db_search(
       -1,
       '',
@@ -276,10 +347,10 @@ class getAddresses_ajax(BaseHandler):
       lng,
       LatLng(lat=lat, lng=lng),
       names[0],
-      self.user_id)
+      user.get_id())
     if results:
       results['search'] = {'lat': lat,'lng':lng}
-      check_for_dirty_data(self.user_id, results)
+      check_for_dirty_data(user.get_id(), results)
       json.dump(results,
                 self.response.out,
                 default=json_serial)
@@ -311,7 +382,8 @@ def handle_error(request, response, exception):
 
 class MainHandler(BaseHandler):
   def get(self):
-    if logged_in():
+    user = self.check_auth()
+    if user:
       con = {"cats": Category.all()}
       logging.info('MainHandler: Logged in')
       self.render_template("index.html", con)
@@ -370,10 +442,11 @@ class updateItem(BaseHandler):
     """
     " get a single item
     """
-    if logged_in():
+    user = self.check_auth()
+    if user:
       try:
         it = Item.get_item(key)
-        it_json = itemToJSONPoint(it, uid_for_votes=self.user_id)
+        it_json = itemToJSONPoint(it, uid_for_votes=user.get_id())
         # adjust the votes so my own is not added to the up/down score
         adjust_votes_for_JSON_pt(it_json)
         json.dump(it_json, self.response.out)
@@ -385,7 +458,8 @@ class updateItem(BaseHandler):
       self.display_message("Unable to get item")
 
   def post(self, key):
-    if logged_in():
+    user = self.check_auth()
+    if user:
       it = None
       try:
         it = Item.get_item(key)
@@ -404,12 +478,12 @@ class updateItem(BaseHandler):
         logging.exception("Category not found %s" % posted_cat, exc_info=True)
 
       it.put()
-      old_votes = it.votes.filter("voter =", self.user_id)
+      old_votes = it.votes.filter("voter =", user.get_id())
       for v in old_votes:
         v.delete()
       vote = Vote()
       vote.item = it
-      vote.voter = self.user_id
+      vote.voter = user.get_id()
       vote.comment = self.request.get('descr')
       vote.vote = 1 if self.request.get("vote") == "like" else -1
       vote.put()
@@ -419,7 +493,7 @@ class updateItem(BaseHandler):
       memcache_touch_place(it)
 
 
-      # CategoryStatsDenormalised.addPost(self.user_id,master_cat)
+      # CategoryStatsDenormalised.addPost(user.get_id(),master_cat)
       # TODO this should be ajax
       self.response.out.write(str(it.key()))
 
@@ -588,9 +662,10 @@ class UpdateItemFromAnotherAppAPI(BaseHandler):
 
 class newOrUpdateItem(BaseHandler):
   def post(self):
-    if logged_in():
-      it = update_item_internal(self, self.user_id, allow_update=True)
-      it_json = itemToJSONPoint(it, uid_for_votes=self.user_id)
+    user = self.check_auth()
+    if user:
+      it = update_item_internal(self, user.get_id(), allow_update=True)
+      it_json = itemToJSONPoint(it, uid_for_votes=user.get_id())
       # adjust the votes so my own is not added to the up/down score
       adjust_votes_for_JSON_pt(it_json)
       json.dump(it_json, self.response.out)
@@ -661,27 +736,30 @@ class geoLookup(BaseHandler):
 
 class getItem_ajax(BaseHandler):
   def get(self, key):
-    try:
-      it = Item.get_item(key)
-      res = {"place_name": it.place_name,
-             "address": it.address,
-             "category": it.category.title,
-             "lat": str(it.lat),
-             "lng": str(it.lng),
-             "key": str(it.key())
-      }
-      if it.photo:
-        res["img"] = str(it.key())
-      if it.owner == self.user_id:
-        res["mine"] = True
-        res["descr"], res["vote"] = it.vote_from(it.owner)
-      else:
-        res["mine"] = False
-        res["descr"], res["vote"] = it.vote_from(self.user_id)
-      json.dump(res, self.response.out)
-    except Exception:
-      logging.error("getItem_ajax Exception", exc_info=True)
-      self.error(500)
+    user = self.check_auth()
+    if user:
+      try:
+        it = Item.get_item(key)
+        res = {"place_name": it.place_name,
+               "address": it.address,
+               "category": it.category.title,
+               "lat": str(it.lat),
+               "lng": str(it.lng),
+               "key": str(it.key())
+        }
+        if it.photo:
+          res["img"] = str(it.key())
+        if it.owner == user.get_id():
+          res["mine"] = True
+          res["descr"], res["vote"] = it.vote_from(it.owner)
+        else:
+          res["mine"] = False
+          res["descr"], res["vote"] = it.vote_from(user.get_id())
+        json.dump(res, self.response.out)
+      except Exception:
+        logging.error("getItem_ajax Exception", exc_info=True)
+        self.error(500)
+    self.abort(403)
 
 
 class getItemVotes_ajax(BaseHandler):
@@ -750,6 +828,32 @@ class logout(BaseHandler):
     return self.render_template("login.html")
 
 
+class loginAPI(BaseHandler):
+  def get(self):
+    username = ""
+    try:
+      logging.debug("Login API Started")
+      username = self.request.get('username')
+      user = self.user_model.get_by_auth_id(username)
+      if user and user.blocked:
+          logging.info('views.loginAPI: Blocked user '+username)
+          self.abort(403)
+      password = self.request.get('password')
+      self.auth.get_user_by_password(username, password, remember=True,
+                                     save_session=True)
+      logging.info('LoginAPI: Logged in')
+      tok = user.create_auth_token(user.get_id())
+      self.response.out.write('{"auth":"%s"}'%tok)
+    except (InvalidAuthIdError, InvalidPasswordError) :
+      logging.info(
+        'LoginAPI failed for userId %s because of %s',
+        username, exc_info=True)
+      self.abort(401)
+    except Exception, ex:
+      logging.exception(
+        'LoginAPI failed because of unexpected error %s', exc_info=True)
+      self.abort(500)
+
 class login(BaseHandler):
   def post(self):
     username = ""
@@ -783,47 +887,50 @@ class login(BaseHandler):
 
 class addVote_ajax(BaseHandler):
   def post(self):
-    it_key = self.request.get('item_id')
-    it = Item.get_item(it_key)
-    voteScore = int(self.request.get("vote"))
-    my_votes = it.votes.filter('voter =', self.user_id)
-    if my_votes.count() == 0:
-      # a new vote
-      new_vote = Vote()
-      new_vote.item = it
-      new_vote.voter = self.user_id
-    else:
-      # roll back the old vote
-      new_vote = my_votes.get()
-      oldVote = new_vote.vote
-      if oldVote:
-        if oldVote > 0:
-          it.votesUp -= oldVote
-        else:
-          # all votes are abs()
-          it.votesDown -= oldVote
-    new_vote.vote = voteScore
-    new_vote.comment = self.request.get("comment")
-    new_vote.put()
-    if voteScore > 0:
-      it.votesUp += voteScore
-    else:
-      it.votesDown += abs(voteScore)
-    it.put()
-    # refresh cache
-    memcache.set(it_key, it)
-    memcache.delete("JSON:" + it_key)
-    self.response.out.write('OK')
-
+    user = self.check_auth()
+    if user:
+      it_key = self.request.get('item_id')
+      it = Item.get_item(it_key)
+      voteScore = int(self.request.get("vote"))
+      my_votes = it.votes.filter('voter =', user.get_id())
+      if my_votes.count() == 0:
+        # a new vote
+        new_vote = Vote()
+        new_vote.item = it
+        new_vote.voter = user.get_id()
+      else:
+        # roll back the old vote
+        new_vote = my_votes.get()
+        oldVote = new_vote.vote
+        if oldVote:
+          if oldVote > 0:
+            it.votesUp -= oldVote
+          else:
+            # all votes are abs()
+            it.votesDown -= oldVote
+      new_vote.vote = voteScore
+      new_vote.comment = self.request.get("comment")
+      new_vote.put()
+      if voteScore > 0:
+        it.votesUp += voteScore
+      else:
+        it.votesDown += abs(voteScore)
+      it.put()
+      # refresh cache
+      memcache.set(it_key, it)
+      memcache.delete("JSON:" + it_key)
+      self.response.out.write('OK')
+    self.abort(403)
 
 class getMapList_Ajax(BaseHandler):
   def get(self):
-    if logged_in():
+    user = self.check_auth()
+    if user:
       result = PlacesDB.get_item_list(
         request=self.request,
         include_maps_data=True,
-        user_id=self.user_id,
-        exclude_user_id=self.user_id)
+        user_id=user.get_id(),
+        exclude_user_id=user.get_id())
       json.dump(result,
                 self.response.out)
     else:
@@ -857,15 +964,16 @@ class ping(BaseHandler):
 
 class deleteItem(BaseHandler):
   def post(self, key):
-    if logged_in():
+    user = self.check_auth()
+    if user:
       try:
         item = Item.get_item(key)
         if item:
-          my_votes = item.votes.filter('voter =', self.user_id)
+          my_votes = item.votes.filter('voter =', user.get_id())
           for vote in my_votes:
             logging.info("deleteItem: " + str(vote.key()))
             vote.delete()
-        memcache_touch_user(self.user_id)
+        memcache_touch_user(user.get_id())
         self.response.write('OK')
       except Exception:
         logging.error("deleteItem", exc_info=True)
@@ -875,6 +983,8 @@ class deleteItem(BaseHandler):
 
 class passwordVerificationHandler(BaseHandler):
     def get(self, *args, **kwargs):
+        #TODO: we aren't using auth anymore
+        assert False
         user = None
         user_id = kwargs['user_id']
         signup_token = kwargs['signup_token']

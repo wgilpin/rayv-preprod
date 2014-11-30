@@ -24,6 +24,7 @@ class UserProfile(db.Model):
   is_admin = db.BooleanProperty(default=False)
 
 
+
 class User(webapp2_extras.appengine.auth.models.User):
   screen_name = model.StringProperty()
   blocked = model.BooleanProperty(default=False)
@@ -56,6 +57,26 @@ class User(webapp2_extras.appengine.auth.models.User):
       return user, timestamp
 
     return None, None
+
+  @classmethod
+  def get_by_auth_token_and_username(cls, token, username):
+    """Returns a userId object based on a userId ID and token.
+
+    :param token:
+        The token string to be verified.
+    :returns:
+        A tuple ``(User, timestamp)``, with a userId object and
+        the token timestamp, or ``(None, None)`` if both were not found.
+    """
+    try:
+      rec = cls.token_model.query(cls.token_model.token==token)
+      if rec:
+        user = cls.get_by_id(int(rec.get().user))
+        if user and user.auth_ids[0]==username:
+          return user
+    except Exception, e:
+      logging.error('get_by_auth_token_and_username',exc_info=True)
+    return None
 
   def profile(self):
     try:

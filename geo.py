@@ -326,7 +326,7 @@ class LatLng():
 
 
 
-def itemKeyToJSONPoint(key):
+def itemKeyToJSONPoint(key, request):
   try:
     # memcache has item entries under Key, and JSON entries under JSON:key
     if type(key) is db.Key:
@@ -337,14 +337,14 @@ def itemKeyToJSONPoint(key):
     item = memcache.get(key)
     if not item:
       item = Item.get(key)
-    res = itemToJSONPoint(item)  # convert and memcache
+    res = itemToJSONPoint(item, request=request)  # convert and memcache
     memcache.add('JSON:' + key, res)
     return res
   except Exception:
     logging.exception('itemKeyToJSONPoint', exc_info=True)
 
 
-def itemToJSONPoint(it, GPS_origin=None, map_origin=None, uid_for_votes=None):
+def itemToJSONPoint(it, request, GPS_origin=None, map_origin=None, uid_for_votes=None):
   """
   create a json object for the web.
   :param it: Item
@@ -354,10 +354,14 @@ def itemToJSONPoint(it, GPS_origin=None, map_origin=None, uid_for_votes=None):
   :return: dict - json repr of the place
   """
   try:
+    if request:
+      base_url = request.url[:request.url.find(request.path)]
+    else:
+      base_url = ""
     if getProp(it, 'photo'):
       if it.photo.picture:
-        image_url = '/img/' + str(it.photo.key())
-        thumbnail_url = '/thumb/' + str(it.photo.key())
+        image_url = base_url+'/img/' + str(it.photo.key())
+        thumbnail_url = base_url+'/thumb/' + str(it.photo.key())
       else:
         image_url = ''
         thumbnail_url = ''

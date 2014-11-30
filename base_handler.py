@@ -6,6 +6,7 @@ from webapp2_extras import auth
 from webapp2_extras import sessions
 
 from google.appengine.ext.webapp import template
+from auth_model import User
 from settings import config
 
 
@@ -144,6 +145,16 @@ class BaseHandler(webapp2.RequestHandler):
       logging.debug("template path 5: " + template_file)
       return template_file
 
+  def check_auth(self):
+    if 'auth' in self.request.params:
+      if len(self.request.params['auth'])>0:
+        user =  User.get_by_auth_token_and_username(
+          self.request.params['auth'],
+          self.request.params['username'])
+        if user.blocked:
+          raise Exception('Blocked')
+        return user
+    return self.user_model.get_by_auth_id(self.user.auth_ids[0])
 
 
 

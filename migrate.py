@@ -7,7 +7,7 @@ from auth_logic import BaseHandler
 from auth_model import User
 import geohash
 from models import Item, Vote, DBImage
-from views import logged_in, getPlaceDetailFromGoogle
+from views import getPlaceDetailFromGoogle
 
 __author__ = 'Will'
 
@@ -217,7 +217,8 @@ class migrate(BaseHandler):
         it.put()
 
   def get(self):
-    if logged_in():
+    user = self.check_auth()
+    if user:
       if self.request.get("no") == '1':
         self.set_votes_up_down()
         self.response.out.write("1-items OK")
@@ -279,7 +280,7 @@ class migrate(BaseHandler):
         self.response.out.write("14 - last edit times added")
       elif self.request.get("no") == "add-blocked":
         self.add_blocked_to_user()
-        self.response.out.write("Use blocked - added")
+        self.response.out.write("User blocked - added")
       else:
         self.response.out.write("No Migration")
     else:
