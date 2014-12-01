@@ -1,3 +1,4 @@
+import base64
 import urllib2
 import datetime
 from google.appengine.api import images, memcache
@@ -833,17 +834,21 @@ class loginAPI(BaseHandler):
     username = ""
     try:
       logging.debug("Login API Started")
-      username = self.request.get('username')
-      user = self.user_model.get_by_auth_id(username)
-      if user and user.blocked:
-          logging.info('views.loginAPI: Blocked user '+username)
-          self.abort(403)
-      password = self.request.get('password')
-      self.auth.get_user_by_password(username, password, remember=True,
-                                     save_session=True)
-      logging.info('LoginAPI: Logged in')
-      tok = user.create_auth_token(user.get_id())
-      self.response.out.write('{"auth":"%s"}'%tok)
+      if 'HTTP_AUTHORIZATION' in self.request.headers.environ:
+        token = self.request.headers.environ['HTTP_AUTHORIZATION']
+        (username, password) = base64.b64decode(token.split(' ')[1]).split(':')
+        user = self.user_model.get_by_auth_id(username)
+        if user and user.blocked:
+            logging.info('views.loginAPI: Blocked user '+username)
+            self.abort(403)
+        self.auth.get_user_by_password(username, password, remember=True,
+                                       save_session=True)
+        logging.info('LoginAPI: Logged in')
+        #tok = user.create_auth_token(user.get_id())
+        #self.response.out.write('{"auth":"%s"}'%tok)
+      else:
+        logging.warning('LoginAPI no auth header')
+        self.abort(401)
     except (InvalidAuthIdError, InvalidPasswordError) :
       logging.info(
         'LoginAPI failed for userId %s because of %s',
