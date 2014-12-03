@@ -3,7 +3,7 @@ import urllib2
 from datetime import datetime
 from google.appengine.ext import db
 from google.appengine.ext.db import ReferencePropertyResolveError
-from auth_logic import BaseHandler
+from auth_logic import BaseHandler, user_required
 from auth_model import User
 import geohash
 from models import Item, Vote, DBImage
@@ -13,6 +13,7 @@ __author__ = 'Will'
 
 
 class migrate(BaseHandler):
+  @user_required
   def remove_orphan_votes(self):
     # remove orphan votes after an item is deleted
     votes = Vote.all()
@@ -25,7 +26,7 @@ class migrate(BaseHandler):
       except Exception:
         self.response.out.write("FAIL ", exc_info=True)
 
-
+  @user_required
   def add_websites(self):
     # add websites
     items = Item.all()
@@ -46,6 +47,7 @@ class migrate(BaseHandler):
         self.response.out.write("FAIL %s-%s<br>" % (it.place_name, str(e)))
         pass
 
+  @user_required
   def remote_urls_to_blobs(self):
     # add convert remote urls to blobs
     items = Item.all()
@@ -71,6 +73,7 @@ class migrate(BaseHandler):
         self.response.out.write("FAIL %s-%s<br>" % (it.place_name, str(e)))
         pass
 
+  @user_required
   def add_phone_numbers(self):
     # add phone nos
     items = Item.all()
@@ -91,6 +94,7 @@ class migrate(BaseHandler):
         self.response.out.write("FAIL %s-%s<br>" % (it.title, str(e)))
         pass
 
+  @user_required
   def add_google_img_if_missing(self):
     # add google img where missing
     items = Item.all()
@@ -114,6 +118,7 @@ class migrate(BaseHandler):
         self.response.out.write("FAIL %s-%s<br>" % (it.title, str(e)))
         pass
 
+  @user_required
   def recalc_votes_totals(self):
     # recalc vote totals
     items = Item.all()
@@ -129,12 +134,14 @@ class migrate(BaseHandler):
       it.votesDown = down
       it.put()
 
+  @user_required
   def add_geohash(self):
     # add GeoHash
     for it in Item().all():
       it.geo_hash = geohash.encode(it.lat, it.lng)
       it.put()
 
+  @user_required
   def votes_down_to_abs(self):
     # make sure votesDown is +ve (abs())
     items = Item.all()
@@ -143,6 +150,7 @@ class migrate(BaseHandler):
         it.votesDown = abs(it.votesDown)
         it.put()
 
+  @user_required
   def one_vote_per_item(self):
     # make sure each item has 1 vote
     items = Item.all()
@@ -157,6 +165,7 @@ class migrate(BaseHandler):
         pass
       it.put()
 
+  @user_required
   def at_least_one_vote_per_item(self):
     # make sure each item has 1 vote
     items = Item.all()
@@ -178,6 +187,7 @@ class migrate(BaseHandler):
           it.votesDown = abs(vote.vote)
         it.put()
 
+  @user_required
   def item_title_to_StringProperty(self):
     # change Item title property to a StringProp not a textProp (place_name)
     items = Item.all()
@@ -185,6 +195,7 @@ class migrate(BaseHandler):
       it.place_name = it.title
       it.put()
 
+  @user_required
   def move_comment_to_vote(self):
     # move item comment from the item to the vote
     items = Item.all()
@@ -195,6 +206,7 @@ class migrate(BaseHandler):
         vote.comment = it.descr
         vote.put()
 
+  @user_required
   def set_votes_up_down(self):
     items = Item.all()
     for it in items:
@@ -216,6 +228,7 @@ class migrate(BaseHandler):
       if dirty:
         it.put()
 
+  @user_required
   def get(self):
     user = self.check_auth()
     if user:
@@ -286,6 +299,7 @@ class migrate(BaseHandler):
     else:
       self.response.out.write("Log In")
 
+  @user_required
   def add_edited(self):
     # add the last edited field to each
     items = Item.all()
@@ -307,6 +321,7 @@ class migrate(BaseHandler):
       if dirty:
         it.put()
 
+  @user_required
   def add_blocked_to_user(self):
     users = User.query()
     for u in users:
