@@ -2,7 +2,7 @@ import json
 import logging
 from operator import itemgetter
 import urllib2
-from geo import findDbPlacesNearLoc, itemToJSONPoint, LatLng
+from geo import findDbPlacesNearLoc, item_to_json_point, LatLng
 from models import Vote
 import settings
 
@@ -13,6 +13,7 @@ class PlacesDB():
   @classmethod
   def map_and_db_search(
       cls,
+      request,
       exclude_user_id,
       filter_kind,
       include_maps_data,
@@ -41,6 +42,7 @@ class PlacesDB():
     list_of_place_names = []
     points = findDbPlacesNearLoc(
       my_locn,
+      request,
       search_text=text_to_search,
       filter=search_filter,
       uid=user_id,
@@ -62,7 +64,7 @@ class PlacesDB():
       #points["count"] = 0
       # todo: this returns all items - limit?
       for gpt in includeList:
-        jPt = itemToJSONPoint(gpt,my_locn)
+        jPt = item_to_json_point(gpt, request, my_locn)
         points["points"].append(jPt)
         points["count"] += 1
 
@@ -96,6 +98,7 @@ class PlacesDB():
     search_filter = None
     filter_kind = request.get("filter")
     return cls.map_and_db_search(
+      request,
       exclude_user_id,
       filter_kind,
       include_maps_data,

@@ -9,10 +9,11 @@ from webapp2_extras import auth
 import json
 from auth_logic import user_required
 from auth_model import UserProfile, User
-from caching import memcache_get_user_dict, memcache_touch_user, memcache_put_user_dict, memcache_touch_place
+from caching import memcache_get_user_dict, memcache_touch_user, \
+  memcache_put_user_dict, memcache_touch_place
 from dataloader import load_data
 from geo import getPlaceDetailFromGoogle, geoCodeAddress, \
-  adjust_votes_for_JSON_pt, itemToJSONPoint
+  adjust_votes_for_JSON_pt, item_to_json_point
 from models import Item, DBImage, Vote, Category, getProp
 from geo import LatLng, itemKeyToJSONPoint
 from places_db import PlacesDB
@@ -34,7 +35,7 @@ class getItems_Ajax(BaseHandler):
     """
     profile_in("getItems_Ajax")
     result = PlacesDB.get_item_list(self.request, False, self.user_id)
-    check_for_dirty_data(self.user_id, result)
+    check_for_dirty_data(self.user_id, result, self.request)
     json.dump(result,
               self.response.out)
     profile_out("getItems_Ajax")
@@ -140,7 +141,7 @@ class friendsAPI(BaseHandler):
     friends_data = []
     if settings.config['all_are_friends']:
       for user in User.query():
-        if self.user_id == my_id:
+        if self.user_id == self.user_id:
           continue  # don't add myself again
         friends_data.append(self.user_id)
     else:
@@ -208,7 +209,8 @@ class getFullUserRecord(BaseHandler):
           first_user = my_id
         places = {}
         # load the data for the 1 user  - me or specified
-        friends_data = [serialize_user_details(first_user, places, my_id, self.request)]
+        friends_data = [
+          serialize_user_details(first_user, places, my_id, self.request)]
         # was it for all users? If so we've only done ourselves
         if not for_1_user:
           # for all users
@@ -265,9 +267,7 @@ def json_serial(o):
     return o.isoformat()
 
 
-
-
-def check_for_dirty_data(user_id, results):
+def check_for_dirty_data(user_id, results, request):
   # every server call, we look for dirty data and append it if needed
   prof = memcache_get_user_dict(user_id)['p']
   my_last_check = prof.last_read
@@ -277,7 +277,7 @@ def check_for_dirty_data(user_id, results):
     if (not my_last_check) or \
         (memcache_get_user_dict(friend)['p'].last_write > my_last_check):
       dirty_friends.append(
-        serialize_user_details(friend, dirty_places, user_id))
+        serialize_user_details(friend, dirty_places, user_id, request))
   if len(dirty_friends) > 0:
     results['dirty_list'] = {"friends": dirty_friends,
                              "places": dirty_places}
@@ -320,6 +320,7 @@ class getAddresses_ajax(BaseHandler):
         lat = addressResult['results'][0]['geometry']['location']['lat']
         lng = addressResult['results'][0]['geometry']['location']['lng']
     results = PlacesDB.map_and_db_search(
+      self.request,
       -1,
       '',
       True,
@@ -330,7 +331,7 @@ class getAddresses_ajax(BaseHandler):
       self.user_id)
     if results:
       results['search'] = {'lat': lat,'lng':lng}
-      check_for_dirty_data(self.user_id, results)
+      check_for_dirty_data(self.user_id, results, self.request)
       json.dump(results,
                 self.response.out,
                 default=json_serial)
@@ -355,11 +356,6 @@ def handle_error(request, response, exception):
   response.set_status(exception.code)
 
 
-
-
-
-
-
 class MainHandler(BaseHandler):
   def get(self):
     if self.user:
@@ -380,7 +376,6 @@ class register(BaseHandler):
     name = self.request.get('name')
     password = self.request.get('password')
     last_name = self.request.get('lastname')
-
     unique_properties = ['email_address']
     user_data = self.user_model.create_user(
       email,
@@ -394,17 +389,11 @@ class register(BaseHandler):
       self.render_template(
         'signup.html', {"message": "That userId is already registered", })
       return
-
-    user = user_data[1]
     user_id = self.user_id
-
     token = self.user_model.create_signup_token(user_id)
-
     verification_url = self.uri_for('verification', type='v', user_id=user_id,
                                     signup_token=token, _full=True)
-
     msg = 'An email has been sent to your account'
-
     message = EmailMessage(
       sender=settings.config['system_email'],
       to=email,
@@ -412,7 +401,6 @@ class register(BaseHandler):
       body="Click here to confirm your email address " + verification_url
     )
     message.send()
-
     self.display_message(msg.format(url=verification_url))
 
 class updateItem(BaseHandler):
@@ -423,13 +411,12 @@ class updateItem(BaseHandler):
     """
     try:
       it = Item.get_item(key)
-      it_json = itemToJSONPoint(it, self.request, uid_for_votes=self.user_id)
+      it_json = item_to_json_point(it, self.request, uid_for_votes=self.user_id)
       # adjust the votes so my own is not added to the up/down score
       adjust_votes_for_JSON_pt(it_json)
       json.dump(it_json, self.response.out)
     except:
       logging.error('updateItem GET Exception',exc_info=True)
-
     else:
       logging.error('updateItem GET: '+key)
       self.display_message("Unable to get item")
@@ -452,7 +439,6 @@ class updateItem(BaseHandler):
         it.category = cat
     except:
       logging.exception("Category not found %s" % posted_cat, exc_info=True)
-
     it.put()
     old_votes = it.votes.filter("voter =", self.user_id)
     for v in old_votes:
@@ -463,16 +449,12 @@ class updateItem(BaseHandler):
     vote.comment = self.request.get('descr')
     vote.vote = 1 if self.request.get("vote") == "like" else -1
     vote.put()
-
     it.put()  # again
     # refresh cache
     memcache_touch_place(it)
-
-
     # CategoryStatsDenormalised.addPost(self.user_id,master_cat)
     # TODO this should be ajax
     self.response.out.write(str(it.key()))
-
 
 
 def update_photo(it, request_handler):
@@ -481,9 +463,7 @@ def update_photo(it, request_handler):
     rot = request_handler.request.get("rotation")
     if len(raw_file) > 0:
       # a new image saved
-
       img = DBImage()  # - no: create it
-
       if rot and (rot <> u'0'):  # is a rotation requested?
         angle = int(rot) * 90
         raw_file = images.rotate(raw_file, angle)
@@ -511,7 +491,6 @@ def update_photo(it, request_handler):
   except Exception:
     logging.exception("newOrUpdateItem Image Resize: ", exc_info=True)
     img = None
-
   return img
 
 
@@ -638,7 +617,7 @@ class newOrUpdateItem(BaseHandler):
   @user_required
   def post(self):
     it = update_item_internal(self, self.user_id, allow_update=True)
-    it_json = itemToJSONPoint(it, uid_for_votes=self.user_id)
+    it_json = item_to_json_point(it, self.request, uid_for_votes=self.user_id)
     # adjust the votes so my own is not added to the up/down score
     adjust_votes_for_JSON_pt(it_json)
     json.dump(it_json, self.response.out)
@@ -758,7 +737,6 @@ class ImageHandler(BaseHandler):
         self.response.out.write(photo.picture)
     except:
       logging.error('ImageHandler '+key, exc_info=True)
-
 
 
 class ThumbHandler(BaseHandler):
@@ -959,15 +937,18 @@ class passwordVerificationHandler(BaseHandler):
                                                      'signup')
 
         if not user:
-            logging.info('Could not find any userId with id "%s" signup token "%s"',
-                         user_id, signup_token)
+            logging.info(
+              'Could not find any userId with id "%s" signup token "%s"',
+              user_id,
+              signup_token)
             self.abort(404)
 
         # store userId data in the session
         self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)
 
         if verification_type == 'v':
-            # remove signup token, we don't want users to come back with an old link
+            # remove signup token,
+            # we don't want users to come back with an old link
             self.user_model.delete_signup_token(self.user_id, signup_token)
 
             if not user.verified:

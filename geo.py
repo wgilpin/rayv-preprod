@@ -114,6 +114,7 @@ def geoCodeAddress(address, search_centre):
 
 
 def findDbPlacesNearLoc(my_location,
+                        request,
                         search_text=None,
                         filter=None,
                         uid=None,
@@ -148,9 +149,9 @@ def findDbPlacesNearLoc(my_location,
         if not search_text in it.place_name.lower():
           continue
       if not ignore_votes:
-        jsonPt = itemToJSONPoint(it, position, uid_for_votes=uid)
+        jsonPt = item_to_json_point(it, request, position, uid_for_votes=uid)
       else:
-        jsonPt = itemToJSONPoint(it, position)
+        jsonPt = item_to_json_point(it, request, position)
 
 
       search_results.append(adjust_votes_for_JSON_pt(jsonPt))
@@ -337,17 +338,18 @@ def itemKeyToJSONPoint(key, request):
     item = memcache.get(key)
     if not item:
       item = Item.get(key)
-    res = itemToJSONPoint(item, request=request)  # convert and memcache
+    res = item_to_json_point(item, request=request)  # convert and memcache
     memcache.add('JSON:' + key, res)
     return res
   except Exception:
     logging.exception('itemKeyToJSONPoint', exc_info=True)
 
 
-def itemToJSONPoint(it, request, GPS_origin=None, map_origin=None, uid_for_votes=None):
+def item_to_json_point(it, request, GPS_origin=None, map_origin=None, uid_for_votes=None):
   """
   create a json object for the web.
   :param it: Item
+  :param request: BaseHandler
   :param GPS_origin: LatLng
   :param map_origin: bool - do we calculate distances from where the map is
           centred, as opposed to from my location?
@@ -415,7 +417,7 @@ def itemToJSONPoint(it, request, GPS_origin=None, map_origin=None, uid_for_votes
 
     return data
   except Exception, E:
-    logging.exception('itemToJSONPoint', exc_info=True)
+    logging.exception('item_to_json_point', exc_info=True)
 
 
 def adjust_votes_for_JSON_pt(json_pt):
