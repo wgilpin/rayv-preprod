@@ -31,18 +31,6 @@ handlers:
 - url: /static
   static_dir: static
 
-- url: /signup
-  script: main.app
-  secure: always
-
-- url: /login
-  script: main.app
-  secure: always
-
-- url: /forgot
-  script: main.app
-  secure: always
-
 - url: .*
   script: main.app
   secure: always
