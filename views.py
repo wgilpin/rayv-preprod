@@ -7,6 +7,7 @@ from google.appengine.api.mail import EmailMessage
 from google.appengine.ext import db
 from webapp2_extras import auth
 import json
+from webob.exc import HTTPUnauthorized
 from auth_logic import user_required
 from auth_model import UserProfile, User
 from caching import memcache_get_user_dict, memcache_touch_user, \
@@ -775,8 +776,13 @@ class loginAPI(BaseHandler):
     username = ""
     try:
       logging.debug("Login API Started")
+      logging.debug("Login headers " + str(self.request.headers.environ))
+      token = None
       if 'HTTP_AUTHORIZATION' in self.request.headers.environ:
         token = self.request.headers.environ['HTTP_AUTHORIZATION']
+      elif 'Authorization' in self.request.headers:
+        token = self.request.headers['Authorization']
+      if token:
         (username, password) = base64.b64decode(token.split(' ')[1]).split(':')
         user = self.user_model.get_by_auth_id(username)
         if user and user.blocked:
@@ -790,14 +796,14 @@ class loginAPI(BaseHandler):
       else:
         logging.warning('LoginAPI no auth header')
         self.abort(401)
-    except (InvalidAuthIdError, InvalidPasswordError) :
+    except (InvalidAuthIdError, InvalidPasswordError, HTTPUnauthorized) :
       logging.info(
-        'LoginAPI failed for userId %s because of %s',
+        'LoginAPI failed for userId %s',
         username, exc_info=True)
       self.abort(401)
-    except Exception, ex:
+    except Exception:
       logging.exception(
-        'LoginAPI failed because of unexpected error %s', exc_info=True)
+        'LoginAPI failed because of unexpected error', exc_info=True)
       self.abort(500)
 
 class login(BaseHandler):
