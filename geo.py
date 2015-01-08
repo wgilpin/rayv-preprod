@@ -364,6 +364,8 @@ def item_to_json_point(it, request, GPS_origin=None, map_origin=None, uid_for_vo
       if it.photo.picture:
         image_url = base_url+'/img/' + str(it.photo.key())
         thumbnail_url = base_url+'/thumb/' + str(it.photo.key())
+        image_url.replace('https','http')
+        thumbnail_url.replace('https','http')
       else:
         image_url = ''
         thumbnail_url = ''

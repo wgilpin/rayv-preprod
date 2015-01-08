@@ -424,38 +424,40 @@ class updateItem(BaseHandler):
 
   @user_required
   def post(self, key):
-    it = None
-    try:
-      it = Item.get_item(key)
-    except Exception:
-      logging.exception("updateItem ", exc_info=True)
-      # not found
-      self.error(400)
-    # it.descr = self.request.get('descr')
-    # category
-    posted_cat = self.request.get("cat")
-    try:
-      cat = Category.get_by_key_name(posted_cat)
-      if cat:
-        it.category = cat
-    except:
-      logging.exception("Category not found %s" % posted_cat, exc_info=True)
-    it.put()
-    old_votes = it.votes.filter("voter =", self.user_id)
-    for v in old_votes:
-      v.delete()
-    vote = Vote()
-    vote.item = it
-    vote.voter = self.user_id
-    vote.comment = self.request.get('descr')
-    vote.vote = 1 if self.request.get("vote") == "like" else -1
-    vote.put()
-    it.put()  # again
-    # refresh cache
-    memcache_touch_place(it)
-    # CategoryStatsDenormalised.addPost(self.user_id,master_cat)
-    # TODO this should be ajax
-    self.response.out.write(str(it.key()))
+    logging.error("updateitem is deprecated")
+    self.abort(501)
+    # it = None
+    # try:
+    #   it = Item.get_item(key)
+    # except Exception:
+    #   logging.exception("updateItem ", exc_info=True)
+    #   # not found
+    #   self.error(400)
+    # # it.descr = self.request.get('descr')
+    # # category
+    # posted_cat = self.request.get("cat")
+    # try:
+    #   cat = Category.get_by_key_name(posted_cat)
+    #   if cat:
+    #     it.category = cat
+    # except:
+    #   logging.exception("Category not found %s" % posted_cat, exc_info=True)
+    # it.put()
+    # old_votes = it.votes.filter("voter =", self.user_id)
+    # for v in old_votes:
+    #   v.delete()
+    # vote = Vote()
+    # vote.item = it
+    # vote.voter = self.user_id
+    # vote.comment = self.request.get('descr')
+    # vote.vote = 1 if self.request.get("vote") == "like" else -1
+    # vote.put()
+    # it.put()  # again
+    # # refresh cache
+    # memcache_touch_place(it)
+    # # CategoryStatsDenormalised.addPost(self.user_id,master_cat)
+    # # TODO this should be ajax
+    # self.response.out.write(str(it.key()))
 
 
 def update_photo(it, request_handler):
@@ -521,7 +523,7 @@ def update_votes(item, request_handler, user_id):
     logging.error("newOrUpdateItem votes exception", exc_info=True)
 
 
-def update_item_internal(self, user_id, allow_update=True):
+def   update_item_internal(self, user_id, allow_update=True):
   # is it an edit or a new?
   it = Item.get_unique_place(self.request, allow_update)
   if not it:
@@ -729,7 +731,6 @@ class getItemVotes_ajax(BaseHandler):
 
 
 class ImageHandler(BaseHandler):
-  @user_required
   def get(self, key):
     try:
       photo = db.get(key)
@@ -741,7 +742,6 @@ class ImageHandler(BaseHandler):
 
 
 class ThumbHandler(BaseHandler):
-  @user_required
   def get(self, key):
     try:
       photo = db.get(key)
@@ -824,8 +824,7 @@ class login(BaseHandler):
       return self.render_template("index.html", con)
     except (InvalidAuthIdError, InvalidPasswordError) :
       logging.info(
-        'Login failed for userId %s because of %s',
-        username, exc_info=True)
+        'Login failed for userId %s'%username, exc_info=True)
       return self.render_template("login.html", {"message": "Login Failed"})
     except Exception:
       logging.exception(
