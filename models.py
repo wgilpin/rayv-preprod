@@ -10,13 +10,13 @@ from settings import config
 __author__ = 'Will'
 
 
-def getProp(obj, propName):
+def getProp(obj, propName, falseValue=False):
   try:
     if hasattr(obj, propName):
-      return getattr(obj, propName, None)
+      return getattr(obj, propName, falseValue)
     return obj[propName]
   except:
-    return False
+    return falseValue
 
 
 # #####################################################################################

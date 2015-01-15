@@ -21,7 +21,7 @@ def getPlaceDetailFromGoogle(item):
   params = {'radius': 150,
             'types': config['place_types'],
             'location': '%f,%f' % (item.lat, item.lng),
-            'name': item.place_name,
+            'name': item.place_name.encode('utf-8'),
             'sensor': False,
             'key': config['google_api_key']}
   url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" + \
@@ -386,13 +386,13 @@ def item_to_json_point(it, request, GPS_origin=None, map_origin=None, uid_for_vo
     data = {
       'lat': getProp(it, 'lat'),
       'lng': getProp(it, 'lng'),
-      'website': getProp(it, 'website'),
-      'address': getProp(it, 'address'),
+      'website': getProp(it, 'website',''),
+      'address': getProp(it, 'address',''),
       'key': str(it.key()) if type(it) is Item else "",
       'place_name': getProp(it, 'place_name'),
-      'place_id': getProp(it,'place_id'),
+      'place_id': getProp(it,'place_id',''),
       'category': category.title if category else "",
-      'telephone': getProp(it, 'telephone'),
+      'telephone': getProp(it, 'telephone', ''),
       'untried': False,
       'vote': 'null',
       'img': image_url,
@@ -401,7 +401,7 @@ def item_to_json_point(it, request, GPS_origin=None, map_origin=None, uid_for_vo
       'up': it.votes.filter("vote =", 1).count() if hasattr(it, 'votes') else 0,
       'down': it.votes.filter("vote =", -1).count() if
                                                 hasattr(it, 'votes') else 0,
-      'owner': getProp(it, 'owner'),
+      'owner': getProp(it, 'owner',''),
       # is_map is True if the point came
       # from a google places API search. Default False
       'is_map': False}
