@@ -253,7 +253,7 @@ class api_log(BaseHandler):
   @user_required
   def post(self):
     message = self.request.POST["message"]
-    level = self.request.POST["level"]
+    level = int(self.request.POST["level"])
     logging.log(level, message)
 
 class user_profile(BaseHandler):
