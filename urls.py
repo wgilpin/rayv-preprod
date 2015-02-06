@@ -26,6 +26,8 @@ urls = [
   webapp2.Route('/api/items', views.itemsAPI),
   webapp2.Route('/api/friends', views.friendsAPI),
   webapp2.Route('/api/friend/<id:\d+>/votes', views.friendsVotesAPI),
+  webapp2.Route('/api/log',views.api_log),
+
 
 
   webapp2.Route('/getItems_Ajax', views.getItems_Ajax, name='getItems_Ajax'),

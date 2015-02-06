@@ -174,9 +174,8 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
       wipe_table("Category")
       wipe_table("Item")
       wipe_table("Vote")
-
+      print "wiped"
     res = []
-    print "wiped"
     if not section or section == 'user':
       for idx, usr in enumerate(Users):
         if Max:

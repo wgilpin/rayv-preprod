@@ -245,6 +245,17 @@ class getFullUserRecord(BaseHandler):
         return
     self.error(401)
 
+class api_log(BaseHandler):
+  """
+  Level is one of :
+    'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG',
+  """
+  @user_required
+  def post(self):
+    message = self.request.POST["message"]
+    level = self.request.POST["level"]
+    logging.log(level, message)
+
 class user_profile(BaseHandler):
   @user_required
   def get(self):

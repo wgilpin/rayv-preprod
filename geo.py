@@ -18,17 +18,26 @@ __author__ = 'Will'
 
 def getPlaceDetailFromGoogle(item):
   logging.debug('getPlaceDetailFromGoogle '+item.place_name)
+  place_name = item.place_name.encode('utf-8')
   params = {'radius': 150,
             'types': config['place_types'],
             'location': '%f,%f' % (item.lat, item.lng),
-            'name': item.place_name.encode('utf-8'),
+            'name': place_name,
             'sensor': False,
             'key': config['google_api_key']}
   url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" + \
         urllib.urlencode(params)
-  response = urllib2.urlopen(url)
-  json_result = response.read()
-  address_result = json.loads(json_result)
+  try:
+    response = urllib2.urlopen(url)
+    json_result = response.read()
+    address_result = json.loads(json_result)
+  except:
+    logging.error(
+      'getPlaceDetailFromGoogle: Exception [%s]',
+      item.place_name,
+      exc_info=True)
+    return {"photo": None, "telephone": None}
+
   photo_ref = None
   place_id = None
   if address_result['status'] == "OK":
@@ -85,9 +94,14 @@ def geoCodeLatLng(lat, lng):
   url = ("https://maps.googleapis.com/maps/api/geocode/json?latlng=%s,"
          "%s&sensor=false&key=%s") % \
         (lat, lng, config['google_api_key'])
-  response = urllib2.urlopen(url)
-  serverResponse = response.read()
-  geoCode = json.loads(serverResponse)
+  try:
+    response = urllib2.urlopen(url)
+    serverResponse = response.read()
+    geoCode = json.loads(serverResponse)
+  except:
+    logging.error(
+      'geoCodeLatLng: Exception @[%d,%d]', lat, lng, exc_info=True)
+    return None
   if geoCode['status'] == "OK":
     addr = geoCode['results'][0]['formatted_address']
   else:
@@ -99,9 +113,13 @@ def geoCodeAddress(address, search_centre):
   url = ("https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor"
          "=false&key=%s") % \
         (urllib2.quote(address), config['google_api_key' ])
-  response = urllib2.urlopen(url)
-  jsonGeoCode = response.read()
-  geoCode = json.loads(jsonGeoCode)
+  try:
+    response = urllib2.urlopen(url)
+    jsonGeoCode = response.read()
+    geoCode = json.loads(jsonGeoCode)
+  except:
+    logging.error( 'geoCodeAddress: Exception [%s]', address, exc_info=True)
+    return None
   if geoCode['status'] == "OK":
     pos = geoCode['results'][0]['geometry']['location']
   else:
