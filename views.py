@@ -920,21 +920,31 @@ class ping(BaseHandler):
   def get(self):
     self.response.write('OK')
 
+class api_delete(BaseHandler):
+  @user_required
+  def post(self):
+    deleteItem.delete_item(self, self.request.POST["key"])
+
+
 class deleteItem(BaseHandler):
   @user_required
   def post(self, key):
+    self.delete_item(self, key)
+
+  @staticmethod
+  def delete_item(handler, key):
     try:
       item = Item.get_item(key)
       if item:
-        my_votes = item.votes.filter('voter =', self.user_id)
+        my_votes = item.votes.filter('voter =', handler.user_id)
         for vote in my_votes:
           logging.info("deleteItem: " + str(vote.key()))
           vote.delete()
-      memcache_touch_user(self.user_id)
-      self.response.write('OK')
+      memcache_touch_user(handler.user_id)
+      handler.response.write('OK')
     except Exception:
-      logging.error("deleteItem", exc_info=True)
-      self.abort(500)
+      logging.error("delete_item", exc_info=True)
+      handler.abort(500)
 
 class passwordVerificationHandler(BaseHandler):
     def get(self, *args, **kwargs):

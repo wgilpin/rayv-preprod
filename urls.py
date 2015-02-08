@@ -27,6 +27,7 @@ urls = [
   webapp2.Route('/api/friends', views.friendsAPI),
   webapp2.Route('/api/friend/<id:\d+>/votes', views.friendsVotesAPI),
   webapp2.Route('/api/log',views.api_log),
+  webapp2.Route('/api/delete',views.api_delete),
 
 
 
