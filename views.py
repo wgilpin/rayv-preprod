@@ -555,15 +555,19 @@ def   update_item_internal(self, user_id, allow_update=True):
         img = DBImage()
         remoteURL = detail['photo']
         if remoteURL:
-          main_url = remoteURL % 250
-          data = urllib2.urlopen(main_url)
-          img.picture = db.Blob(data.read())
-          img.remoteURL = None
-          thumb_url = remoteURL % 65
-          thumb_data = urllib2.urlopen(thumb_url)
-          img.thumb = db.Blob(thumb_data.read())
-          img.put()
-          it.photo = img
+          try:
+            main_url = remoteURL % 250
+            data = urllib2.urlopen(main_url)
+            img.picture = db.Blob(data.read())
+            img.remoteURL = None
+            thumb_url = remoteURL % 65
+            thumb_data = urllib2.urlopen(thumb_url)
+            img.thumb = db.Blob(thumb_data.read())
+            img.put()
+            it.photo = img
+          except:
+            logging.error("update_item_internal: remote url Exception", exc_info=True)
+            it.photo = None
       it.telephone = detail['telephone'] if 'telephone' in detail else None
       it.website = detail['website'] if 'website' in detail else None
 
