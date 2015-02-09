@@ -529,6 +529,7 @@ def update_votes(item, request_handler, user_id):
     else:
       vote_str = request_handler.request.get("voteScore")
       vote.vote = 1 if vote_str == "1" or vote_str == "like" else -1
+    vote.when = datetime.datetime.now()
     vote.put()
   except Exception:
     logging.error("newOrUpdateItem votes exception", exc_info=True)
@@ -871,6 +872,7 @@ class addVote_ajax(BaseHandler):
           it.votesDown -= oldVote
     new_vote.vote = voteScore
     new_vote.comment = self.request.get("comment")
+    new_vote.when = datetime.datetime.now()
     new_vote.put()
     if voteScore > 0:
       it.votesUp += voteScore

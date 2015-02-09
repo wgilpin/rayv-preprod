@@ -350,6 +350,8 @@ class Vote(db.Model):
                        "untried": user_vote.untried,
                        "comment": user_vote.comment,
                        "place_name": user_vote.item.place_name,
+                       # Json date format 1984-10-02T01:00:00
+                       "when": user_vote.when.strftime('%Y-%m-%dT%H:%M:%S'),
         }
         entry[str(user_vote.item.key())] = vote_detail
       return entry
