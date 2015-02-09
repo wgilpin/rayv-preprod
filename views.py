@@ -58,12 +58,12 @@ class getBook(BaseHandler):
 
 
 #TODO: change to ndb! Then drop the memcache crazies, and do Since properly
-def get_user_votes(current_user_id, user_id):
+def get_user_votes(current_user_id, user_id, since=None):
   user_dict = memcache_get_user_dict(user_id)
   if 'v' in user_dict:
     votes = user_dict['v']
   else:
-    votes = Vote.get_user_votes(user_id)
+    votes = Vote.get_user_votes(user_id, since)
     user_dict['v'] = votes
     memcache_put_user_dict(user_dict)
   # we ignore any 'untried' votes from a friend
@@ -77,7 +77,7 @@ def get_user_votes(current_user_id, user_id):
   return user_dict, votes
 
 
-def serialize_user_details(user_id, places, current_user, request):
+def serialize_user_details(user_id, places, current_user, request, since=None):
   """ give the list of votes & places for a user
   @param user_id: int: which user
   @param places: dict: list of places indexed by key (BY VALUE)
@@ -88,7 +88,7 @@ def serialize_user_details(user_id, places, current_user, request):
   try:
     #profile_in("serialize_user_details")
     # get it from the cache
-    user_dict, votes = get_user_votes(current_user, user_id)
+    user_dict, votes = get_user_votes(current_user, user_id, since)
 
     if getProp(user_dict['p'], 'last_write'):
       last_write = user_dict['p'].last_write
@@ -171,6 +171,8 @@ class itemsAPI(BaseHandler):
     self.abort(403)
 
 
+
+
 class getFullUserRecord(BaseHandler):
   @user_required
   def get(self):
@@ -192,14 +194,19 @@ class getFullUserRecord(BaseHandler):
       user = memcache_get_user_dict(my_id)
       if user:
         # logged in
+        since = None
         if 'since' in self.request.params:
           # move since back in time to allow for error
-          since = int(self.request.params['since']) - \
+          since = datetime.datetime.strptime(
+            self.request.params['since'],
+            settings.config['DATETIME_FORMAT']) - \
                   settings.config['TIMING_DELTA'];
         # is it for a specific user?
-        for_1_user = long(self.request.get("forUser")) if \
-                  "forUser" in self.request.params \
-                  else None
+        if "forUser" in self.request.params:
+          for_1_user = long(self.request.get("forUser"))
+        else:
+          for_1_user = None
+
         # either the first lookup is for me, plus everyone,
         # or it is for a specified user
         result = {"id": my_id}
@@ -211,7 +218,12 @@ class getFullUserRecord(BaseHandler):
         places = {}
         # load the data for the 1 user  - me or specified
         friends_data = [
-          serialize_user_details(first_user, places, my_id, self.request)]
+          serialize_user_details(
+            first_user,
+            places,
+            my_id,
+            self.request,
+            since)]
         # was it for all users? If so we've only done ourselves
         if not for_1_user:
           # for all users
@@ -221,18 +233,12 @@ class getFullUserRecord(BaseHandler):
               if userProf.userId == my_id:
                 continue  # don't add myself again
               friends_data.append(serialize_user_details(
-                userProf.userId, places, my_id, self.request))
+                userProf.userId, places, my_id, self.request, since))
           else:
             for friend in prof.friends:
               friends_data.append(serialize_user_details(
-                friend, places, my_id, self.request))
+                friend, places, my_id, self.request, since))
           result["friendsData"] = friends_data
-        if 'since' in self.request.params:
-          places_since = []
-          for plIdx in places:
-            if places[plIdx]['edited'] > since:
-              places_since.append(places[plIdx])
-          places = places_since
         result["places"] = places
         # encode using a custom encoder for datetime
 

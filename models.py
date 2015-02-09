@@ -6,6 +6,7 @@ from google.appengine.ext.db import BadKeyError, BadRequestError
 from auth_model import User
 import geohash
 from settings import config
+import settings
 
 __author__ = 'Will'
 
@@ -340,10 +341,12 @@ class Vote(db.Model):
     memcache.set('USERNAME' + str(self.voter), name)
 
   @classmethod
-  def get_user_votes(cls, user_id):
+  def get_user_votes(cls, user_id, since=None):
     try:
       entry = {}
       user_vote_list = Vote.all().filter("voter =", user_id)
+      if since:
+        user_vote_list = user_vote_list.filter("when >", since)
       for user_vote in user_vote_list:
         vote_detail = {"key": str(user_vote.item.key()),
                        "vote": user_vote.vote,
@@ -351,7 +354,8 @@ class Vote(db.Model):
                        "comment": user_vote.comment,
                        "place_name": user_vote.item.place_name,
                        # Json date format 1984-10-02T01:00:00
-                       "when": user_vote.when.strftime('%Y-%m-%dT%H:%M:%S'),
+                       "when": user_vote.when.strftime(
+                         settings.config['DATETIME_FORMAT']),
         }
         entry[str(user_vote.item.key())] = vote_detail
       return entry

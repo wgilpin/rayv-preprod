@@ -11,6 +11,9 @@ from views import getPlaceDetailFromGoogle
 
 __author__ = 'Will'
 
+"""
+         URL is /migrate_datastore?no=XXXX
+"""
 
 class migrate(BaseHandler):
   @user_required
@@ -207,6 +210,13 @@ class migrate(BaseHandler):
         vote.put()
 
   @user_required
+  def set_vote_time_to_now(self):
+    votes = Vote.all()
+    for v in votes:
+      v.when = datetime.now()
+      v.put()
+
+  @user_required
   def set_votes_up_down(self):
     items = Item.all()
     for it in items:
@@ -230,74 +240,75 @@ class migrate(BaseHandler):
 
   @user_required
   def get(self):
-    user = self.check_auth()
-    if user:
-      if self.request.get("no") == '1':
-        self.set_votes_up_down()
-        self.response.out.write("1-items OK")
-        votes = Vote.all()
-        for v in votes:
-          dirty = False
-          try:
-            if v.vote == True:
-              v.vote = 1
-              dirty = True
-          except:
+
+    if self.request.get("no") == '1':
+      self.set_votes_up_down()
+      self.response.out.write("1-items OK")
+      votes = Vote.all()
+      for v in votes:
+        dirty = False
+        try:
+          if v.vote == True:
             v.vote = 1
             dirty = True
-          if dirty:
-            v.put()
+        except:
+          v.vote = 1
+          dirty = True
+        if dirty:
+          v.put()
 
-        self.response.out.write("1-votes OK")
-        return
-      elif self.request.get("no") == '2':
-        self.move_comment_to_vote()
-        self.response.out.write("2-vote comments OK")
-      elif self.request.get("no") == '3':
-        self.at_least_one_vote_per_item()
-        self.response.out.write("3-vote totals OK")
-      elif self.request.get("no") == '4':
-        self.one_vote_per_item()
-        self.response.out.write("4-latLng OK")
-      elif self.request.get("no") == '5':
-        self.votes_down_to_abs()
-        self.response.out.write("5-+ve votes OK")
-      elif self.request.get("no") == "6":
-        self.add_geohash()
-        self.response.out.write("6 - geohash added OK")
-      elif self.request.get("no") == "7":
-        self.recalc_votes_totals()
-        self.response.out.write("7 - votes re-totaled OK")
-      elif self.request.get("no") == "8":
-        self.add_google_img_if_missing()
-        self.response.out.write("8 - images got from google OK")
-      elif self.request.get("no") == "9":
-        self.add_phone_numbers()
-        self.response.out.write("9 - phone nos got from google OK")
-      elif self.request.get("no") == "10":
-        self.item_title_to_StringProperty()
-        self.response.out.write("10 - title becomes place_name StringProp OK")
-      elif self.request.get("no") == "11":
-        self.remote_urls_to_blobs()
-        self.response.out.write("11 - images got from google into db OK")
-      elif self.request.get("no") == "12":
-        self.remove_orphan_votes()
-        self.response.out.write(json.dumps({
-          'status':'OK',
-          'detail':'12 - votes clean - MEMCACHE'}))
-      elif self.request.get("no") == "13":
-        self.add_websites()
-        self.response.out.write("13 - websites got from google OK")
-      elif self.request.get("no") == "14":
-        self.add_edited()
-        self.response.out.write("14 - last edit times added")
-      elif self.request.get("no") == "add-blocked":
-        self.add_blocked_to_user()
-        self.response.out.write("User blocked - added")
-      else:
-        self.response.out.write("No Migration")
+      self.response.out.write("1-votes OK")
+      return
+    elif self.request.get("no") == '2':
+      self.move_comment_to_vote()
+      self.response.out.write("2-vote comments OK")
+    elif self.request.get("no") == '3':
+      self.at_least_one_vote_per_item()
+      self.response.out.write("3-vote totals OK")
+    elif self.request.get("no") == '4':
+      self.one_vote_per_item()
+      self.response.out.write("4-latLng OK")
+    elif self.request.get("no") == '5':
+      self.votes_down_to_abs()
+      self.response.out.write("5-+ve votes OK")
+    elif self.request.get("no") == "6":
+      self.add_geohash()
+      self.response.out.write("6 - geohash added OK")
+    elif self.request.get("no") == "7":
+      self.recalc_votes_totals()
+      self.response.out.write("7 - votes re-totaled OK")
+    elif self.request.get("no") == "8":
+      self.add_google_img_if_missing()
+      self.response.out.write("8 - images got from google OK")
+    elif self.request.get("no") == "9":
+      self.add_phone_numbers()
+      self.response.out.write("9 - phone nos got from google OK")
+    elif self.request.get("no") == "10":
+      self.item_title_to_StringProperty()
+      self.response.out.write("10 - title becomes place_name StringProp OK")
+    elif self.request.get("no") == "11":
+      self.remote_urls_to_blobs()
+      self.response.out.write("11 - images got from google into db OK")
+    elif self.request.get("no") == "12":
+      self.remove_orphan_votes()
+      self.response.out.write(json.dumps({
+        'status':'OK',
+        'detail':'12 - votes clean - MEMCACHE'}))
+    elif self.request.get("no") == "13":
+      self.add_websites()
+      self.response.out.write("13 - websites got from google OK")
+    elif self.request.get("no") == "14":
+      self.add_edited()
+      self.response.out.write("14 - last edit times added")
+    elif self.request.get("no") == "add-blocked":
+      self.add_blocked_to_user()
+      self.response.out.write("User blocked - added")
+    elif self.request.get("no") == "reset-vote-times":
+      self.set_vote_time_to_now()
+      self.response.out.write("Vote Times Reset")
     else:
-      self.response.out.write("Log In")
+      self.response.out.write("No Migration")
+
 
   @user_required
   def add_edited(self):

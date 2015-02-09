@@ -20,8 +20,9 @@ config = {
   'ALLOWED_INCLUDE_ROOTS': "/templates",
   'google_api_key': 'AIzaSyDiTThta8R7EFuFo8cGfPHxIGYoFkc77Bw',
   'all_are_friends': True,
-  'TIMING_DELTA': 5 * 60 * 1000, # 5 mins in ms
-  'system_email': 'wgilpin+rayv@gmail.com'
+  'TIMING_DELTA': timedelta(0,5 * 60), # 5 mins
+  'system_email': 'wgilpin+rayv@gmail.com',
+  'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S',
 }
 
 auth.default_config['token_max_age'] = 86400 * 7 * 8  # 8 weeks login auth token timeout
