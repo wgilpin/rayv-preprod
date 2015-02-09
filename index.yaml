@@ -39,3 +39,8 @@ indexes:
   properties:
   - name: userId=
   - name: when_added
+
+- kind: Vote
+  properties:
+  - name: voter
+  - name: when

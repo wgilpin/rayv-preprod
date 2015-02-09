@@ -69,11 +69,12 @@ def get_user_votes(current_user_id, user_id, since=None):
   # we ignore any 'untried' votes from a friend
   if user_id != current_user_id:
     to_be_removed = []
-    for vote in votes:
-      if votes[vote]['untried']:
-        to_be_removed.append(vote)
-    for idx in to_be_removed:
-      del votes[idx]
+    if votes:
+      for vote in votes:
+        if votes[vote]['untried']:
+          to_be_removed.append(vote)
+      for idx in to_be_removed:
+        del votes[idx]
   return user_dict, votes
 
 
