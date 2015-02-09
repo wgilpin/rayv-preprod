@@ -100,15 +100,16 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
               # todo is it first_name?
               'name': user_dict['u'].screen_name,
               'last_write': last_write}
-    for place_key in votes:
-      if not place_key in places:
-        place_json = itemKeyToJSONPoint(place_key, request)
-        if user_id == current_user:
-          place_json['vote'] = votes[place_key]['vote']
-          place_json['untried'] = votes[place_key]['untried']
-        places[place_key] = place_json
-    for place in places:
-      places[place] = adjust_votes_for_JSON_pt(places[place])
+    if votes:
+      for place_key in votes:
+        if not place_key in places:
+          place_json = itemKeyToJSONPoint(place_key, request)
+          if user_id == current_user:
+            place_json['vote'] = votes[place_key]['vote']
+            place_json['untried'] = votes[place_key]['untried']
+          places[place_key] = place_json
+      for place in places:
+        places[place] = adjust_votes_for_JSON_pt(places[place])
     #profile_out("serialize_user_details")
     return result
   except Exception, e:
