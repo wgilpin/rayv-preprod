@@ -528,19 +528,28 @@ def update_votes(item, request_handler, user_id):
     vote = Vote()
     vote.item = item
     vote.voter = user_id
-    vote.comment = request_handler.request.get('myComment')
+    vote.comment =  request_handler.request.get('myComment')
     if request_handler.request.get("untried") == 'true':
       vote.untried = True
       vote.vote = 0
     else:
       vote_str = request_handler.request.get("voteScore")
-      vote.vote = 1 if vote_str == "1" or vote_str == "like" else -1
+      voteScore = 1 if vote_str == "1" or vote_str == "like" else -1
+      vote.vote = voteScore
     vote.put()
+    logging.info ('update_votes for %s "%s"=%d'%
+                  (item.place_name,vote.comment,vote.vote))
   except Exception:
     logging.error("newOrUpdateItem votes exception", exc_info=True)
 
 
-def   update_item_internal(self, user_id, allow_update=True):
+def update_item_internal(self, user_id, allow_update=True):
+  def update_field(field_name, value):
+    # so we can log edits
+    old_val = getProp(it,field_name)
+    if old_val != value:
+      setattr(it,field_name,value)
+      changed[field_name]=str(old_val)+"->"+str(value)
   # is it an edit or a new?
   it = Item.get_unique_place(self.request, allow_update)
   if not it:
@@ -548,7 +557,8 @@ def   update_item_internal(self, user_id, allow_update=True):
     return None
   img = update_photo(it, self)
   # it.place_name = self.request.get('new-title') set in get_unique_place
-  it.address = self.request.get('address')
+  changed = {}
+  update_field ('address', self.request.get('address'))
   it.owner = user_id
   if img:
     it.photo = img
@@ -588,9 +598,9 @@ def   update_item_internal(self, user_id, allow_update=True):
     cat = Category.get_by_key_name(posted_cat)
   except:
     cat = None
-  it.category = cat
+  update_field('category', cat)
   if "place_name" in self.request.params:
-    it.place_name = self.request.params['place_name']
+    update_field('place_name', self.request.params['place_name'])
   it.put()
   # refresh cache
   memcache_touch_place(it)
@@ -599,6 +609,7 @@ def   update_item_internal(self, user_id, allow_update=True):
   it.put()  # again
   # mark user as dirty
   memcache_touch_user(user_id)
+  logging.info("update_item_internal for "+it.place_name+": "+str(changed))
   return it
 
 class UpdateItemFromAnotherAppAPI(BaseHandler):
