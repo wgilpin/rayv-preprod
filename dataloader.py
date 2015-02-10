@@ -195,6 +195,8 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
                                        email_address=email, name=name,
                                        password_raw=password,
                                        last_name=last_name, verified=False)
+          this_user.screen_name = name
+          this_user.put()
           UserRecords.append(this_user)
           if not this_user[0]:  # user_data is a tuple
             res.append("ERROR - User: " + usr[0])

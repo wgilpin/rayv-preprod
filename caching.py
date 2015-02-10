@@ -27,7 +27,7 @@ def memcache_get_user_dict(UserId):
       return record
     else:
       logging.error('memcache_get_user_dict No User '+str(UserId))
-  except:
+  except Exception, E:
     logging.error('memcache_get_user_dict', exc_info=True)
 
 

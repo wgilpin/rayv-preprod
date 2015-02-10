@@ -231,11 +231,12 @@ class getFullUserRecord(BaseHandler):
           # for all users
           prof = user['p']
           if settings.config['all_are_friends']:
-            for userProf in UserProfile().all():
-              if userProf.userId == my_id:
+            for user in User.gql(""):
+            # for userProf in UserProfile().all():
+              if user.get_id() == my_id:
                 continue  # don't add myself again
               friends_data.append(serialize_user_details(
-                userProf.userId, places, my_id, self.request, since))
+                user.get_id(), places, my_id, self.request, since))
           else:
             for friend in prof.friends:
               friends_data.append(serialize_user_details(
@@ -537,7 +538,6 @@ def update_votes(item, request_handler, user_id):
     else:
       vote_str = request_handler.request.get("voteScore")
       vote.vote = 1 if vote_str == "1" or vote_str == "like" else -1
-    vote.when = datetime.datetime.now()
     vote.put()
   except Exception:
     logging.error("newOrUpdateItem votes exception", exc_info=True)

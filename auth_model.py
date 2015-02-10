@@ -86,7 +86,7 @@ class User(webapp2_extras.appengine.auth.models.User):
         return res
       raise LookupError
     except:
-      logging.info("Create user profile")
+      logging.info("Create user profile for "+str(self.key.id()))
       new_profile = UserProfile()
       # put this User's UserId in the profile to link them
       new_profile.userId = self.key.id()
