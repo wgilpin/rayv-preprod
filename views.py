@@ -437,10 +437,7 @@ class updateItem(BaseHandler):
       adjust_votes_for_JSON_pt(it_json)
       json.dump(it_json, self.response.out)
     except:
-      logging.error('updateItem GET Exception',exc_info=True)
-    else:
-      logging.error('updateItem GET: '+key)
-      self.display_message("Unable to get item")
+      logging.error('updateItem GET Exception '+key,exc_info=True)
 
   @user_required
   def post(self, key):
