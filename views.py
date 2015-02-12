@@ -570,6 +570,7 @@ def update_item_internal(self, user_id, allow_update=True):
         img = DBImage()
         remoteURL = detail['photo']
         if remoteURL:
+          thumb_url=None
           try:
             main_url = remoteURL % 250
             data = urllib2.urlopen(main_url)
@@ -582,7 +583,7 @@ def update_item_internal(self, user_id, allow_update=True):
             it.photo = img
           except:
             if thumb_url:
-              logging.error("update_item_internal: remote url ["+thumb_url+"] Exception", exc_info=True)
+              logging.error("update_item_internal: remote url ["+str(thumb_url)+"] Exception", exc_info=True)
             else:
               logging.error("update_item_internal: remote url Exception", exc_info=True)
             it.photo = None
