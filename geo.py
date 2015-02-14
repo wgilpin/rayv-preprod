@@ -11,6 +11,7 @@ from caching import memcache_get_user_dict
 import geohash
 from models import Item, getProp, get_category
 from settings import config
+from settings_per_server import server_settings
 
 __author__ = 'Will'
 
@@ -270,7 +271,7 @@ def geoSearch(search_centre,
     import json
 
     # Set the Places API key for your application
-    auth_key = 'AIzaSyCLAhYubQhsrI5rhVfzN21ItL5U6R1QSxU'
+    auth_key = server_settings['auth_key']
 
     # Define the location coordinates
     location = "%f,%f" % (lat, lng)
