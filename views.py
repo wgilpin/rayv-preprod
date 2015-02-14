@@ -410,7 +410,8 @@ class register(BaseHandler):
       self.render_template(
         'signup.html', {"message": "That userId is already registered", })
       return
-    user_id = self.user_id
+    user = user_data[1]
+    user_id = user.get_id()
     token = self.user_model.create_signup_token(user_id)
     verification_url = self.uri_for('verification', type='v', user_id=user_id,
                                     signup_token=token, _full=True)
