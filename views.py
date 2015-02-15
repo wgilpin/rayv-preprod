@@ -975,8 +975,7 @@ class deleteItem(BaseHandler):
 
 class passwordVerificationHandler(BaseHandler):
     def get(self, *args, **kwargs):
-        #TODO: we aren't using auth anymore
-        assert False
+
         user = None
         user_id = kwargs['user_id']
         signup_token = kwargs['signup_token']
