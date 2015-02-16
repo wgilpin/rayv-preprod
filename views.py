@@ -172,6 +172,25 @@ class itemsAPI(BaseHandler):
       return
     self.abort(403)
 
+class profileAPI(BaseHandler):
+  @user_required
+  def get(self):
+    res = {
+      'screen_name': self.user.screen_name,
+      'email': self.user.email_address,
+      'sex': self.user.sex,
+    }
+    json.dump({'profile':res}, self.response.out, default=json_serial)
+    return
+
+  @user_required
+  def post(self):
+    sn = self.request.params["screen_name"]
+    em = self.request.params["email"]
+    gn = self.request.params["gender"]
+    self.auth.user.screen_name = sn
+    self.auth.user.sex = gn
+    self.auth.put()
 
 
 
@@ -423,6 +442,7 @@ class register(BaseHandler):
       body="Click here to confirm your email address " + verification_url
     )
     message.send()
+    logging.info('Verification email sent to '+email)
     self.display_message(msg.format(url=verification_url))
 
 class updateItem(BaseHandler):

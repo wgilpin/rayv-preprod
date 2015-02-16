@@ -22,6 +22,7 @@ class UserProfile(db.Model):
   # list of key ids
   friends = db.ListProperty(long)
   is_admin = db.BooleanProperty(default=False)
+  sex = db.StringProperty(default="")
 
 
 

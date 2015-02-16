@@ -135,6 +135,9 @@ class VerificationHandler(BaseHandler):
       if user.blocked:
         logging.info('VerificationHandler: Blocked user ')
         self.abort(403)
+      else:
+        logging.info('VerificationHandler: Good user ')
+
     else:
       logging.info('Could not find any userId with id "%s" signup token "%s"',
                    user_id, signup_token)
