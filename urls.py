@@ -23,6 +23,7 @@ urls = [
   webapp2.Route('/register', views.register, name='register'),
   webapp2.Route('/logout', views.logout),
   webapp2.Route('/api/login', views.loginAPI),
+  webapp2.Route('/api/register', auth_logic.RegisterInOne),
   webapp2.Route('/api/profile', views.profileAPI),
   webapp2.Route('/api/items', views.itemsAPI),
   webapp2.Route('/api/friends', views.friendsAPI),

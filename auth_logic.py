@@ -31,6 +31,39 @@ def user_required(handler):
 
   return check_login
 
+class RegisterInOne(BaseHandler):
+  def post(self):
+    username = self.request.get('username')
+    user = self.user_model.get_by_auth_id(username)
+    if user and user.blocked:
+      logging.info('SignupHandler: Blocked user ' + username)
+      self.response.out.write("BLOCKED")
+    email = self.request.get('email')
+    name = self.request.get('name')
+    password = self.request.get('password')
+    last_name = self.request.get('lastname')
+
+    unique_properties = ['email_address']
+    user_data = self.user_model.create_user(username,
+                                            unique_properties,
+                                            email_address=email, name=name,
+                                            password_raw=password,
+                                            last_name=last_name, verified=False)
+    if not user_data[0]:  #user_data is a tuple
+      self.response.out.write("BAD_USERNAME")
+
+    user = user_data[1]
+    user.screen_name = self.request.get('screenname')
+    user.put()
+
+    # store userId data in the session
+    self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)
+
+    if not user.verified:
+      user.verified = True
+      user.put()
+    self.response.out.write("OK")
+
 
 class SignupHandler(BaseHandler):
   def get(self):

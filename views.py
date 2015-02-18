@@ -175,6 +175,8 @@ class itemsAPI(BaseHandler):
 class profileAPI(BaseHandler):
   @user_required
   def get(self):
+    if not hasattr(self.user,'sex'):
+      self.user.sex = "";
     res = {
       'screen_name': self.user.screen_name,
       'email': self.user.email_address,
@@ -186,12 +188,11 @@ class profileAPI(BaseHandler):
   @user_required
   def post(self):
     sn = self.request.params["screen_name"]
-    em = self.request.params["email"]
     gn = self.request.params["gender"]
-    self.auth.user.screen_name = sn
-    self.auth.user.sex = gn
-    self.auth.put()
-
+    self.user.screen_name = sn
+    self.user.sex = gn
+    self.user.put()
+    self.response.out.write("OK")
 
 
 class getFullUserRecord(BaseHandler):
