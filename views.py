@@ -264,7 +264,7 @@ class getFullUserRecord(BaseHandler):
           if settings.config['all_are_friends']:
             q = User.gql('')
             logging.info("getFullUserRecord: %d friends"%q.count())
-            for user in User.gql(""):
+            for user in q:
             # for userProf in UserProfile().all():
               if user.get_id() == my_id:
                 continue  # don't add myself again
