@@ -62,11 +62,14 @@ def get_user_votes(current_user_id, user_id, since=None):
   user_dict = memcache_get_user_dict(user_id)
   if 'v' in user_dict:
     votes = user_dict['v']
+    logging.debug("get_user_votes: from memcache %d votes"%len(votes))
   else:
     votes = Vote.get_user_votes(user_id, since)
     user_dict['v'] = votes
     memcache_put_user_dict(user_dict)
+    logging.debug("get_user_votes: from db %d votes"%len(votes))
   # we ignore any 'untried' votes from a friend
+  have_removed = 0
   if user_id != current_user_id:
     to_be_removed = []
     if votes:
@@ -75,6 +78,8 @@ def get_user_votes(current_user_id, user_id, since=None):
           to_be_removed.append(vote)
       for idx in to_be_removed:
         del votes[idx]
+    logging.debug('get_user_votes: removed %d '%len(to_be_removed))
+
   return user_dict, votes
 
 
@@ -87,7 +92,7 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
   @return:
   """
   try:
-    #profile_in("serialize_user_details")
+    logging.debug("serialize_user_details %d"%user_id)
     # get it from the cache
     user_dict, votes = get_user_votes(current_user, user_id, since)
 
@@ -101,6 +106,8 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
               'name': user_dict['u'].screen_name,
               'last_write': last_write}
     if votes:
+      logging.debug("serialize_user_details: %d votes"%len(votes))
+      added_places = 0
       for place_key in votes:
         if not place_key in places:
           place_json = itemKeyToJSONPoint(place_key, request)
@@ -110,7 +117,9 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
           places[place_key] = place_json
       for place in places:
         places[place] = adjust_votes_for_JSON_pt(places[place])
-    #profile_out("serialize_user_details")
+      logging.debug('serialize_user_details: Added %d places'%len(places))
+    else:
+      logging.debug("serialize_user_details: No Votes")
     return result
   except Exception, e:
     logging.error("serialize_user_details Exception", exc_info=True)
@@ -268,6 +277,7 @@ class getFullUserRecord(BaseHandler):
               friends_data.append(serialize_user_details(
                 friend, places, my_id, self.request, since))
           result["friendsData"] = friends_data
+          logging.debug('getFullUserRecord: return %d places'%len(places))
         result["places"] = places
         # encode using a custom encoder for datetime
 
