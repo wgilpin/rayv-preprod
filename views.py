@@ -233,9 +233,11 @@ class getFullUserRecord(BaseHandler):
         # or it is for a specified user
         result = {"id": my_id}
         if for_1_user:
+          logging.info("getFullUserRecord: 1 user")
           first_user = for_1_user
           result["for_1_user"] = for_1_user
         else:
+          logging.info("getFullUserRecord: 1+ user")
           first_user = my_id
         places = {}
         # load the data for the 1 user  - me or specified
@@ -251,12 +253,16 @@ class getFullUserRecord(BaseHandler):
           # for all users
           prof = user['p']
           if settings.config['all_are_friends']:
+            q = User.gql('')
+            logging.info("getFullUserRecord: %d friends"%q.count())
             for user in User.gql(""):
             # for userProf in UserProfile().all():
               if user.get_id() == my_id:
                 continue  # don't add myself again
-              friends_data.append(serialize_user_details(
-                user.get_id(), places, my_id, self.request, since))
+              data = serialize_user_details(
+                user.get_id(), places, my_id, self.request, since)
+              logging.info("getFullUserRecord: record %s"%data)
+              friends_data.append(data)
           else:
             for friend in prof.friends:
               friends_data.append(serialize_user_details(
