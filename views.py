@@ -60,11 +60,13 @@ class getBook(BaseHandler):
 #TODO: change to ndb! Then drop the memcache crazies, and do Since properly
 def get_user_votes(current_user_id, user_id, since=None):
   user_dict = memcache_get_user_dict(user_id)
+  votes = {}
   if 'v' in user_dict:
     votes = user_dict['v']
     logging.debug("get_user_votes: from memcache %d votes"%len(votes))
-  else:
-    votes = Vote.get_user_votes(user_id, since)
+  if len(votes) == 0 or not 'v' in user_dict:
+    # we are going to memcache the votes sowe get ALL votes & ignore since
+    votes = Vote.get_user_votes(user_id)
     user_dict['v'] = votes
     memcache_put_user_dict(user_dict)
     logging.debug("get_user_votes: from db %d votes"%len(votes))
@@ -280,7 +282,6 @@ class getFullUserRecord(BaseHandler):
           logging.debug('getFullUserRecord: return %d places'%len(places))
         result["places"] = places
         # encode using a custom encoder for datetime
-
 
         json_str = json.dumps(
           result,
