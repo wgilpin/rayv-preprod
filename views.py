@@ -67,7 +67,7 @@ def get_user_votes(current_user_id, user_id, since=None):
       logging.debug("get_user_votes: from memcache %d votes"%len(votes))
     else:
       logging.debug("get_user_votes: from memcache no votes")
-  if len(votes) == 0 or not 'v' in user_dict:
+  if not votes or len(votes) == 0 or not 'v' in user_dict:
     # we are going to memcache the votes sowe get ALL votes & ignore since
     votes = Vote.get_user_votes(user_id)
     user_dict['v'] = votes
