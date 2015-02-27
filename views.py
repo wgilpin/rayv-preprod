@@ -68,22 +68,24 @@ def get_user_votes(current_user_id, user_id, since=None):
     else:
       logging.debug("get_user_votes: from memcache no votes")
   if not votes or len(votes) == 0 or not 'v' in user_dict:
-    # we are going to memcache the votes sowe get ALL votes & ignore since
+    # we are going to memcache the votes so we get ALL votes & ignore since
     votes = Vote.get_user_votes(user_id)
     user_dict['v'] = votes
     memcache_put_user_dict(user_dict)
     logging.debug("get_user_votes: from db %d votes"%len(votes))
   # we ignore any 'untried' votes from a friend
   have_removed = 0
-  if user_id != current_user_id:
-    to_be_removed = []
-    if votes:
-      for vote in votes:
-        if votes[vote]['untried']:
-          to_be_removed.append(vote)
-      for idx in to_be_removed:
-        del votes[idx]
-    logging.debug('get_user_votes: removed %d '%len(to_be_removed))
+  #TODO: This is commented out for iOS bug #209, show wishlist items in news
+  #TODO: BUT it was put here for some good reason for the web client?
+  # if user_id != current_user_id:
+  #   to_be_removed = []
+  #   if votes:
+  #     for vote in votes:
+  #       if votes[vote]['untried']:
+  #         to_be_removed.append(vote)
+  #     for idx in to_be_removed:
+  #       del votes[idx]
+  #   logging.debug('get_user_votes: removed %d '%len(to_be_removed))
 
   return user_dict, votes
 
