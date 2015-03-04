@@ -142,6 +142,7 @@ def findDbPlacesNearLoc(my_location,
                         place_names=None,
                         ignore_votes=False):
   try:
+    logging.debug("findDbPlacesNearLoc Start")
     for geo_precision in range(6, 3, -1):
       geo_code = geohash.encode(
         my_location.lat, my_location.lng, precision=geo_precision)
