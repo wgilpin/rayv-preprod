@@ -166,6 +166,7 @@ def findDbPlacesNearLoc(my_location,
       if search_text:
         # we only want ones that match the search text
         if not search_text in it.place_name.lower():
+          logging.debug("findDbPlacesNearLoc IGNORE %s"%it.place_name)
           continue
       if not ignore_votes:
         jsonPt = item_to_json_point(it, request, position, uid_for_votes=uid)
