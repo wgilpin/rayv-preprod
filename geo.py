@@ -172,7 +172,7 @@ def findDbPlacesNearLoc(my_location,
       else:
         jsonPt = item_to_json_point(it, request, position)
 
-
+      logging.debug("findDbPlacesNearLoc - add %s"%(jsonPt['place_name'], jsonPt['category']))
       search_results.append(adjust_votes_for_JSON_pt(jsonPt))
       place_names.append(it.place_name)
 
