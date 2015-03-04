@@ -195,12 +195,14 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
                                        email_address=email, name=name,
                                        password_raw=password,
                                        last_name=last_name, verified=False)
-          this_user.screen_name = name
-          this_user.put()
-          UserRecords.append(this_user)
           if not this_user[0]:  # user_data is a tuple
             res.append("ERROR - User: " + usr[0])
-          res.append("User: " + usr[0])
+          else:
+            user = this_user[1]
+            user.screen_name = name
+            user.put()
+            UserRecords.append(user)
+            res.append("User: " + usr[0])
         else:
           this_user.set_password(usr[4])
           this_user.profile().is_admin = True

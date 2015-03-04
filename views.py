@@ -390,7 +390,7 @@ class getAddresses_ajax(BaseHandler):
       lat,
       lng,
       LatLng(lat=lat, lng=lng),
-      names[0],
+      names[0].lower(),
       self.user_id)
     if results:
       results['search'] = {'lat': lat,'lng':lng}
