@@ -99,7 +99,7 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
   @return:
   """
   try:
-    logging.debug("serialize_user_details %d"%user_id)
+    logging.info("serialize_user_details 1")
     # get it from the cache
     user_dict, votes = get_user_votes(current_user, user_id, since)
 
@@ -130,7 +130,6 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
     return result
   except Exception, e:
     logging.error("serialize_user_details Exception", exc_info=True)
-    profile_out("serialize_user_details")
 
 class friendsVotesAPI(BaseHandler):
   @user_required
