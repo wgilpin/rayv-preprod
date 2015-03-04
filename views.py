@@ -361,6 +361,7 @@ class getCuisines_ajax(BaseHandler):
 class getAddresses_ajax(BaseHandler):
   @user_required
   def get(self):
+    logging.debug('getAddresses_ajax')
     address = self.request.get("addr")
     lat = float(self.request.get("lat"))
     lng = float(self.request.get("lng"))

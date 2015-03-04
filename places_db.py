@@ -34,6 +34,7 @@ class PlacesDB():
     :param user_id: int userId of the current user
     :return: dict {"local": [points]}
     """
+    logging.debug("map_and_db_search")
     search_filter = {
       "kind": filter_kind,
       "userId": user_id,
