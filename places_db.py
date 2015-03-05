@@ -2,6 +2,7 @@ import json
 import logging
 from operator import itemgetter
 import urllib2
+from google.appengine._internal.django.utils.html import escape
 from geo import findDbPlacesNearLoc, item_to_json_point, LatLng
 from models import Vote
 import settings
@@ -121,13 +122,14 @@ class PlacesDB():
     :param radius: int - search radius (m)
     :return: dict - {"item_count": int, "items": []}
     """
+    escaped_name = urllib2.quote(name)
     url = ("https://maps.googleapis.com/maps/api/place/nearbysearch/"
           "json?rankby=distance&types=%s&location=%f,%f&name=%s&sensor=false&key=%s")\
           % \
           (settings.config['place_types'],
            lat,
            lng,
-           name,
+           escaped_name,
            settings.config['google_api_key'] )
     response = urllib2.urlopen(url)
     jsonResult = response.read()

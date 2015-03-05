@@ -8,7 +8,7 @@ from google.appengine.ext import db
 from webapp2_extras import auth
 import json
 from webob.exc import HTTPUnauthorized
-from auth_logic import user_required
+from auth_logic import user_required, api_login_required
 from auth_model import UserProfile, User
 from caching import memcache_get_user_dict, memcache_touch_user, \
   memcache_put_user_dict, memcache_touch_place
@@ -358,7 +358,7 @@ class getCuisines_ajax(BaseHandler):
 
 
 class getAddresses_ajax(BaseHandler):
-  @user_required
+  @api_login_required
   def get(self):
     logging.debug('getAddresses_ajax')
     address = self.request.get("addr")
@@ -390,7 +390,7 @@ class getAddresses_ajax(BaseHandler):
       lat,
       lng,
       LatLng(lat=lat, lng=lng),
-      names[0].lower(),
+      self.request.get("place_name").lower(),
       self.user_id)
     if results:
       results['search'] = {'lat': lat,'lng':lng}

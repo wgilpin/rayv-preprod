@@ -31,6 +31,21 @@ def user_required(handler):
 
   return check_login
 
+def api_login_required(handler):
+  """
+    Decorator that checks if there's a userId associated with the current session.
+    Will also fail if there's no session present.
+  """
+
+  def check_login(self, *args, **kwargs):
+    auth = self.auth
+    if not auth.get_user_by_session():
+      self.response.out.write("LOGIN")
+    else:
+      return handler(self, *args, **kwargs)
+
+  return check_login
+
 class RegisterInOne(BaseHandler):
   def post(self):
     username = self.request.get('username')
