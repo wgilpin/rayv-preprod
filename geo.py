@@ -142,14 +142,41 @@ def findDbPlacesNearLoc(my_location,
                         place_names=None,
                         ignore_votes=False):
   try:
+    cache = {}
     logging.debug("findDbPlacesNearLoc Start")
+    result_list = []
+    reject_list = []
     for geo_precision in range(6, 3, -1):
       geo_code = geohash.encode(
         my_location.lat, my_location.lng, precision=geo_precision)
-      initial_results = Item.all(keys_only=True).\
+      query_result = Item.all(keys_only=True).\
         filter("geo_hash >", geo_code).\
         filter("geo_hash <", geo_code + "{")
-      if initial_results.count() > 10:
+      if search_text:
+        #if we're looking for a name, filter the results to find it
+        for point_key in query_result:
+          if point_key in result_list:
+            continue
+          if point_key in reject_list:
+            continue
+          if point_key in cache:
+            it = cache[point_key]
+          else:
+            it = Item.get_item(str(point_key))
+            cache[point_key] = it
+          if search_text in it.place_name.lower():
+            result_list.append(point_key)
+            continue
+          reject_list.append(point_key)
+        if len(result_list)>5:
+          break
+        continue
+      elif query_result.count() > 10:
+        for point_key in query_result:
+          if not point_key in result_list:
+            it = Item.get_item(str(point_key))
+            cache[point_key] = it
+            result_list.append(point_key)
         break
     search_results = []
     return_data = {}
@@ -158,19 +185,23 @@ def findDbPlacesNearLoc(my_location,
     exclude_user_id = None
     if filter:
       if filter["kind"] == "mine":
+        # how does this fit? geo search and list of all mine are too different
+        assert False
         my_id = filter["userId"]
-        initial_results = Item.all(keys_only=True).\
-          filter("owner =", my_id)  # TODO: owner does not make it mine - votes
+        temp_results = []
+        for key in result_list:
+          if cache[key].owner == my_id:
+            temp_results.append(key)
+        # initial_results = Item.all(keys_only=True).\
+        #   filter("owner =", my_id)  # TODO: owner does not make it mine - votes
       if 'exclude_user' in filter:
         exclude_user_id = filter['exclude_user']
     user = memcache_get_user_dict(uid)
-    for point_key in initial_results:
-      it = Item.get_item(str(point_key))
-      if search_text:
-        # we only want ones that match the search text
-        if not search_text in it.place_name.lower():
-          logging.debug("findDbPlacesNearLoc IGNORE %s"%it.place_name)
-          continue
+    for point_key in result_list:
+      if point_key in cache:
+        it = cache[point_key]
+      else:
+        it = Item.get_item(str(point_key))
       if not ignore_votes:
         jsonPt = item_to_json_point(it, request, position, uid_for_votes=uid)
       else:
@@ -184,7 +215,7 @@ def findDbPlacesNearLoc(my_location,
     # search_results.sort(key=itemgetter('distance_map_float'))
     return_data['points'] = search_results
     return return_data
-  except Exception:
+  except Exception, ex:
     logging.error("findDbPlacesNearLoc Exception", exc_info=True)
     return return_data
 
