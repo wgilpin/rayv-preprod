@@ -186,6 +186,7 @@ def findDbPlacesNearLoc(my_location,
     if filter:
       if filter["kind"] == "mine":
         # how does this fit? geo search and list of all mine are too different
+        logging.error("findDbPlacesNearLoc Assertion failure")
         assert False
         my_id = filter["userId"]
         temp_results = []
