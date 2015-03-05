@@ -153,6 +153,8 @@ def findDbPlacesNearLoc(my_location,
         break
     search_results = []
     return_data = {}
+    return_data['count'] = 0
+    return_data['points'] = []
     exclude_user_id = None
     if filter:
       if filter["kind"] == "mine":
@@ -174,7 +176,7 @@ def findDbPlacesNearLoc(my_location,
       else:
         jsonPt = item_to_json_point(it, request, position)
 
-      logging.debug("findDbPlacesNearLoc - add %s"%(jsonPt['place_name'], jsonPt['category']))
+      logging.debug("findDbPlacesNearLoc - add %s is a %s"%(jsonPt['place_name'], jsonPt['category']))
       search_results.append(adjust_votes_for_JSON_pt(jsonPt))
       place_names.append(it.place_name)
 
@@ -184,6 +186,7 @@ def findDbPlacesNearLoc(my_location,
     return return_data
   except Exception:
     logging.error("findDbPlacesNearLoc Exception", exc_info=True)
+    return return_data
 
 
 def geoSearch(search_centre,
