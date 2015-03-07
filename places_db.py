@@ -122,42 +122,50 @@ class PlacesDB():
     :param radius: int - search radius (m)
     :return: dict - {"item_count": int, "items": []}
     """
-    escaped_name = urllib2.quote(name)
-    url = ("https://maps.googleapis.com/maps/api/place/nearbysearch/"
-          "json?rankby=distance&types=%s&location=%f,%f&name=%s&sensor=false&key=%s")\
-          % \
-          (settings.config['place_types'],
-           lat,
-           lng,
-           escaped_name,
-           settings.config['google_api_key'] )
-    response = urllib2.urlopen(url)
-    jsonResult = response.read()
-    addressResult = json.loads(jsonResult)
     results = {"item_count": 0,
-               "items": []}
-    addresses = []
-    if addressResult['status'] == "OK":
-      origin = LatLng(lat=lat, lng=lng)
-      for r in addressResult['results']:
-        if "formatted_address" in r:
-          address = r['formatted_address']
-        else:
-          address = r['vicinity']
-        post_code = r['postal_code'].split(' ')[0] if 'postal_code' in r else ''
-        detail = {'place_name': r['name'],
-                  'address': address,
-                  'post_code': post_code,
-                  'place_id': r['place_id'],
-                  "lat": r['geometry']['location']['lat'],
-                  "lng": r['geometry']['location']['lng']}
-        addresses.append(detail)
-        results["item_count"] += 1
-      results['items'] = addresses
+                 "items": []}
+    try:
+      escaped_name = urllib2.quote(name)
+      url = ("https://maps.googleapis.com/maps/api/place/nearbysearch/"
+            "json?rankby=distance&types=%s&location=%f,%f&name=%s&sensor=false&key=%s")\
+            % \
+            (settings.config['place_types'],
+             lat,
+             lng,
+             escaped_name,
+             settings.config['google_api_key'] )
+      response = urllib2.urlopen(url)
+      jsonResult = response.read()
+      addressResult = json.loads(jsonResult)
+      addresses = []
+    except Exception, e:
+      logging.error('get_google_db_places Exception in Load', exc_info=True)
       return results
+    if addressResult['status'] == "OK":
+      try:
+        origin = LatLng(lat=lat, lng=lng)
+        for r in addressResult['results']:
+          if "formatted_address" in r:
+            address = r['formatted_address']
+          else:
+            address = r['vicinity']
+          post_code = r['postal_code'].split(' ')[0] if 'postal_code' in r else ''
+          detail = {'place_name': r['name'],
+                    'address': address,
+                    'post_code': post_code,
+                    'place_id': r['place_id'],
+                    "lat": r['geometry']['location']['lat'],
+                    "lng": r['geometry']['location']['lng']}
+          addresses.append(detail)
+          results["item_count"] += 1
+        results['items'] = addresses
+        return results
+      except Exception, e:
+        logging.error('get_google_db_places Exception processing', exc_info=True)
+        return results
     else:
       logging.error(
         "get_google_db_places near [%f,%f]: %s" %
           (lat, lng, addressResult['status']),
         exc_info=True)
-      return []
+      return results

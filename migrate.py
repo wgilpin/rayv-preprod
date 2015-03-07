@@ -6,7 +6,7 @@ from google.appengine.ext.db import ReferencePropertyResolveError
 from auth_logic import BaseHandler, user_required
 from auth_model import User
 import geohash
-from models import Item, Vote, DBImage
+from models import Item, Vote, DBImage, Category
 from views import getPlaceDetailFromGoogle
 
 __author__ = 'Will'
@@ -28,6 +28,23 @@ class migrate(BaseHandler):
         self.response.out.write('Delete 1')
       except Exception:
         self.response.out.write("FAIL ", exc_info=True)
+
+  @user_required
+  def add_cuisines(self):
+    try:
+      new_cats = [
+        "Brunch",
+        "Middle Eastern",
+        "African",
+        "Brazilian"]
+      for cat in new_cats:
+        new_cat = Category(key_name=cat)
+        new_cat.title = cat
+        new_cat.put()
+        self.response.out.write('Added Category %s<br>'%cat)
+      self.response.out.write('Adding Categories succeeded')
+    except Exception, ex:
+      self.response.out.write('Adding categories failed %s'%ex)
 
   @user_required
   def add_websites(self):
@@ -305,6 +322,9 @@ class migrate(BaseHandler):
       self.response.out.write("User blocked - added")
     elif self.request.get("no") == "reset-vote-times":
       self.set_vote_time_to_now()
+      self.response.out.write("Vote Times Reset")
+    elif self.request.get("no") == "add-cuisines":
+      self.add_cuisines()
       self.response.out.write("Vote Times Reset")
     else:
       self.response.out.write("No Migration")
