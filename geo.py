@@ -7,6 +7,7 @@ import urllib2
 from google.appengine.api import memcache
 from google.appengine.ext import db
 import time
+from auth_logic import api_login_required
 from caching import memcache_get_user_dict
 import geohash
 from models import Item, getProp, get_category
@@ -14,7 +15,7 @@ from settings import config
 from settings_per_server import server_settings
 
 __author__ = 'Will'
-
+from base_handler import BaseHandler
 
 
 def getPlaceDetailFromGoogle(item):
@@ -109,6 +110,24 @@ def geoCodeLatLng(lat, lng):
     logging.warning("geoCodeLatLng: Failed to geocode %s,%s" % (lat, lng))
     addr = None
   return addr
+
+class geoCodeAddressMultiple(BaseHandler):
+
+  @api_login_required
+  def get(self):
+    address = self.request.params['address']
+    #TODO: these could be trivially cached
+    url = ("https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor"
+           "=false&key=%s") % \
+          (urllib2.quote(address), config['google_api_key' ])
+    try:
+      response = urllib2.urlopen(url)
+      jsonGeoCode = response.read()
+      geoCode = json.loads(jsonGeoCode)
+      json.dump(geoCode, self.response.out)
+    except:
+      logging.error( 'geoCodeAddressMultiple: Exception [%s]', address, exc_info=True)
+      return None
 
 def geoCodeAddress(address, search_centre):
   url = ("https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor"

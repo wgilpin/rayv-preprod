@@ -5,6 +5,7 @@ from auth_logic import SignupHandler, VerificationHandler, SetPasswordHandler, L
   ForgotPasswordHandler, AuthenticatedHandler
 import auth_logic
 import dataloader
+import geo
 import migrate
 import profiler
 import views
@@ -30,6 +31,8 @@ urls = [
   webapp2.Route('/api/friend/<id:\d+>/votes', views.friendsVotesAPI),
   webapp2.Route('/api/log',views.api_log),
   webapp2.Route('/api/delete',views.api_delete),
+  webapp2.Route('/api/geocode',geo.geoCodeAddressMultiple),
+  webapp2.Route('/api/place_details',views.getPlaceDetailsApi),
 
 
 

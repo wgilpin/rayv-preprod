@@ -1,4 +1,5 @@
 import base64
+import urllib
 import urllib2
 import datetime
 from google.appengine.api import images, memcache
@@ -467,6 +468,35 @@ class register(BaseHandler):
     message.send()
     logging.info('Verification email sent to '+email)
     self.display_message(msg.format(url=verification_url))
+
+class getPlaceDetailsApi(BaseHandler):
+  @api_login_required
+  def get(self):
+    place_id = self.request.params['place_id']
+    logging.debug('getPlaceDetailsApi '+place_id)
+    params = {'placeid': place_id,
+              'key': settings.config['google_api_key']}
+    url = "https://maps.googleapis.com/maps/api/place/details/json?" + \
+          urllib.urlencode(params)
+    res = {}
+    try:
+      response = urllib2.urlopen(url)
+      json_result = response.read()
+      details_result = json.loads(json_result)
+    except:
+      logging.error(
+        'getPlaceDetailFromGoogle: Exception [%s]',
+        item.place_name,
+        exc_info=True)
+      return {"photo": None, "telephone": None}
+
+    if details_result['status'] == "OK":
+      if "international_phone_number" in details_result['result']:
+        res['telephone'] = details_result['result']["international_phone_number"]
+      if "website" in details_result['result']:
+        res['website'] = details_result['result']["website"]
+    json.dump(res, self.response.out)
+
 
 class updateItem(BaseHandler):
   @user_required
