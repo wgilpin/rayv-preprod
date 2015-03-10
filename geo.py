@@ -222,10 +222,10 @@ def findDbPlacesNearLoc(my_location,
         it = cache[point_key]
       else:
         it = Item.get_item(str(point_key))
-      if not ignore_votes:
-        jsonPt = item_to_json_point(it, request, position, uid_for_votes=uid)
-      else:
-        jsonPt = item_to_json_point(it, request, position)
+      #if not ignore_votes:
+      jsonPt = item_to_json_point(it, request, position, uid_for_votes=uid)
+      #else:
+      #jsonPt = item_to_json_point(it, request, position)
 
       logging.debug("findDbPlacesNearLoc - add %s is a %s"%(jsonPt['place_name'], jsonPt['category']))
       search_results.append(adjust_votes_for_JSON_pt(jsonPt))

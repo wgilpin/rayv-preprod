@@ -52,7 +52,7 @@ class PlacesDB():
       place_names=list_of_place_names,
       ignore_votes=True)
     if include_maps_data:
-      googPts = cls.get_google_db_places(lat, lng, text_to_search, 5000)
+      googPts = cls.get_google_db_places(lat, lng, text_to_search, 3000)
       includeList = []
       # todo: step through both in sequence
       try:
