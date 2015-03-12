@@ -5,6 +5,7 @@ from google.appengine.ext import db
 from google.appengine.ext.db import ReferencePropertyResolveError
 from auth_logic import BaseHandler, user_required
 from auth_model import User
+from geo import geoCodeLatLng
 import geohash
 from models import Item, Vote, DBImage, Category
 from views import getPlaceDetailFromGoogle
@@ -16,6 +17,23 @@ __author__ = 'Will'
 """
 
 class migrate(BaseHandler):
+
+  @user_required
+  def add_addresses(self):
+    #add address to any that don't have one
+    try:
+      items = Item.all()
+      count = 0
+      for it in items:
+        if len(it.address)==0:
+          it.address = geoCodeLatLng(it.lat, it.lng)
+          it.put()
+          count += 1
+      self.response.out.write('Added %d addresses \n'%count)
+    except:
+        self.response.out.write("FAIL ")
+
+
   @user_required
   def remove_orphan_votes(self):
     # remove orphan votes after an item is deleted
@@ -27,7 +45,7 @@ class migrate(BaseHandler):
         db.delete(v)
         self.response.out.write('Delete 1')
       except Exception:
-        self.response.out.write("FAIL ", exc_info=True)
+        self.response.out.write("FAIL ")
 
   @user_required
   def add_cuisines(self):
@@ -326,6 +344,9 @@ class migrate(BaseHandler):
     elif self.request.get("no") == "add-cuisines":
       self.add_cuisines()
       self.response.out.write("Vote Times Reset")
+    elif self.request.get("no") == "add-addresses":
+      self.add_addresses()
+      self.response.out.write("Addresses Added")
     else:
       self.response.out.write("No Migration")
 
