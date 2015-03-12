@@ -26,7 +26,7 @@ class migrate(BaseHandler):
       items = Item.all()
       count = 0
       for it in items:
-        if len(it.address)==0:
+        if it.address == None or len(it.address)==0:
           it.address = geoCodeLatLng(it.lat, it.lng)
           it.put()
           count += 1
