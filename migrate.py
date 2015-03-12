@@ -1,4 +1,5 @@
 import json
+import logging
 import urllib2
 from datetime import datetime
 from google.appengine.ext import db
@@ -31,7 +32,9 @@ class migrate(BaseHandler):
           count += 1
       self.response.out.write('Added %d addresses \n'%count)
     except:
-        self.response.out.write("FAIL ")
+      self.response.out.write("FAIL ")
+      logging.error("Migration add-addresses FAIL", exc_info=True)
+
 
 
   @user_required
