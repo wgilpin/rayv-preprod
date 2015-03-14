@@ -250,7 +250,7 @@ class getFullUserRecord(BaseHandler):
         # or it is for a specified user
         result = {
           "id": my_id,
-          "admin":user.profile().is_admin }
+          "admin": self.user.profile().is_admin }
         if for_1_user:
           logging.info("getFullUserRecord: 1 user")
           first_user = for_1_user
