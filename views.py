@@ -113,7 +113,6 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
               "id": user_id,
               # todo is it first_name?
               'name': user_dict['u'].screen_name,
-              'admin': is_administrator(),
               'last_write': last_write}
     if votes:
       logging.debug("serialize_user_details: %d votes"%len(votes))
@@ -249,7 +248,9 @@ class getFullUserRecord(BaseHandler):
 
         # either the first lookup is for me, plus everyone,
         # or it is for a specified user
-        result = {"id": my_id}
+        result = {
+          "id": my_id,
+          "admin":user.profile().is_admin }
         if for_1_user:
           logging.info("getFullUserRecord: 1 user")
           first_user = for_1_user
