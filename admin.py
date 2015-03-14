@@ -14,7 +14,7 @@ from geo import getPlaceDetailFromGoogle
 __author__ = 'Will'
 
 
-def administrator():
+def is_administrator():
   """ True if logged in
   @return: bool
   """
@@ -29,7 +29,7 @@ def administrator():
 
 class Main(BaseHandler):
   def get(self):
-    if administrator():
+    if is_administrator():
       con = {}
       con['items'] = Item.all()
       self.render_template("admin-main.html", con)
@@ -39,7 +39,7 @@ class Main(BaseHandler):
 
 class SyncToProd(BaseHandler):
   def post(self):
-    if administrator():
+    if is_administrator():
       try:
         logging.info("SyncToProd")
         seed_user = None
@@ -77,7 +77,7 @@ class SyncToProd(BaseHandler):
 
 class updatePhotoFromGoogle(BaseHandler):
   def post(self):
-    if administrator():
+    if is_administrator():
       try:
         logging.info("updatePhotoFromGoogle")
         place_list = json.loads(self.request.params['list'])

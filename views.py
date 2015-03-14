@@ -9,6 +9,7 @@ from google.appengine.ext import db
 from webapp2_extras import auth
 import json
 from webob.exc import HTTPUnauthorized
+from admin import is_administrator
 from auth_logic import user_required, api_login_required
 from auth_model import UserProfile, User
 from caching import memcache_get_user_dict, memcache_touch_user, \
@@ -112,6 +113,7 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
               "id": user_id,
               # todo is it first_name?
               'name': user_dict['u'].screen_name,
+              'admin': is_administrator(),
               'last_write': last_write}
     if votes:
       logging.debug("serialize_user_details: %d votes"%len(votes))
