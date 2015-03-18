@@ -165,7 +165,7 @@ def findDbPlacesNearLoc(my_location,
     logging.debug("findDbPlacesNearLoc Start")
     result_list = []
     reject_list = []
-    for geo_precision in range(6, 4, -1):
+    for geo_precision in range(6, 3, -1):
       geo_code = geohash.encode(
         my_location.lat, my_location.lng, precision=geo_precision)
       query_result = Item.all(keys_only=True).\
