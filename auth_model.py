@@ -26,9 +26,11 @@ class UserProfile(db.Model):
 
 
 
+
 class User(webapp2_extras.appengine.auth.models.User):
   screen_name = model.StringProperty()
   blocked = model.BooleanProperty(default=False)
+
   def set_password(self, raw_password):
     """Sets the password for the current userId
 
@@ -36,6 +38,12 @@ class User(webapp2_extras.appengine.auth.models.User):
         The raw password which will be hashed and stored
     """
     self.password = security.generate_password_hash(raw_password, length=12)
+
+  def to_custom_dict(self):
+    return {
+      'screen_name': self.screen_name,
+      'blocked': self.blocked
+    }
 
   @classmethod
   def get_by_auth_token(cls, user_id, token, subject='auth'):
@@ -98,4 +106,14 @@ class User(webapp2_extras.appengine.auth.models.User):
       new_profile.last_read = datetime.datetime.now()
       new_profile.put()
       return new_profile
+
+  @classmethod
+  def get_user_friends(cls, userId):
+    # all are friends
+    users = User.all()
+    res = []
+    for u in users:
+      if not u.blocked:
+        res.append(u.userId)
+    return  res
 

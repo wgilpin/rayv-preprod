@@ -58,7 +58,6 @@ class getBook(BaseHandler):
               self.response.out)
 
 
-
 #TODO: change to ndb! Then drop the memcache crazies, and do Since properly
 def get_user_votes(current_user_id, user_id, since=None):
   user_dict = memcache_get_user_dict(user_id)
@@ -69,7 +68,7 @@ def get_user_votes(current_user_id, user_id, since=None):
       logging.debug("get_user_votes: from memcache %d votes"%len(votes))
     else:
       logging.debug("get_user_votes: from memcache no votes")
-  if not votes or len(votes) == 0 or not 'v' in user_dict:
+  if not 'v' in user_dict:
     # we are going to memcache the votes so we get ALL votes & ignore since
     votes = Vote.get_user_votes(user_id)
     user_dict['v'] = votes
@@ -210,7 +209,6 @@ class profileAPI(BaseHandler):
     self.user.sex = gn
     self.user.put()
     self.response.out.write("OK")
-
 
 class getFullUserRecord(BaseHandler):
   @user_required
@@ -686,7 +684,7 @@ def update_item_internal(self, user_id, allow_update=True):
   # todo: why?
   it.put()  # again
   # mark user as dirty
-  memcache_touch_user(user_id)
+  memcache_update_user_votes(user_id)
   logging.info("update_item_internal for "+it.place_name+": "+str(changed))
   return it
 

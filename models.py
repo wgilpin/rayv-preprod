@@ -343,6 +343,7 @@ class Vote(db.Model):
   @classmethod
   def get_user_votes(cls, user_id, since=None):
     try:
+      print "get_user_votes %d"%user_id
       entry = {}
       user_vote_list = Vote.all().filter("voter =", user_id)
       if since:
