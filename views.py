@@ -13,7 +13,7 @@ from admin import is_administrator
 from auth_logic import user_required, api_login_required
 from auth_model import UserProfile, User
 from caching import memcache_get_user_dict, memcache_touch_user, \
-  memcache_put_user_dict, memcache_touch_place
+  memcache_put_user_dict, memcache_touch_place, memcache_update_user_votes
 from dataloader import load_data
 from geo import getPlaceDetailFromGoogle, geoCodeAddress, \
   adjust_votes_for_JSON_pt, item_to_json_point
