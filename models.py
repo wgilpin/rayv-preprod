@@ -298,6 +298,8 @@ class Item(db.Model):
     @return item:
     """
     try:
+      if (not key):
+        return None
       item = memcache.get(key)
       if item:
         return item
