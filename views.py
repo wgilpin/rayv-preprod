@@ -122,7 +122,8 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
           if user_id == current_user:
             place_json['vote'] = votes[place_key]['vote']
             place_json['untried'] = votes[place_key]['untried']
-          places[place_key] = place_json
+          if place_json["category"]:
+            places[place_key] = place_json
       for place in places:
         places[place] = adjust_votes_for_JSON_pt(places[place])
       logging.debug('serialize_user_details: Added %d places'%len(places))
