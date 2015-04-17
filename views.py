@@ -207,9 +207,10 @@ class profileAPI(BaseHandler):
   @user_required
   def post(self):
     sn = self.request.params["screen_name"]
-    gn = self.request.params["gender"]
+    if 'gender' in self.request.params:
+      gn = self.request.params["gender"]
+      self.user.sex = gn
     self.user.screen_name = sn
-    self.user.sex = gn
     self.user.put()
     self.response.out.write("OK")
 
