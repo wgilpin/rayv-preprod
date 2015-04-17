@@ -71,6 +71,8 @@ def getPlaceDetailFromGoogle(item):
       response = urllib2.urlopen(detail_url)
       json_result = response.read()
       detail_result = json.loads(json_result)
+      if "formatted_address" in detail_result['result']:
+        res['address'] = detail_result['result']["formatted_address"]
       if "international_phone_number" in detail_result['result']:
         res['telephone'] = detail_result['result']["international_phone_number"]
       elif "formatted_phone_number" in detail_result['result']:

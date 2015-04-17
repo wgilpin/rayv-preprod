@@ -38,6 +38,8 @@ class getItems_Ajax(BaseHandler):
     """
     profile_in("getItems_Ajax")
     result = PlacesDB.get_item_list(self.request, False, self.user_id)
+    if results == None:
+      self.abort(500)
     check_for_dirty_data(self.user_id, result, self.request)
     json.dump(result,
               self.response.out)
@@ -992,6 +994,8 @@ class getMapList_Ajax(BaseHandler):
       include_maps_data=True,
       user_id=self.user_id,
       exclude_user_id=self.user_id)
+    if result == None:
+      self.abort(500)
     json.dump(result,
               self.response.out)
 

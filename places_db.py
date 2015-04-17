@@ -53,6 +53,8 @@ class PlacesDB():
       ignore_votes=True)
     if include_maps_data:
       googPts = cls.get_google_db_places(lat, lng, text_to_search, 3000)
+      if googPts == None:
+        return None
       includeList = []
       # todo: step through both in sequence
       try:
@@ -140,7 +142,7 @@ class PlacesDB():
       addresses = []
     except Exception, e:
       logging.error('get_google_db_places Exception in Load', exc_info=True)
-      return results
+      return None
     if addressResult['status'] == "OK":
       try:
         origin = LatLng(lat=lat, lng=lng)

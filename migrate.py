@@ -19,6 +19,7 @@ __author__ = 'Will'
 
 class migrate(BaseHandler):
 
+
   @user_required
   def add_addresses(self):
     #add address to any that don't have one
@@ -26,12 +27,20 @@ class migrate(BaseHandler):
       items = Item.all()
       count = 0
       for it in items:
-        if it.address == None or len(it.address)==0:
-          it.address = geoCodeLatLng(it.lat, it.lng)
-          it.put()
-          count += 1
+        if not it.address:
+          google_data = getPlaceDetailFromGoogle(it)
+          if 'address' in google_data:
+            it.address = google_data['address']
+          if not it.address:
+            it.address = geoCodeLatLng(it.lat, it.lng)
+          if it.address:
+            it.put()
+            count += 1
+          else:
+            self.response.out.write('No address for \s'%it.place_name)
+
       self.response.out.write('Added %d addresses \n'%count)
-    except:
+    except Exception, e:
       self.response.out.write("FAIL ")
       logging.error("Migration add-addresses FAIL", exc_info=True)
 
