@@ -3,7 +3,7 @@ import logging
 from operator import itemgetter
 import urllib2
 from google.appengine._internal.django.utils.html import escape
-from geo import findDbPlacesNearLoc, item_to_json_point, LatLng
+from geo import findDbPlacesNearLoc, item_to_json_point, LatLng, approx_distance
 from models import Vote
 import settings
 
@@ -58,10 +58,17 @@ class PlacesDB():
       includeList = []
       # todo: step through both in sequence
       try:
+        # deDup the list - if it's come back from google check if we had it already:
+        # same name AND nearby
         for gpt in googPts["items"]:
-          if gpt["place_name"] in list_of_place_names:
-            continue
-          includeList.append(gpt)
+          for dbPt in points['points']:
+            if gpt["place_name"] == dbPt["place_name"]:
+              distance = approx_distance(gpt, dbPt)
+              if distance > 0.05:
+                includeList.append(gpt)
+                break
+            else:
+                includeList.append(gpt)
       except Exception, e:
         pass
       # points["points"] = []

@@ -50,7 +50,7 @@ urls = [
   webapp2.Route('/item/del/<key:\S+>', views.deleteItem),
   webapp2.Route('/item/<key:\S+>', views.updateItem),
   webapp2.Route('/item', views.newOrUpdateItem, name='newOrUpdateItem'),
-  webapp2.Route('/updateItem', views.updateItem),
+  #webapp2.Route('/updateItem', views.updateItem),
   webapp2.Route('/geoLookup', views.geoLookup),
   webapp2.Route('/img/<key:\S+>', views.ImageHandler),
   webapp2.Route('/thumb/<key:\S+>', views.ThumbHandler),

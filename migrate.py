@@ -348,7 +348,7 @@ class migrate(BaseHandler):
     elif migration_name == "11":
       self.remote_urls_to_blobs()
       self.response.out.write("11 - images got from google into db OK")
-    elif migration_name == "12":
+    elif migration_name == "remove_orphan_votes":
       self.remove_orphan_votes()
       self.response.out.write(json.dumps({
         'status':'OK',

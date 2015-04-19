@@ -7,6 +7,7 @@ import urllib2
 from google.appengine.api import memcache
 from google.appengine.ext import db
 import time
+import math
 from auth_logic import api_login_required
 from caching import memcache_get_user_dict
 import geohash
@@ -523,3 +524,17 @@ def adjust_votes_for_JSON_pt(json_pt):
   except:
     pass
   return json_pt
+
+def approx_distance(point, origin):
+  # params are dicts.
+  # based on 1/60 rule
+  # delta lat. Degrees * 69 (miles)
+  p_lat = point["lat"]
+  p_lng = point["lng"]
+  d_lat = (origin["lat"] - p_lat) * 69
+  # cos(lat) approx by 1/60
+  cos_lat = min(1, (90 - p_lat) / 60)
+  #delta lng = degrees * cos(lat) *69 miles
+  d_lng = (origin["lng"] - p_lng) * 69 * cos_lat
+  dist = math.sqrt(d_lat * d_lat + d_lng * d_lng)
+  return dist
