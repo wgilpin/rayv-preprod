@@ -35,6 +35,16 @@ class PlacesDB():
     :param user_id: int userId of the current user
     :return: dict {"local": [points]}
     """
+    def add_if_unique (point):
+      for p in includeList:
+        if point["place_name"] == p["place_name"]:
+          distance = approx_distance(point, p)
+          if distance < 0.05:
+            #found, don't add
+            return
+      #wasn't found in list, add
+      includeList.append(gpt)
+
     logging.debug("map_and_db_search")
     search_filter = {
       "kind": filter_kind,
@@ -60,15 +70,11 @@ class PlacesDB():
       try:
         # deDup the list - if it's come back from google check if we had it already:
         # same name AND nearby
+        for pt in points['points']:
+          add_if_unique(pt)
         for gpt in googPts["items"]:
-          for dbPt in points['points']:
-            if gpt["place_name"] == dbPt["place_name"]:
-              distance = approx_distance(gpt, dbPt)
-              if distance > 0.05:
-                includeList.append(gpt)
-                break
-            else:
-                includeList.append(gpt)
+          add_if_unique(gpt)
+
       except Exception, e:
         pass
       # points["points"] = []
