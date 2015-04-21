@@ -460,7 +460,10 @@ def item_to_json_point(it, request, GPS_origin=None, map_origin=None, uid_for_vo
       category = None
     edit_time = getProp(it,'edited')
     if edit_time:
-      edit_time_unix = int(time.mktime(edit_time.timetuple())) * 1000
+      try:
+        edit_time_unix = int(time.mktime(edit_time.timetuple())) * 1000
+      except:
+        edit_time_unix = 0
     else:
       edit_time_unix = 0
     data = {
@@ -525,16 +528,16 @@ def adjust_votes_for_JSON_pt(json_pt):
     pass
   return json_pt
 
-def approx_distance(point, origin):
+def approx_distance(point, place):
   # params are dicts.
   # based on 1/60 rule
   # delta lat. Degrees * 69 (miles)
   p_lat = point["lat"]
   p_lng = point["lng"]
-  d_lat = (origin["lat"] - p_lat) * 69
+  d_lat = (place["lat"] - p_lat) * 69
   # cos(lat) approx by 1/60
   cos_lat = min(1, (90 - p_lat) / 60)
   #delta lng = degrees * cos(lat) *69 miles
-  d_lng = (origin["lng"] - p_lng) * 69 * cos_lat
+  d_lng = (place["lng"] - p_lng) * 69 * cos_lat
   dist = math.sqrt(d_lat * d_lat + d_lng * d_lng)
   return dist
