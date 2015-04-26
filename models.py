@@ -222,7 +222,8 @@ class Item(db.Model):
 
   def get_json(self):
     if self.json=="":
-      self.save()
+      self.json = self.get_json_str()
+      self.put()
     return json.loads(self.json)
 
   def qualified_title(self):
