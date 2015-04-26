@@ -245,7 +245,7 @@ class Item(db.Model):
     self.put()
 
   def set_json(self):
-    json_data = self.to_json()
+    json_data = self.to_json(None)
     json_str = json.dumps(
       json_data,
       default=self.json_serial)
