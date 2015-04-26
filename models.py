@@ -222,8 +222,9 @@ class Item(db.Model):
 
   def get_json(self):
     if self.json=="":
-      self.json = self.get_json_str()
+      json_data = self.set_json()
       self.put()
+      return json_data
     return json.loads(self.json)
 
   def qualified_title(self):
@@ -240,15 +241,16 @@ class Item(db.Model):
         return o.isoformat()
 
   def save(self):
-    self.json = self.get_json_str()
+    self.set_json()
     self.put()
 
-  def get_json_str(self):
-    json_data = self.get_json()
+  def set_json(self):
+    json_data = self.to_json()
     json_str = json.dumps(
       json_data,
       default=self.json_serial)
-    return json_str
+    self.json = json_str
+    return json_data
 
   @classmethod
   def key_to_json(cls, key, request):
