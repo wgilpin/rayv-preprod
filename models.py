@@ -1,12 +1,14 @@
+import json
 import logging
+import datetime
 from google.appengine.api import images, memcache
 from google.appengine.api.images import CORRECT_ORIENTATION
 from google.appengine.ext import db
 from google.appengine.ext.db import BadKeyError, BadRequestError
+import time
 from auth_model import User
 import geohash
 from settings import config
-import settings
 
 __author__ = 'Will'
 
@@ -210,6 +212,7 @@ class Item(db.Model):
   created = db.DateTimeProperty(auto_now_add=True)
   edited = db.DateTimeProperty(auto_now=True)
   website = db.StringProperty(default='', required=False)
+  json = db.TextProperty(required=False, default = "")
 
   def prop(self, name):
     return getProp(self, name)
@@ -217,8 +220,141 @@ class Item(db.Model):
   def __unicode__(self):
     return self.place_name
 
+  def get_json(self):
+    if self.json=="":
+      self.save()
+    return json.loads(self.json)
+
   def qualified_title(self):
     return self.__unicode__()
+
+  @classmethod
+  def json_serial(cls, o):
+    """
+    JSON serializer for objects not serializable by default json code
+       http://stackoverflow.com/questions/11875770/how-to-overcome-
+              datetime-datetime-not-json-serializable-in-python
+    """
+    if type(o) is datetime.date or type(o) is datetime.datetime:
+        return o.isoformat()
+
+  def save(self):
+    self.json = self.get_json_str()
+    self.put()
+
+  def get_json_str(self):
+    json_data = self.get_json()
+    json_str = json.dumps(
+      json_data,
+      default=self.json_serial)
+    return json_str
+
+  @classmethod
+  def key_to_json(cls, key, request):
+    try:
+      # memcache has item entries under Key, and JSON entries under JSON:key
+      item = Item.get(key)
+      return item.get_json()
+    except Exception:
+      logging.exception('key_to_json', exc_info=True)
+
+
+  def to_json(self, request, uid_for_votes=None):
+    """
+    create a json object for the web.
+    :param it: Item
+    :param request: BaseHandler
+    :param GPS_origin: LatLng
+    :param map_origin: bool - do we calculate distances from where the map is
+            centred, as opposed to from my location?
+    :return: dict - json repr of the place
+    """
+    try:
+      if request:
+        base_url = request.url[:request.url.find(request.path)]
+      else:
+        base_url = ""
+      if self.photo:
+        if self.photo.picture:
+          image_url = base_url+'/img/' + str(self.photo.key())
+          thumbnail_url = base_url+'/thumb/' + str(self.photo.key())
+          image_url.replace('https','http')
+          thumbnail_url.replace('https','http')
+        else:
+          image_url = ''
+          thumbnail_url = ''
+      else:
+        image_url = ''
+        thumbnail_url = ''
+        # image_url = "/static/images/noImage.jpeg"
+      edit_time = self.edited
+      if edit_time:
+        try:
+          edit_time_unix = int(time.mktime(edit_time.timetuple())) * 1000
+        except:
+          edit_time_unix = 0
+      else:
+        edit_time_unix = 0
+      data = {
+        'lat': self.lat,
+        'lng': self.lng,
+        'website': self.website,
+        'address': self.address,
+        'key': str(self.key()) ,
+        'place_name': self.place_name,
+        'place_id': '',
+        'category': self.category.title,
+        'telephone': self.telephone,
+        'untried': False,
+        'vote': 'null',
+        'img': image_url,
+        'edited': edit_time_unix,
+        'thumbnail': thumbnail_url,
+        'up': self.votes.filter("vote =", 1).count(),
+        'down': self.votes.filter("vote =", -1).count(),
+        'owner': self.owner,
+        # is_map is True if the point came
+        # from a google places API search. Default False
+        'is_map': False}
+      if uid_for_votes:
+        vote = self.votes.filter("voter =", uid_for_votes).get()
+        if vote:
+          # if the user has voted for this item, and the user is excluded, next
+          data["mine"] = True;
+          data["vote"] = int(vote.vote)
+          data["descr"] = vote.comment
+          if vote.untried:
+            data["untried"] = True
+
+      return data
+    except Exception, E:
+      logging.exception('to_json', exc_info=True)
+
+
+  def json_adjusted_votes(self, user_id=None):
+    """
+    The up & down scores in a json pt include the vote of the current user
+    This routine removes the vote of the current user from the calculation
+    :param json_pt: dict: the jsonPt
+    :return: dict: the amended jsonPt
+    """
+    if hasattr(self, 'adjusted_json'):
+      return self.adjusted_json
+    json_pt = self.get_json()
+    self.adjusted_json = json_pt
+    user_rec, votes = get_user_votes(user_id)
+    for v in votes:
+      if v == str(self.key()):
+        json_pt['vote'] = votes[v]['vote']
+        json_pt['untried'] = votes[v]['untried']
+        if json_pt['vote'] == 1:
+          if json_pt['up'] > 0:
+            self.adjusted_json['up'] = json_pt['up'] - 1
+        elif json_pt['vote'] == -1:
+          if json_pt['down'] > 0:
+            self.adjusted_json['down'] = json_pt['down'] - 1
+        break
+    return self.adjusted_json
 
   @classmethod
   def get_unique_place(cls, request, return_existing=True):
@@ -345,7 +481,6 @@ class Vote(db.Model):
   @classmethod
   def get_user_votes(cls, user_id, since=None):
     try:
-      print "get_user_votes %d"%user_id
       entry = {}
       user_vote_list = Vote.all().filter("voter =", user_id)
       if since:
@@ -358,7 +493,7 @@ class Vote(db.Model):
                        "place_name": user_vote.item.place_name,
                        # Json date format 1984-10-02T01:00:00
                        "when": user_vote.when.strftime(
-                         settings.config['DATETIME_FORMAT']),
+                         config['DATETIME_FORMAT']),
         }
         entry[str(user_vote.item.key())] = vote_detail
       return entry
@@ -372,7 +507,7 @@ class Trust(db.Model):
   trust = db.IntegerProperty()
 
   @classmethod
-  def updateTrust(user_a, user_b):
+  def updateTrust(cls, user_a, user_b):
     if user_a < user_b:
       first = user_a
       second = user_b
@@ -394,3 +529,115 @@ class Trust(db.Model):
         similar.append(id)
         #count similarity of votes
 
+#caching
+
+def memcache_get_user_dict(UserId):
+  """
+  memcache enabled get User
+  @param UserId:
+  @return user:
+  """
+  try:
+    user_rec = memcache.get(str(UserId))
+    if user_rec:
+      return user_rec
+    user = User().get_by_id(UserId)
+    if user:
+      uprof = user.profile()
+      record = {'u': user,
+                'p': uprof}
+      if not memcache.set(str(UserId), record):
+        logging.error("could not memcache Item %d"% UserId)
+      return record
+    else:
+      logging.error('memcache_get_user_dict No User '+str(UserId))
+  except Exception:
+    logging.error('memcache_get_user_dict', exc_info=True)
+
+
+def memcache_touch_user(id):
+  print "memcache_touch_user %d"%id
+  ur = memcache_get_user_dict(id)
+  ur['p'].last_write = datetime.datetime.now()
+  ur['p'].put()
+  memcache.delete(str(id))
+
+def memcache_update_user_votes(id):
+  print "memcache_update_user_votes %d"%id
+  ur = memcache_get_user_dict(id)
+  ur['p'].last_write = datetime.datetime.now()
+  ur['p'].put()
+  ur['v'] = Vote.get_user_votes(id)
+  if not memcache.set(str(id), ur):
+      logging.error("could not update User Votes %d"% id)
+
+def memcache_touch_place(key_or_item):
+  try:
+    if type(key_or_item) == db.Key:
+      it = db.get(key_or_item)
+      key = key_or_item
+    else:
+      it = key_or_item
+      key = str(it.key())
+    memcache.delete(key)
+    memcache.delete("JSON:" + key)
+    memcache.set(key, it)
+  except Exception:
+    logging.error("failed to memcache place " + str(key_or_item), exc_info=True)
+
+
+def memcache_put_user(user):
+  """
+  put user in memcache
+  @param user:
+  """
+  try:
+    uid = user.key.id()
+    uprof = user.profile()
+    record = {'u': user,
+              'p': uprof}
+    if not memcache.set(str(id), record):
+      logging.error("could not memcache Item " + str(uid))
+  except Exception:
+    logging.error("failed to memcache user " + str(uid), exc_info=True)
+
+
+def memcache_put_user_dict(dict):
+  """
+  put user in memcache
+  @param dict:
+  """
+  try:
+    uid = dict['u'].key.id()
+    if not memcache.set(str(uid), dict):
+      logging.error("could not memcache Item " + uid)
+  except Exception:
+    logging.error("failed to memcache Dict " + uid, exc_info=True)
+
+#TODO: change to ndb! Then drop the memcache crazies, and do Since properly
+def get_user_votes( user_id, since=None):
+  user_dict = memcache_get_user_dict(user_id)
+  votes = {}
+  if 'v' in user_dict:
+    votes = user_dict['v']
+
+  if not 'v' in user_dict:
+    # we are going to memcache the votes so we get ALL votes & ignore since
+    votes = Vote.get_user_votes(user_id)
+    user_dict['v'] = votes
+    memcache_put_user_dict(user_dict)
+  # we ignore any 'untried' votes from a friend
+  have_removed = 0
+  #TODO: This is commented out for iOS bug #209, show wishlist items in news
+  #TODO: BUT it was put here for some good reason for the web client?
+  # if user_id != current_user_id:
+  #   to_be_removed = []
+  #   if votes:
+  #     for vote in votes:
+  #       if votes[vote]['untried']:
+  #         to_be_removed.append(vote)
+  #     for idx in to_be_removed:
+  #       del votes[idx]
+  #   logging.debug('get_user_votes: removed %d '%len(to_be_removed))
+
+  return user_dict, votes

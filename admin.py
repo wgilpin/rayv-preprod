@@ -5,11 +5,10 @@ from google.appengine.ext import db
 from auth_logic import BaseHandler
 from webapp2_extras import auth
 from auth_model import User
-from geo import itemKeyToJSONPoint
 from models import Item, DBImage
 import urllib
 from google.appengine.api import urlfetch
-from geo import getPlaceDetailFromGoogle
+from views import getPlaceDetailFromGoogle
 
 __author__ = 'Will'
 
@@ -54,7 +53,7 @@ class SyncToProd(BaseHandler):
           for place in place_list:
             it = Item.get(place)
             logging.info("SyncToProd sending " + it.place_name)
-            form_fields = itemKeyToJSONPoint(place)
+            form_fields = place.key_to_json()
             vote = it.votes.filter("voter =", seed_user).get()
             if vote:
               form_fields['myComment'] = vote.comment

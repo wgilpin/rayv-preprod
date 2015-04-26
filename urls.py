@@ -5,7 +5,6 @@ from auth_logic import SignupHandler, VerificationHandler, SetPasswordHandler, L
   ForgotPasswordHandler, AuthenticatedHandler
 import auth_logic
 import dataloader
-import geo
 import migrate
 import profiler
 import views
@@ -31,7 +30,7 @@ urls = [
   webapp2.Route('/api/friend/<id:\d+>/votes', views.friendsVotesAPI),
   webapp2.Route('/api/log',views.api_log),
   webapp2.Route('/api/delete',views.api_delete),
-  webapp2.Route('/api/geocode',geo.geoCodeAddressMultiple),
+  webapp2.Route('/api/geocode',views.geoCodeAddressMultiple),
   webapp2.Route('/api/place_details',views.getPlaceDetailsApi),
 
 
@@ -40,7 +39,7 @@ urls = [
   webapp2.Route('/getMapList_Ajax', views.getMapList_Ajax),
   webapp2.Route('/getAddresses_ajax', views.getAddresses_ajax),
   webapp2.Route('/getCuisines_ajax', views.getCuisines_ajax),
-  webapp2.Route('/getFullUserRecord', views.getFullUserRecord),
+  webapp2.Route('/getFullUserRecord', views.getUserRecordFast),
   webapp2.Route('/getBook', views.getBook),
   webapp2.Route('/addVote_Ajax', views.addVote_ajax),
   webapp2.Route('/getItem/<key:\S+>', views.getItem_ajax),

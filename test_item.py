@@ -1,7 +1,6 @@
 import os
 import webapp2
 os.environ['DJANGO_SETTINGS_MODULE'] = os.path.dirname(__file__)
-from caching import memcache_get_user_dict
 
 
 from dataloader import load_data, load_one_item, load_one_user, items_data_list, ITEM_NAME, ITEM_ADDRESS

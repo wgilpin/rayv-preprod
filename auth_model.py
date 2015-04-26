@@ -27,9 +27,11 @@ class UserProfile(db.Model):
 
 
 
+
 class User(webapp2_extras.appengine.auth.models.User):
   screen_name = model.StringProperty()
   blocked = model.BooleanProperty(default=False)
+  votes_json = db.StringProperty(default="")
 
   def set_password(self, raw_password):
     """Sets the password for the current userId

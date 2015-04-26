@@ -6,10 +6,9 @@ from google.appengine.ext import db
 from google.appengine.ext.db import ReferencePropertyResolveError
 from auth_logic import BaseHandler, user_required
 from auth_model import User
-from geo import geoCodeLatLng
 import geohash
 from models import Item, Vote, DBImage, Category
-from views import getPlaceDetailFromGoogle
+from views import getPlaceDetailFromGoogle, geoCodeLatLng
 
 __author__ = 'Will'
 
@@ -34,7 +33,7 @@ class migrate(BaseHandler):
           if not it.address:
             it.address = geoCodeLatLng(it.lat, it.lng)
           if it.address:
-            it.put()
+            it.save()
             count += 1
           else:
             self.response.out.write('No address for \s'%it.place_name)
@@ -102,7 +101,7 @@ class migrate(BaseHandler):
           it.website = getPlaceDetailFromGoogle(it)['website']
         else:
           self.response.out.write("%s no website<br>" % it.place_name)
-        it.put()
+        it.save()
         self.response.out.write("%s is %s<br>" % (it.place_name, it.website))
       except Exception, e:
         self.response.out.write("FAIL %s<br>" % it.place_name)
@@ -149,7 +148,7 @@ class migrate(BaseHandler):
           it.telephone = getPlaceDetailFromGoogle(it)['telephone']
         else:
           self.response.out.write("%s no phone<br>" % it.title)
-        it.put()
+        it.save()
         self.response.out.write("%s is %s<br>" % (it.title, it.telephone))
       except Exception, e:
         self.response.out.write("FAIL %s<br>" % it.title)
@@ -174,7 +173,7 @@ class migrate(BaseHandler):
         it.photo = img
         self.response.out.write("Added <a href='%s'>%s</a><br>" %
                                 (img.remoteURL, it.title))
-        it.put()
+        it.save()
       except Exception, e:
         self.response.out.write("FAIL %s<br>" % it.title)
         self.response.out.write("FAIL %s-%s<br>" % (it.title, str(e)))
@@ -194,14 +193,14 @@ class migrate(BaseHandler):
           down += abs(v.vote)
       it.votesUp = up
       it.votesDown = down
-      it.put()
+      it.save()
 
   @user_required
   def add_geohash(self):
     # add GeoHash
     for it in Item().all():
       it.geo_hash = geohash.encode(it.lat, it.lng)
-      it.put()
+      it.save()
 
   @user_required
   def votes_down_to_abs(self):
@@ -210,7 +209,7 @@ class migrate(BaseHandler):
     for it in items:
       if it.votesDown < 0:
         it.votesDown = abs(it.votesDown)
-        it.put()
+        it.save()
 
   @user_required
   def one_vote_per_item(self):
@@ -225,7 +224,7 @@ class migrate(BaseHandler):
         it.lng = it.long
       except:
         pass
-      it.put()
+      it.save()
 
   @user_required
   def at_least_one_vote_per_item(self):
@@ -241,13 +240,13 @@ class migrate(BaseHandler):
         vote.comment = "blah"
         it.upVotes = 1
         vote.put()
-        it.put()
+        it.save()
       if it.votesUp == it.votesDown == 0:
         if vote.vote > 0:
           it.votesUp = vote.vote
         else:
           it.votesDown = abs(vote.vote)
-        it.put()
+        it.save()
 
   @user_required
   def item_title_to_StringProperty(self):
@@ -255,7 +254,7 @@ class migrate(BaseHandler):
     items = Item.all()
     for it in items:
       it.place_name = it.title
-      it.put()
+      it.save()
 
   @user_required
   def move_comment_to_vote(self):
@@ -295,7 +294,7 @@ class migrate(BaseHandler):
         it.votesDown = 0
         dirty = True
       if dirty:
-        it.put()
+        it.save()
 
   @user_required
   def get(self):
@@ -386,7 +385,7 @@ class migrate(BaseHandler):
     for it in items:
       try:
         it.edited = stamp;
-        it.put()
+        it.save()
       except:
         it.votesUp = 0
         dirty = True
@@ -398,7 +397,7 @@ class migrate(BaseHandler):
         it.votesDown = 0
         dirty = True
       if dirty:
-        it.put()
+        it.save()
 
   @user_required
   def add_blocked_to_user(self):

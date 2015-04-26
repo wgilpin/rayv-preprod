@@ -1,10 +1,7 @@
 import json
 import logging
-from operator import itemgetter
 import urllib2
-from google.appengine._internal.django.utils.html import escape
-from geo import findDbPlacesNearLoc, item_to_json_point, LatLng, approx_distance
-from models import Vote
+import views
 import settings
 
 __author__ = 'Will'
@@ -80,8 +77,7 @@ class PlacesDB():
       #points["count"] = 0
       # todo: this returns all items - limit?
       for gpt in includeList:
-        jPt = item_to_json_point(gpt, request, my_locn)
-        points["points"].append(jPt)
+        points["points"].append(gpt)
         points["count"] += 1
 
       sorted_results = points["points"]
@@ -169,7 +165,22 @@ class PlacesDB():
                     'post_code': post_code,
                     'place_id': r['place_id'],
                     "lat": r['geometry']['location']['lat'],
-                    "lng": r['geometry']['location']['lng']}
+                    "lng": r['geometry']['location']['lng'],
+                    'website': '',
+                    'key': "",
+                    'category': "",
+                    'telephone': '',
+                    'untried': False,
+                    'vote': 'null',
+                    'img': '',
+                    'edited': None,
+                    'thumbnail': '',
+                    'up': 0,
+                    'down': 0,
+                    'owner': None,
+                    # is_map is True if the point came
+                    # from a google places API search. Default False
+                    'is_map': True}
           addresses.append(detail)
           results["item_count"] += 1
         results['items'] = addresses

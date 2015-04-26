@@ -6,12 +6,11 @@ import time
 from webapp2_extras import auth
 import auth_logic
 from auth_model import User
-from geo import geoCodeLatLng, geoCodeAddress, getPlaceDetailFromGoogle, LatLng
-from models import Category, Item, Vote, DBImage
+import models
 import geohash
 from os.path import isfile
 from auth_logic import BaseHandler
-
+import views
 
 __author__ = 'Will'
 
@@ -101,13 +100,13 @@ def wipe_table(model):
 
 def add_addresses_to_db():
   res = []
-  for it in Item.all():
+  for it in models.Item.all():
     if (not it.address) or (it.address == "") or (it.address == "null"):
       logging.info("add_addresses_to_db %s @ %f,%f" % (it.place_name, it.lat, it.lng))
-      new_addr = geoCodeLatLng(it.lat, it.lng)
+      new_addr = views.geoCodeLatLng(it.lat, it.lng)
       if new_addr:
         it.address = new_addr
-        it.put()
+        it.save()
         res.append(it.place_name + ": " + it.address)
   return res
 
@@ -135,31 +134,31 @@ def load_one_user(user_number):
 
 def load_one_item(owner):
   item_test_data = items_data_list[0]
-  it = Item.all().filter('place_name =', item_test_data[ITEM_NAME]).get()
+  it = models.Item.all().filter('place_name =', item_test_data[ITEM_NAME]).get()
   if it:
     return it
   else:
-    new_it = Item()
-    cat = Category.get_by_key_name(item_test_data[ITEM_CATEGORY])
+    new_it = models.Item()
+    cat = models.Category.get_by_key_name(item_test_data[ITEM_CATEGORY])
     if not cat:
-      cat = Category(key_name=item_test_data[ITEM_CATEGORY]).put()
+      cat = models.Category(key_name=item_test_data[ITEM_CATEGORY]).put()
     new_it.category = cat
     new_it.place_name = item_test_data[ITEM_NAME]
-    home = LatLng(lat=51.57, lng=-0.13)
-    lat_long = geoCodeAddress(item_test_data[1], home)
+    home = views.LatLng(lat=51.57, lng=-0.13)
+    lat_long = models.geoCodeAddress(item_test_data[1], home)
     new_it.lat = lat_long['lat']
     new_it.lng = lat_long['lng']
     new_it.address = item_test_data[ITEM_ADDRESS]
     new_it.owner = owner.key.id()
     # new_it.descr = "blah"
     new_it.geo_hash = geohash.encode(new_it.lat, new_it.lng)
-    img = DBImage()
-    detail = getPlaceDetailFromGoogle(new_it)
+    img = models.DBImage()
+    detail = views.getPlaceDetailFromGoogle(new_it)
     img.remoteURL = detail['photo']
     img.put()
     new_it.photo = img
     new_it.telephone = detail['telephone']
-    new_it.put()
+    new_it.save()
     return new_it
 
 
@@ -215,39 +214,39 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
         if Max:
           if idx >= Max:
             break
-        if Category.get_by_key_name(cat):
+        if models.Category.get_by_key_name(cat):
           res.append("Category exists: " + cat)
         else:
-          new_cat = Category(key_name=cat)
+          new_cat = models.Category(key_name=cat)
           new_cat.title = cat
           new_cat.put()
           res.append("Created: " + cat)
 
     print "category ok"
     if not section or section == "item":
-      home = LatLng(lat=51.57, lng=-0.13)
+      home = models.LatLng(lat=51.57, lng=-0.13)
       for idx, item in enumerate(items_data_list):
         if Max:
           if idx >= Max:
             break
-        it = Item.all().filter('place_name =', item[0]).get()
+        it = models.Item.all().filter('place_name =', item[0]).get()
         if it:
           res.append("Item exists: " + item[0])
-          it.category = Category.get_by_key_name(item[2])
-          it.put()
+          it.category = models.Category.get_by_key_name(item[2])
+          it.save()
         else:
-          new_it = Item()
-          new_it.category = Category.get_by_key_name(item[2])
+          new_it = models.Item()
+          new_it.category = models.Category.get_by_key_name(item[2])
           new_it.place_name = item[0]
-          lat_long = fakeGeoCode() if useFakeGeoCoder else geoCodeAddress(item[1], home)
+          lat_long = fakeGeoCode() if useFakeGeoCoder else models.geoCodeAddress(item[1], home)
           new_it.lat = lat_long['lat']
           new_it.lng = lat_long['lng']
           new_it.address = item[1]
           new_it.owner = a_sample_user.key.id()
           # new_it.descr = "blah"
           new_it.geo_hash = geohash.encode(new_it.lat, new_it.lng)
-          img = DBImage()
-          detail = getPlaceDetailFromGoogle(new_it)
+          img = models.DBImage()
+          detail = models.getPlaceDetailFromGoogle(new_it)
           remoteURL = detail['photo']
           if remoteURL:
             main_url = remoteURL % 250
@@ -262,12 +261,12 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
           img.put()
           new_it.photo = img
           new_it.telephone = detail['telephone']
-          new_it.put()
+          new_it.save()
           res.append('Item: ' + item[0])
 
       print "items"
       # votes
-      items = Item.all()
+      items = models.Item.all()
       i = 0
       for idx, vote_item in enumerate(items):
         if Max:
