@@ -480,6 +480,18 @@ class Vote(db.Model):
     user = User.get_by_id(self.voter)
     name = user.screen_name
     memcache.set('USERNAME' + str(self.voter), name)
+    
+  def to_json(self, voter_id):
+     return {"key": str(self.item.key()),
+                       "vote": self.vote,
+                       "untried": self.untried,
+                       "comment": self.comment,
+                       "voter": voter_id,
+                       "place_name": self.item.place_name,
+                       # Json date format 1984-10-02T01:00:00
+                       "when": self.when.strftime(
+                         config['DATETIME_FORMAT']),
+        }
 
   @classmethod
   def get_user_votes(cls, user_id, since=None):
@@ -493,6 +505,7 @@ class Vote(db.Model):
                        "vote": user_vote.vote,
                        "untried": user_vote.untried,
                        "comment": user_vote.comment,
+                       "voter": user_id,
                        "place_name": user_vote.item.place_name,
                        # Json date format 1984-10-02T01:00:00
                        "when": user_vote.when.strftime(
@@ -644,3 +657,4 @@ def get_user_votes( user_id, since=None):
   #   logging.debug('get_user_votes: removed %d '%len(to_be_removed))
 
   return user_dict, votes
+

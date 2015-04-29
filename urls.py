@@ -6,6 +6,7 @@ from auth_logic import SignupHandler, VerificationHandler, SetPasswordHandler, L
 import auth_logic
 import dataloader
 import migrate
+import ndb_models
 import profiler
 import views
 
@@ -33,13 +34,18 @@ urls = [
   webapp2.Route('/api/geocode',views.geoCodeAddressMultiple),
   webapp2.Route('/api/place_details',views.getPlaceDetailsApi),
 
+  webapp2.Route('/api/UpdateVote',ndb_models.AddVoteChangesWorker),
+  webapp2.Route('/api/UpdatePlace',ndb_models.AddPlaceChangesWorker),
+  webapp2.Route('/api/ClearUserChanges',ndb_models.ClearUserChangesWorker),
+  webapp2.Route('/api/vote',views.UpdateVote),
 
 
+  webapp2.Route('/clear_user_updates',ndb_models.ClearUserUpdates),
   webapp2.Route('/getItems_Ajax', views.getItems_Ajax, name='getItems_Ajax'),
   webapp2.Route('/getMapList_Ajax', views.getMapList_Ajax),
   webapp2.Route('/getAddresses_ajax', views.getAddresses_ajax),
   webapp2.Route('/getCuisines_ajax', views.getCuisines_ajax),
-  webapp2.Route('/getFullUserRecord', views.getUserRecordFast),
+  webapp2.Route('/getFullUserRecord', ndb_models.getUserRecordFastViaWorkers),
   webapp2.Route('/getBook', views.getBook),
   webapp2.Route('/addVote_Ajax', views.addVote_ajax),
   webapp2.Route('/getItem/<key:\S+>', views.getItem_ajax),
@@ -47,7 +53,7 @@ urls = [
   webapp2.Route('/imageSave_Ajax', views.imageEdit_Ajax),
 
   webapp2.Route('/item/del/<key:\S+>', views.deleteItem),
-  webapp2.Route('/item/<key:\S+>', views.updateItem),
+  # webapp2.Route('/item/<key:\S+>', views.updateItem),
   webapp2.Route('/item', views.newOrUpdateItem, name='newOrUpdateItem'),
   #webapp2.Route('/updateItem', views.updateItem),
   webapp2.Route('/geoLookup', views.geoLookup),

@@ -25,6 +25,7 @@ from webapp2_extras.auth import InvalidAuthIdError
 from webapp2_extras.auth import InvalidPasswordError
 from base_handler import BaseHandler
 from settings_per_server import server_settings
+import ndb_models
 
 __author__ = 'Will'
 
@@ -574,42 +575,7 @@ class updateItem(BaseHandler):
     except:
       logging.error('updateItem GET Exception '+key,exc_info=True)
 
-  @user_required
-  def post(self, key):
-    logging.error("updateitem is deprecated")
-    self.abort(501)
-    # it = None
-    # try:
-    #   it = Item.get_item(key)
-    # except Exception:
-    #   logging.exception("updateItem ", exc_info=True)
-    #   # not found
-    #   self.error(400)
-    # # it.descr = self.request.get('descr')
-    # # category
-    # posted_cat = self.request.get("cat")
-    # try:
-    #   cat = Category.get_by_key_name(posted_cat)
-    #   if cat:
-    #     it.category = cat
-    # except:
-    #   logging.exception("Category not found %s" % posted_cat, exc_info=True)
-    # it.save()
-    # old_votes = it.votes.filter("voter =", self.user_id)
-    # for v in old_votes:
-    #   v.delete()
-    # vote = Vote()
-    # vote.item = it
-    # vote.voter = self.user_id
-    # vote.comment = self.request.get('descr')
-    # vote.vote = 1 if self.request.get("vote") == "like" else -1
-    # vote.put()
-    # it.save()  # again
-    # # refresh cache
-    # memcache_touch_place(it)
-    # # CategoryStatsDenormalised.addPost(self.user_id,master_cat)
-    # # TODO this should be ajax
-    # self.response.out.write(str(it.key()))
+
 
 
 def update_photo(it, request_handler):
@@ -672,6 +638,7 @@ def update_votes(item, request_handler, user_id):
       voteScore = 1 if vote_str == "1" or vote_str == "like" else -1
       vote.vote = voteScore
     vote.put()
+    ndb_models.mark_vote_as_updated(str(vote.key()), user_id)
     logging.info ('update_votes for %s "%s"=%d'%
                   (item.place_name,vote.comment,vote.vote))
 
@@ -800,8 +767,21 @@ class newOrUpdateItem(BaseHandler):
   def post(self):
     it = update_item_internal(self, self.user_id, allow_update=True)
     # adjust the votes so my own is not added to the up/down score
+    ndb_models.mark_place_as_updated(str(it.key()),self.user_id)
     json.dump(it.json_adjusted_votes(self.user_id), self.response.out)
 
+class UpdateVote(BaseHandler):
+  @user_required
+  def post(self):
+    it = Item.get_item(self.request.get('key'))
+    if it:
+      update_votes(it, self, self.user_id)
+      # mark user as dirty
+      memcache_update_user_votes(self.user_id)
+      self.response.out.write('OK')
+      logging.debug("UpdateVote OK")
+    logging.error("UpdateVote 404")
+    self.abort(404)
 
 class loadTestData(BaseHandler):
   def get(self):

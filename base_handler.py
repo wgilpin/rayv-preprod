@@ -89,19 +89,22 @@ class BaseHandler(webapp2.RequestHandler):
     return output
 
   def is_mobile(self, request):
-    if 'm' in request.params:
-      return True
-    if config["mobile"]:
-      return True
-    if request.user_agent.find("iPhone") > -1:
-      return True
-    if request.user_agent.find("iPod") > -1:
-      return True
-    if request.user_agent.find("Android") > -1:
-      return True
-    if request.user_agent.find("BlackBerry") > -1:
-      return True
-    return False
+    try:
+      if 'm' in request.params:
+        return True
+      if config["mobile"]:
+        return True
+      if request.user_agent.find("iPhone") > -1:
+        return True
+      if request.user_agent.find("iPod") > -1:
+        return True
+      if request.user_agent.find("Android") > -1:
+        return True
+      if request.user_agent.find("BlackBerry") > -1:
+        return True
+      return False
+    except:
+      return False
 
   def get_template_file(self, template_file, handler, con=None):
     try:

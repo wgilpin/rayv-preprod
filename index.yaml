@@ -40,7 +40,17 @@ indexes:
   - name: userId=
   - name: when_added
 
+- kind: PlaceChange
+  properties:
+  - name: subscriberId
+  - name: when
+
 - kind: Vote
   properties:
   - name: voter
+  - name: when
+
+- kind: VoteChange
+  properties:
+  - name: subscriberId
   - name: when
