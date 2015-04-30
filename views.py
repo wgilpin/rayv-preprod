@@ -779,6 +779,7 @@ class UpdateVote(BaseHandler):
       memcache_update_user_votes(self.user_id)
       self.response.out.write('OK')
       logging.debug("UpdateVote OK")
+      return
     logging.error("UpdateVote 404")
     self.abort(404)
 
@@ -1318,12 +1319,12 @@ def findDbPlacesNearLoc(my_location,
           break
         continue
       elif query_result.count() > 10:
-        for point_key in query_result:
-          if not point_key in result_list:
-            it = Item.get_item(str(point_key))
-            cache[point_key] = it
-            result_list.append(point_key)
         break
+    for point_key in query_result:
+      if not point_key in result_list:
+        it = Item.get_item(str(point_key))
+        cache[point_key] = it
+        result_list.append(point_key)
     search_results = []
     return_data = {}
     return_data['count'] = 0
@@ -1349,8 +1350,7 @@ def findDbPlacesNearLoc(my_location,
         it = cache[point_key]
       else:
         it = Item.get_item(str(point_key))
-      json_data = it.get_json()
-      json_data['up'], json_data['down'] = it.json_adjusted_votes(user_id=uid)
+      json_data = it.json_adjusted_votes(user_id=uid)
       search_results.append(json_data)
       place_names.append(it.place_name)
 

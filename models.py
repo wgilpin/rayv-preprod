@@ -356,6 +356,7 @@ class Item(db.Model):
         elif json_pt['vote'] == -1:
           if json_pt['down'] > 0:
             self.adjusted_json['down'] = json_pt['down'] - 1
+        self.adjusted_json['descr'] = votes[v]['comment']
         break
     return self.adjusted_json
 
