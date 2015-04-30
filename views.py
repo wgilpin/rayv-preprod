@@ -97,9 +97,8 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
           if "category" in place_json:
             places[place_key] = place_json
       for place in places:
-        pl = Item.get(places[place])
-        json_data = pl.get_json()
-        json_data['up'], json_data['down']= pl.json_adjusted_votes()
+        pl = Item.get(place)
+        json_data = pl.json_adjusted_votes(user_id)
         places[place] = json_data
       logging.debug('serialize_user_details: Added %d places'%len(places))
     else:
