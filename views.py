@@ -1319,10 +1319,11 @@ def findDbPlacesNearLoc(my_location,
           break
         continue
       else:
-        if not point_key in result_list:
-          it = Item.get_item(str(point_key))
-          cache[point_key] = it
-          result_list.append(point_key)
+        for point_key in query_result:
+          if not point_key in result_list:
+            it = Item.get_item(str(point_key))
+            cache[point_key] = it
+            result_list.append(point_key)
       if query_result.count() > 10:
         break
 
