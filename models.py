@@ -260,6 +260,7 @@ class Item(db.Model):
       return item.get_json()
     except Exception:
       logging.exception('key_to_json', exc_info=True)
+      return None
 
 
   def to_json(self, request, uid_for_votes=None):

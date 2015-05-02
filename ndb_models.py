@@ -186,22 +186,28 @@ class getUserRecordFastViaWorkers(BaseHandler):
     for u in q:
       user_dict, user_votes = models.get_user_votes(u.get_id(), since=None)
       for place_key in user_votes:
-        votes[place_key] = user_votes[place_key]
-        if not place_key in places:
-          place_json = models.Item.key_to_json(place_key, request=None)
-          if "category" in place_json:
-            places[place_key] = place_json
-          if u.get_id() == my_id:
-            #adjust
-            place_json['comment'] = votes[place_key]['comment']
-            place_json['vote'] = votes[place_key]['vote']
-            place_json['untried'] = votes[place_key]['untried']
-            if place_json['vote'] == 1:
-              if place_json['up'] > 0:
-                place_json['up'] = place_json['up'] - 1
-            elif place_json['vote'] == -1:
-              if place_json['down'] > 0:
-                place_json['down'] = place_json['down'] - 1
+        try:
+          votes[place_key] = user_votes[place_key]
+          if not place_key in places:
+            place_json = models.Item.key_to_json(place_key, request=None)
+            if "category" in place_json:
+              places[place_key] = place_json
+            if u.get_id() == my_id:
+              #adjust
+              place_json['comment'] = votes[place_key]['comment']
+              place_json['vote'] = votes[place_key]['vote']
+              place_json['untried'] = votes[place_key]['untried']
+              if place_json['vote'] == 1:
+                if place_json['up'] > 0:
+                  place_json['up'] = place_json['up'] - 1
+              elif place_json['vote'] == -1:
+                if place_json['down'] > 0:
+                  place_json['down'] = place_json['down'] - 1
+        except Exception, e:
+          if place_json:
+            logging.error("getFullUserRecord Exception %s"%place_json['place_name'], exc_info=True)
+          else:
+            logging.error("getFullUserRecord Exception %s"%place_key, exc_info=True)
     return votes, places
 
   @user_required
