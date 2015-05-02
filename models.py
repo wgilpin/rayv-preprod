@@ -570,7 +570,7 @@ def memcache_get_user_dict(UserId):
     else:
       logging.error('memcache_get_user_dict No User '+str(UserId))
   except Exception:
-    logging.error('memcache_get_user_dict', exc_info=True)
+    logging.error('memcache_get_user_dict exception', exc_info=True)
 
 
 def memcache_touch_user(id):
