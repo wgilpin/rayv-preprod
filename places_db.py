@@ -188,6 +188,12 @@ class PlacesDB():
       except Exception, e:
         logging.error('get_google_db_places Exception processing', exc_info=True)
         return results
+    elif addressResult['status'] == "ZERO_RESULTS":
+      logging.warning(
+        "get_google_db_places near [%f,%f]: %s - %s" %
+          (lat, lng, name, addressResult['status']),
+        exc_info=True)
+      return results
     else:
       logging.error(
         "get_google_db_places near [%f,%f]: %s" %

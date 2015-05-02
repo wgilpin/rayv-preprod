@@ -235,12 +235,18 @@ class getUserRecordFastViaWorkers(BaseHandler):
         since = None
         now = datetime.datetime.now()
         if 'since' in self.request.params:
-          # move since back in time to allow for error
-          since = datetime.datetime.strptime(
-            self.request.params['since'],
-            views.config['DATETIME_FORMAT']) - \
-                  views.config['TIMING_DELTA'];
-          votes, places = self.getIncrement(my_id, now)
+          try:
+            # move since back in time to allow for error
+            since = datetime.datetime.strptime(
+              self.request.params['since'],
+              views.config['DATETIME_FORMAT']) - \
+                    views.config['TIMING_DELTA'];
+            votes, places = self.getIncrement(my_id, now)
+          except OverflowError, ex:
+            logging.error("getFullUserRecord Time error with %s"%since,
+                          exc_info=True)
+            #full update
+            votes, places = self.getFullUserRecord(my_id, now)
         else:
           #full update
           votes, places = self.getFullUserRecord(my_id, now)
