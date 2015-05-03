@@ -1,6 +1,5 @@
 import datetime
 import logging
-from google.appengine.api import memcache
 from google.appengine.ext.ndb import model
 
 __author__ = 'Will'
@@ -8,7 +7,7 @@ __author__ = 'Will'
 import time
 import webapp2_extras.appengine.auth.models
 
-from google.appengine.ext import ndb, gql, db
+from google.appengine.ext import ndb, db
 
 from webapp2_extras import security
 

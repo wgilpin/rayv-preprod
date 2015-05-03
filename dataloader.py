@@ -3,14 +3,10 @@ from random import random
 import urllib2
 from google.appengine.ext import db
 import time
-from webapp2_extras import auth
-import auth_logic
 from auth_model import User
 import models
 import geohash
-from os.path import isfile
-from auth_logic import BaseHandler
-import views
+import geo
 
 __author__ = 'Will'
 
@@ -103,7 +99,7 @@ def add_addresses_to_db():
   for it in models.Item.all():
     if (not it.address) or (it.address == "") or (it.address == "null"):
       logging.info("add_addresses_to_db %s @ %f,%f" % (it.place_name, it.lat, it.lng))
-      new_addr = views.geoCodeLatLng(it.lat, it.lng)
+      new_addr = geo.geoCodeLatLng(it.lat, it.lng)
       if new_addr:
         it.address = new_addr
         it.save()
@@ -144,8 +140,8 @@ def load_one_item(owner):
       cat = models.Category(key_name=item_test_data[ITEM_CATEGORY]).put()
     new_it.category = cat
     new_it.place_name = item_test_data[ITEM_NAME]
-    home = views.LatLng(lat=51.57, lng=-0.13)
-    lat_long = models.geoCodeAddress(item_test_data[1], home)
+    home = geo.LatLng(lat=51.57, lng=-0.13)
+    lat_long = geo.geoCodeAddress(item_test_data[1], home)
     new_it.lat = lat_long['lat']
     new_it.lng = lat_long['lng']
     new_it.address = item_test_data[ITEM_ADDRESS]
@@ -153,7 +149,7 @@ def load_one_item(owner):
     # new_it.descr = "blah"
     new_it.geo_hash = geohash.encode(new_it.lat, new_it.lng)
     img = models.DBImage()
-    detail = views.getPlaceDetailFromGoogle(new_it)
+    detail = geo.getPlaceDetailFromGoogle(new_it)
     img.remoteURL = detail['photo']
     img.put()
     new_it.photo = img
@@ -224,7 +220,7 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
 
     print "category ok"
     if not section or section == "item":
-      home = models.LatLng(lat=51.57, lng=-0.13)
+      home = geo.LatLng(lat=51.57, lng=-0.13)
       for idx, item in enumerate(items_data_list):
         if Max:
           if idx >= Max:
@@ -238,7 +234,7 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
           new_it = models.Item()
           new_it.category = models.Category.get_by_key_name(item[2])
           new_it.place_name = item[0]
-          lat_long = fakeGeoCode() if useFakeGeoCoder else models.geoCodeAddress(item[1], home)
+          lat_long = fakeGeoCode() if useFakeGeoCoder else geo.geoCodeAddress(item[1], home)
           new_it.lat = lat_long['lat']
           new_it.lng = lat_long['lng']
           new_it.address = item[1]
@@ -246,7 +242,7 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
           # new_it.descr = "blah"
           new_it.geo_hash = geohash.encode(new_it.lat, new_it.lng)
           img = models.DBImage()
-          detail = models.getPlaceDetailFromGoogle(new_it)
+          detail = geo.getPlaceDetailFromGoogle(new_it)
           remoteURL = detail['photo']
           if remoteURL:
             main_url = remoteURL % 250
@@ -272,7 +268,7 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
         if Max:
           if idx >= Max:
             break
-        vote = Vote()
+        vote = models.Vote()
         vote_score = 1 if (vote_item.key().id() % 2) == 0 else -1
         vote.vote = vote_score
         vote.comment = "blah v" + str(i)

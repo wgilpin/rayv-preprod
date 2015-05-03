@@ -163,9 +163,9 @@ def _decode_c2i(hashcode):
 
 
 def decode(hashcode, delta=False):
-    '''
+    """
     decode a hashcode and get center coordinate, and distance between center and outer border
-    '''
+    """
     if _geohash:
         (lat, lon, lat_bits, lon_bits) = _geohash.decode(hashcode)
         latitude_delta = 90.0 / (1 << lat_bits)
@@ -208,9 +208,9 @@ def decode_exactly(hashcode):
 ## hashcode operations below
 
 def bbox(hashcode):
-    '''
+    """
     decode a hashcode and get north, south, east and west border.
-    '''
+    """
     if _geohash:
         (lat, lon, lat_bits, lon_bits) = _geohash.decode(hashcode)
         latitude_delta = 180.0 / (1 << lat_bits)

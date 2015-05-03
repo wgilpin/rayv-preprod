@@ -2,7 +2,7 @@ import os
 os.environ['DJANGO_SETTINGS_MODULE'] = os.path.dirname(__file__)
 from unittest import TestCase
 from dataloader import load_one_user, load_one_item
-from views import approx_distance, LatLng, geoCodeLatLng
+import geo
 
 __author__ = 'Will'
 
@@ -22,7 +22,7 @@ class TestGeo(TestCase):
 
   def test_geoCodeLatLng(self):
     # lat, lng):
-    addr = geoCodeLatLng(51.574841, -0.121519)
+    addr = geo.geoCodeLatLng(51.574841, -0.121519)
     assert addr.find('Crouch Hill') > -1
 
   def test_findDbPlacesNearLoc(self):
@@ -40,9 +40,9 @@ class TestGeo(TestCase):
   def test_approx_distance(self):
     #point, origin):
     #crouch end to screen on the green
-    crouch = LatLng(lat=51.579585, lng=-0.123729)
-    cinema = LatLng(lat=51.536812, lng=-0.103633)
-    dist = approx_distance(crouch, cinema)
+    crouch = geo.LatLng(lat=51.579585, lng=-0.123729)
+    cinema = geo.LatLng(lat=51.536812, lng=-0.103633)
+    dist = geo.approx_distance(crouch, cinema)
     actual = 3.06
     assert (actual * 0.9) < dist < (actual * 1.1)
 

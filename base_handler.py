@@ -6,7 +6,6 @@ from webapp2_extras import auth
 from webapp2_extras import sessions
 
 from google.appengine.ext.webapp import template
-from auth_model import User
 from settings import config
 
 

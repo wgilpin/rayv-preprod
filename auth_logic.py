@@ -7,8 +7,6 @@ __author__ = 'Will'
 
 # see https://github.com/abahgat/webapp2-userId-accounts/ where I got this fro,
 
-from google.appengine.ext.webapp import template
-
 import logging
 from base_handler import BaseHandler
 

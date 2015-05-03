@@ -8,7 +8,7 @@ from auth_model import User
 from models import Item, DBImage
 import urllib
 from google.appengine.api import urlfetch
-from views import getPlaceDetailFromGoogle
+import geo
 
 __author__ = 'Will'
 
@@ -84,7 +84,7 @@ class updatePhotoFromGoogle(BaseHandler):
           it = Item.get(place)
           if not it.photo:
             it.photo = DBImage()
-          detail = getPlaceDetailFromGoogle(it)
+          detail = geo.getPlaceDetailFromGoogle(it)
           remoteURL = detail['photo']
           if remoteURL:
             main_url = remoteURL % 250

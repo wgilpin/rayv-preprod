@@ -1,8 +1,8 @@
 import json
 import logging
 import urllib2
-import views
 import settings
+import geo
 
 __author__ = 'Will'
 
@@ -35,7 +35,7 @@ class PlacesDB():
     def add_if_unique (point):
       for p in points['points']:
         if point["place_name"] == p["place_name"]:
-          distance = views.approx_distance(point, p)
+          distance = geo.approx_distance(point, p)
           if distance < 0.05:
             #found, don't add
             return
@@ -49,13 +49,13 @@ class PlacesDB():
       "exclude_user": exclude_user_id}
     calc_dist_from = my_locn if include_maps_data else None
     list_of_place_names = []
-    points = views.findDbPlacesNearLoc(
+    points = geo.findDbPlacesNearLoc(
       my_locn,
       request,
       search_text=text_to_search,
       filter=search_filter,
       uid=user_id,
-      position=views.LatLng(lat, lng),
+      position=geo.LatLng(lat, lng),
       place_names=list_of_place_names,
       ignore_votes=True)
     if include_maps_data:
@@ -95,10 +95,10 @@ class PlacesDB():
     @param user_id:
     @return: list of JSON points
     """
-    around = views.LatLng(lat=float(request.get("lat")),
+    around = geo.LatLng(lat=float(request.get("lat")),
                     lng=float(request.get("lng")))
     try:
-      my_locn = views.LatLng(lat=float(request.get("myLat")),
+      my_locn = geo.LatLng(lat=float(request.get("myLat")),
                        lng=float(request.get("myLng")))
     except Exception, E:
       # logging.exception("get_item_list " + str(E))
@@ -153,7 +153,7 @@ class PlacesDB():
       return None
     if addressResult['status'] == "OK":
       try:
-        origin = views.LatLng(lat=lat, lng=lng)
+        origin = geo.LatLng(lat=lat, lng=lng)
         for r in addressResult['results']:
           if "formatted_address" in r:
             address = r['formatted_address']

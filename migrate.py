@@ -8,7 +8,7 @@ from auth_logic import BaseHandler, user_required
 from auth_model import User
 import geohash
 from models import Item, Vote, DBImage, Category
-from views import getPlaceDetailFromGoogle, geoCodeLatLng
+import geo
 
 __author__ = 'Will'
 
@@ -27,11 +27,11 @@ class migrate(BaseHandler):
       count = 0
       for it in items:
         if not it.address:
-          google_data = getPlaceDetailFromGoogle(it)
+          google_data = geo.getPlaceDetailFromGoogle(it)
           if 'address' in google_data:
             it.address = google_data['address']
           if not it.address:
-            it.address = geoCodeLatLng(it.lat, it.lng)
+            it.address = geo.geoCodeLatLng(it.lat, it.lng)
           if it.address:
             it.save()
             count += 1
@@ -96,9 +96,9 @@ class migrate(BaseHandler):
         if it.website:
           self.response.out.write("%s has website<br>" % it.place_name)
           continue
-        detail = getPlaceDetailFromGoogle(it)
+        detail = geo.getPlaceDetailFromGoogle(it)
         if 'website' in detail:
-          it.website = getPlaceDetailFromGoogle(it)['website']
+          it.website = geo.getPlaceDetailFromGoogle(it)['website']
         else:
           self.response.out.write("%s no website<br>" % it.place_name)
         it.save()
@@ -143,9 +143,9 @@ class migrate(BaseHandler):
         if it.telephone:
           self.response.out.write("%s has phone<br>" % it.title)
           continue
-        detail = getPlaceDetailFromGoogle(it)
+        detail = geo.getPlaceDetailFromGoogle(it)
         if 'telephone' in detail:
-          it.telephone = getPlaceDetailFromGoogle(it)['telephone']
+          it.telephone = geo.getPlaceDetailFromGoogle(it)['telephone']
         else:
           self.response.out.write("%s no phone<br>" % it.title)
         it.save()
@@ -168,7 +168,7 @@ class migrate(BaseHandler):
           self.response.out.write("googled %s<br>" % it.title)
           continue
         img = DBImage()
-        img.remoteURL = getPlaceDetailFromGoogle(it)['photo']
+        img.remoteURL = geo.getPlaceDetailFromGoogle(it)['photo']
         img.put()
         it.photo = img
         self.response.out.write("Added <a href='%s'>%s</a><br>" %
@@ -382,9 +382,10 @@ class migrate(BaseHandler):
     # add the last edited field to each
     items = Item.all()
     stamp = datetime.now()
+    dirty = False
     for it in items:
       try:
-        it.edited = stamp;
+        it.edited = stamp
         it.save()
       except:
         it.votesUp = 0

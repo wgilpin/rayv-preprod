@@ -1,6 +1,7 @@
 import os
 import webapp2
 os.environ['DJANGO_SETTINGS_MODULE'] = os.path.dirname(__file__)
+import models
 
 
 from dataloader import load_data, load_one_item, load_one_user, items_data_list, ITEM_NAME, ITEM_ADDRESS
@@ -71,7 +72,7 @@ class TestItem(TestCase):
   def test_closest_vote_from(self):
     self.load_user_and_item()
     self.load_votes(self.user,1,"Good Place")
-    ud = memcache_get_user_dict(self.user.key.id())
+    ud = models.memcache_get_user_dict(self.user.key.id())
     cvf = self.item.closest_vote_from(ud)
     assert cvf.comment == "Good Place"
     assert cvf.vote == 1

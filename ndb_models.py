@@ -1,10 +1,9 @@
-import datetime
+from datetime import datetime
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb import model
 import webapp2
 from auth_model import User
-import settings
 
 __author__ = 'Will'
 import json
@@ -55,7 +54,7 @@ class AddVoteChangesWorker(webapp2.RequestHandler):
         change = VoteChange()
         change.voteId = vote_key
         change.subscriberId = str(u.get_id())
-        change.when = datetime.datetime.strptime(
+        change.when = datetime.strptime(
           time,
           views.config['DATETIME_FORMAT'])
         change.put()
@@ -63,6 +62,9 @@ class AddVoteChangesWorker(webapp2.RequestHandler):
 
 
 class AddPlaceChangesWorker(webapp2.RequestHandler):
+  """
+  Task worker thread for adding places
+  """
   def post(self): # should run at most 1/s due to entity group limit
     """
     Task Worker to mark place as updated
@@ -76,7 +78,7 @@ class AddPlaceChangesWorker(webapp2.RequestHandler):
     def update_place():
       place_entries = PlaceChange.\
         query(PlaceChange.placeId == place_key)
-      now = datetime.datetime.now()
+      now = datetime.now()
       for p in place_entries:
         if p.when < now:
           p.when = now
@@ -103,7 +105,7 @@ class ClearUserChangesWorker(webapp2.RequestHandler):
         userID: string
     """
     user_id = self.request.get('userId')
-    since = datetime.datetime.strptime(
+    since = datetime.strptime(
             self.request.params['before'],
             views.config['DATETIME_FORMAT'])
     # @ndb.transactional
@@ -119,8 +121,7 @@ class ClearUserChangesWorker(webapp2.RequestHandler):
 class ClearUserUpdates(BaseHandler):
   def post(self):
     user_id = self.request.get('userId')
-    before = datetime.datetime.strftime(
-            datetime.datetime.now(),
+    before = datetime.now().strftime(
             views.config['DATETIME_FORMAT'])
     taskqueue.add(url='/api/ClearUserChanges',
                   params={
@@ -132,13 +133,12 @@ def mark_place_as_updated(place_key, user_id):
                 params={'placeKey': place_key, 'userId': user_id})
 
 def mark_vote_as_updated(vote_key, user_id):
-  now=datetime.datetime.strftime(
-            datetime.datetime.now(),
+  now_str= datetime.now(),datetime.strftime(
             views.config['DATETIME_FORMAT'])
   taskqueue.add(url='/api/UpdateVote',
                 params={'voteKey': vote_key,
                         'userId': user_id,
-                        'time': now})
+                        'time': now_str})
 
 def get_updated_places_for_user(user_id, since):
   result = PlaceChange.\
@@ -181,10 +181,9 @@ class getUserRecordFastViaWorkers(BaseHandler):
   def getFullUserRecord(self, my_id, now):
     places = {}
     votes = {}
-    my_votes = {}
     q = User.gql('')
     for u in q:
-      user_dict, user_votes = models.get_user_votes(u.get_id(), since=None)
+      user_dict, user_votes = models.get_user_votes(u.get_id())
       for place_key in user_votes:
         try:
           votes[place_key] = user_votes[place_key]
@@ -233,14 +232,14 @@ class getUserRecordFastViaWorkers(BaseHandler):
           "id": my_id,
           "admin": self.user.profile().is_admin }
         since = None
-        now = datetime.datetime.now()
+        now = datetime.now()
         if 'since' in self.request.params:
           try:
             # move since back in time to allow for error
-            since = datetime.datetime.strptime(
+            since = datetime.strptime(
               self.request.params['since'],
               views.config['DATETIME_FORMAT']) - \
-                    views.config['TIMING_DELTA'];
+                    views.config['TIMING_DELTA']
             votes, places = self.getIncrement(my_id, now)
           except OverflowError, ex:
             logging.error("getFullUserRecord Time error with %s"%since,
@@ -250,7 +249,6 @@ class getUserRecordFastViaWorkers(BaseHandler):
         else:
           #full update
           votes, places = self.getFullUserRecord(my_id, now)
-
 
         friends_list = []
         if views.config['all_are_friends']:

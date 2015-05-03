@@ -18,7 +18,6 @@ import logging
 import webapp2
 from settings import config
 from urls import urls
-from views import handle_error
 
 
 app = webapp2.WSGIApplication(urls, debug=True, config=config)

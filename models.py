@@ -253,7 +253,7 @@ class Item(db.Model):
     return json_data
 
   @classmethod
-  def key_to_json(cls, key, request):
+  def key_to_json(cls, key, request=None):
     try:
       # memcache has item entries under Key, and JSON entries under JSON:key
       item = Item.get(key)
@@ -266,11 +266,8 @@ class Item(db.Model):
   def to_json(self, request, uid_for_votes=None):
     """
     create a json object for the web.
-    :param it: Item
     :param request: BaseHandler
-    :param GPS_origin: LatLng
-    :param map_origin: bool - do we calculate distances from where the map is
-            centred, as opposed to from my location?
+
     :return: dict - json repr of the place
     """
     try:
@@ -324,7 +321,7 @@ class Item(db.Model):
         vote = self.votes.filter("voter =", uid_for_votes).get()
         if vote:
           # if the user has voted for this item, and the user is excluded, next
-          data["mine"] = True;
+          data["mine"] = True
           data["vote"] = int(vote.vote)
           data["descr"] = vote.comment
           if vote.untried:
@@ -339,7 +336,7 @@ class Item(db.Model):
     """
     The up & down scores in a json pt include the vote of the current user
     This routine removes the vote of the current user from the calculation
-    :param json_pt: dict: the jsonPt
+    :param user_id: string: the current logged in user
     :return: dict: the amended jsonPt
     """
     if hasattr(self, 'adjusted_json'):
@@ -412,7 +409,7 @@ class Item(db.Model):
   def closest_vote_from(self, user_record):
     """
     return the text & score from the owners vote
-    @param user_id:
+    @param user_record:
     @return user's comment, user's vote score:
     """
     uid = user_record['p'].userId
@@ -439,7 +436,7 @@ class Item(db.Model):
     @return item:
     """
     try:
-      if (not key):
+      if not key:
         return None
       item = memcache.get(key)
       if item:
@@ -526,12 +523,6 @@ class Trust(db.Model):
 
   @classmethod
   def updateTrust(cls, user_a, user_b):
-    if user_a < user_b:
-      first = user_a
-      second = user_b
-    else:
-      first = user_b
-      second = user_a
     # get list of common item votes
     user_a_hits = Vote.all().filter("voter =", user_a)
     user_b_hits = Vote.all().filter("voter =", user_b)
@@ -552,7 +543,7 @@ class Trust(db.Model):
 def memcache_get_user_dict(UserId):
   """
   memcache enabled get User
-  @param UserId:
+  @param UserId: string
   @return user:
   """
   try:
@@ -609,6 +600,7 @@ def memcache_put_user(user):
   put user in memcache
   @param user:
   """
+  uid = "No UID"
   try:
     uid = user.key.id()
     uprof = user.profile()
@@ -625,6 +617,7 @@ def memcache_put_user_dict(dict):
   put user in memcache
   @param dict:
   """
+  uid = "No UID"
   try:
     uid = dict['u'].key.id()
     if not memcache.set(str(uid), dict):
@@ -633,7 +626,7 @@ def memcache_put_user_dict(dict):
     logging.error("failed to memcache Dict " + uid, exc_info=True)
 
 #TODO: change to ndb! Then drop the memcache crazies, and do Since properly
-def get_user_votes( user_id, since=None):
+def get_user_votes(user_id):
   user_dict = memcache_get_user_dict(user_id)
   votes = {}
   if 'v' in user_dict:

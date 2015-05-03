@@ -2,10 +2,6 @@ from datetime import datetime, timedelta
 import logging
 import pickle
 from google.appengine.api import memcache
-from google.appengine.ext import db
-from webapp2 import RequestHandler
-from webapp2_extras import auth
-from google.appengine.ext.webapp import template
 from auth_logic import BaseHandler
 
 __author__ = 'Will'

@@ -1,10 +1,10 @@
 import webapp2
 from webapp2_extras.routes import RedirectRoute
 import admin
-from auth_logic import SignupHandler, VerificationHandler, SetPasswordHandler, LoginHandler, LogoutHandler, \
+from auth_logic import SignupHandler, SetPasswordHandler, \
   ForgotPasswordHandler, AuthenticatedHandler
 import auth_logic
-import dataloader
+import geo
 import migrate
 import ndb_models
 import profiler
@@ -27,11 +27,11 @@ urls = [
   webapp2.Route('/api/register', auth_logic.RegisterInOne),
   webapp2.Route('/api/profile', views.profileAPI),
   webapp2.Route('/api/items', views.itemsAPI),
-  webapp2.Route('/api/friends', views.friendsAPI),
-  webapp2.Route('/api/friend/<id:\d+>/votes', views.friendsVotesAPI),
+  webapp2.Route('/api/friends', views.FriendsApi),
+  webapp2.Route('/api/friend/<id:\d+>/votes', views.FriendsVotesApi),
   webapp2.Route('/api/log',views.api_log),
   webapp2.Route('/api/delete',views.api_delete),
-  webapp2.Route('/api/geocode',views.geoCodeAddressMultiple),
+  webapp2.Route('/api/geocode',geo.geoCodeAddressMultiple),
   webapp2.Route('/api/place_details',views.getPlaceDetailsApi),
 
   webapp2.Route('/api/UpdateVote',ndb_models.AddVoteChangesWorker),
@@ -41,12 +41,12 @@ urls = [
 
 
   webapp2.Route('/clear_user_updates',ndb_models.ClearUserUpdates),
-  webapp2.Route('/getItems_Ajax', views.getItems_Ajax, name='getItems_Ajax'),
+  webapp2.Route('/GetItemsAjax', views.GetItemsAjax, name='GetItemsAjax'),
   webapp2.Route('/getMapList_Ajax', views.getMapList_Ajax),
   webapp2.Route('/getAddresses_ajax', views.getAddresses_ajax),
   webapp2.Route('/getCuisines_ajax', views.getCuisines_ajax),
   webapp2.Route('/getFullUserRecord', ndb_models.getUserRecordFastViaWorkers),
-  webapp2.Route('/getBook', views.getBook),
+  webapp2.Route('/GetBook', views.GetBook),
   webapp2.Route('/addVote_Ajax', views.addVote_ajax),
   webapp2.Route('/getItem/<key:\S+>', views.getItem_ajax),
   webapp2.Route('/getVotes/<key:\S+>', views.getItemVotes_ajax),
