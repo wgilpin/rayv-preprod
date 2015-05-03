@@ -199,10 +199,27 @@ def findDbPlacesNearLoc(my_location,
       if query_result.count() > 10:
         break
 
+    if len(result_list) == 0 and search_text:
+      #didn't find the name so try splitting it
+      words = search_text.split(' ')
+      for point_key in query_result:
+        if point_key in result_list:
+            continue
+        if point_key in reject_list:
+          continue
+        it = cache[point_key]
+        if not it:
+          continue
+        for w in words:
+          if w in it.place_name.lower():
+            result_list.append(point_key)
+            break
+
     search_results = []
-    return_data = {}
-    return_data['count'] = 0
-    return_data['points'] = []
+    return_data = {
+      'count': 0,
+      'points': []
+    }
     exclude_user_id = None
     if filter:
       if filter["kind"] == "mine":

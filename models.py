@@ -493,12 +493,10 @@ class Vote(db.Model):
         }
 
   @classmethod
-  def get_user_votes(cls, user_id, since=None):
+  def get_user_votes(cls, user_id):
     try:
       entry = {}
       user_vote_list = Vote.all().filter("voter =", user_id)
-      if since:
-        user_vote_list = user_vote_list.filter("when >", since)
       for user_vote in user_vote_list:
         vote_detail = {"key": str(user_vote.item.key()),
                        "vote": user_vote.vote,
@@ -554,7 +552,9 @@ def memcache_get_user_dict(UserId):
     if user:
       uprof = user.profile()
       record = {'u': user,
-                'p': uprof}
+                'p': uprof,
+                'v': Vote.get_user_votes(UserId),
+                'd': datetime.datetime.now()}
       if not memcache.set(str(UserId), record):
         logging.error("could not memcache Item %d"% UserId)
       return record
@@ -575,10 +575,12 @@ def memcache_update_user_votes(id):
   print "memcache_update_user_votes %d"%id
   ur = memcache_get_user_dict(id)
   ur['p'].last_write = datetime.datetime.now()
-  ur['p'].put()
+  # ur['p'].put()
   ur['v'] = Vote.get_user_votes(id)
+  ur['d'] = datetime.datetime.now()
   if not memcache.set(str(id), ur):
       logging.error("could not update User Votes %d"% id)
+  return ur
 
 def memcache_touch_place(key_or_item):
   try:
@@ -627,29 +629,23 @@ def memcache_put_user_dict(dict):
 
 #TODO: change to ndb! Then drop the memcache crazies, and do Since properly
 def get_user_votes(user_id):
-  user_dict = memcache_get_user_dict(user_id)
-  votes = {}
-  if 'v' in user_dict:
+  try:
+    user_dict = memcache_get_user_dict(user_id)
+    votes = {}
+    good_user_dict = True
+    if not 'd' in user_dict:
+      good_user_dict = False
+    if not 'v' in user_dict:
+      good_user_dict = False
+    if not user_dict['d']:
+      good_user_dict = False
+    if not good_user_dict:
+      user_dict = memcache_update_user_votes(user_id)
+    if user_dict['d'] < datetime.datetime.now() - config['memcache_life']:
+      user_dict = memcache_update_user_votes(user_id)
     votes = user_dict['v']
-
-  if not 'v' in user_dict:
-    # we are going to memcache the votes so we get ALL votes & ignore since
-    votes = Vote.get_user_votes(user_id)
-    user_dict['v'] = votes
-    memcache_put_user_dict(user_dict)
-  # we ignore any 'untried' votes from a friend
-  have_removed = 0
-  #TODO: This is commented out for iOS bug #209, show wishlist items in news
-  #TODO: BUT it was put here for some good reason for the web client?
-  # if user_id != current_user_id:
-  #   to_be_removed = []
-  #   if votes:
-  #     for vote in votes:
-  #       if votes[vote]['untried']:
-  #         to_be_removed.append(vote)
-  #     for idx in to_be_removed:
-  #       del votes[idx]
-  #   logging.debug('get_user_votes: removed %d '%len(to_be_removed))
-
-  return user_dict, votes
+    return user_dict, votes
+  except Exception, e:
+    logging.error("get_user_votes Exception", exc_info=True)
+    return None, {}
 
