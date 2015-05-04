@@ -156,52 +156,31 @@ class getUserRecordFastViaWorkers(BaseHandler):
       p = models.Item.get(up.placeId)
       places[up.placeId] =p.get_json()
     updated_votes = VoteChange.query(VoteChange.subscriberId==str(my_id))
-    votes={}
+    votes=[]
     for uv in updated_votes:
       v = models.Vote().get(uv.voteId)
       if v:
-        votes[str(v.item.key())] = v.to_json(my_id)
+        votes.append(v.to_json(my_id))
         #adjust
         place_key = str(v.item.key())
         if not place_key in places:
           places[place_key] = v.item.get_json()
-        place_json = places[place_key]
-        place_json['comment'] = v.comment
-        place_json['vote'] = v.vote
-        place_json['untried'] = v.untried
-        if v.vote == 1:
-          if place_json['up'] > 0:
-            place_json['up'] = place_json['up'] - 1
-        elif v.vote == -1:
-          if place_json['down'] > 0:
-                place_json['down'] = place_json['down'] - 1
-
     return votes, places
 
-  def getFullUserRecord(self, my_id, now):
+  def getFullUserRecord(self, my_id, now=None):
     places = {}
-    votes = {}
+    votes = []
     q = User.gql('')
     for u in q:
       user_dict, user_votes = models.get_user_votes(u.get_id())
       for place_key in user_votes:
         try:
-          votes[place_key] = user_votes[place_key]
+          for vote in user_votes[place_key]:
+            votes.append(vote)
           if not place_key in places:
-            place_json = models.Item.key_to_json(place_key, request=None)
+            place_json = models.Item.key_to_json(place_key, my_id)
             if "category" in place_json:
               places[place_key] = place_json
-            if u.get_id() == my_id:
-              #adjust
-              place_json['comment'] = votes[place_key]['comment']
-              place_json['vote'] = votes[place_key]['vote']
-              place_json['untried'] = votes[place_key]['untried']
-              if place_json['vote'] == 1:
-                if place_json['up'] > 0:
-                  place_json['up'] = place_json['up'] - 1
-              elif place_json['vote'] == -1:
-                if place_json['down'] > 0:
-                  place_json['down'] = place_json['down'] - 1
         except Exception, e:
           if place_json:
             logging.error("getFullUserRecord Exception %s"%place_json['place_name'], exc_info=True)
@@ -245,10 +224,10 @@ class getUserRecordFastViaWorkers(BaseHandler):
             logging.error("getFullUserRecord Time error with %s"%since,
                           exc_info=True)
             #full update
-            votes, places = self.getFullUserRecord(my_id, now)
+            votes, places = self.getFullUserRecord(my_id)
         else:
           #full update
-          votes, places = self.getFullUserRecord(my_id, now)
+          votes, places = self.getFullUserRecord(my_id)
 
         friends_list = []
         if views.config['all_are_friends']:

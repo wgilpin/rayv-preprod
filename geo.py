@@ -239,7 +239,7 @@ def findDbPlacesNearLoc(my_location,
         it = cache[point_key]
       else:
         it = Item.get_item(str(point_key))
-      json_data = it.json_adjusted_votes(user_id=uid)
+      json_data = it.get_json()
       search_results.append(json_data)
       place_names.append(it.place_name)
 

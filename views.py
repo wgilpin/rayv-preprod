@@ -87,7 +87,7 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
       logging.debug("serialize_user_details: %d votes"%len(votes))
       for place_key in votes:
         if not place_key in places:
-          place_json = Item.key_to_json(place_key, request)
+          place_json = Item.key_to_json(place_key)
           if user_id == current_user:
             place_json['vote'] = votes[place_key]['vote']
             place_json['untried'] = votes[place_key]['untried']
@@ -95,7 +95,7 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
             places[place_key] = place_json
       for place in places:
         pl = Item.get(place)
-        json_data = pl.json_adjusted_votes(user_id)
+        json_data = pl.get_json()
         places[place] = json_data
       logging.debug('serialize_user_details: Added %d places'%len(places))
     else:
@@ -235,12 +235,7 @@ class getUserRecordFast(BaseHandler):
           for v in votes:
             #add to the list if it's not there, or overwrite if this is my version
             if not v in places or user_id == my_id:
-              place = Item.get(v)
-              if user_id == my_id:
-                place_json = place.json_adjusted_votes(user_id=my_id)
-              else:
-                place_json = place.get_json()
-              places [v] = place_json
+              places [v] = Item.key_to_json(v)
 
           if getProp(user_dict['p'], 'last_write'):
             last_write = user_dict['p'].last_write
@@ -564,14 +559,9 @@ class updateItem(BaseHandler):
     " get a single item
     """
     try:
-      it = Item.get(key)
-      json_data = it.get_json()
-      json_data['up'], json_data['down'] = it.json_adjusted_votes(user_id=self.user_id)
-      json.dump(json_data, self.response.out)
+      json.dump(Item.key_to_json(key), self.response.out)
     except:
       logging.error('updateItem GET Exception '+key,exc_info=True)
-
-
 
 
 def update_photo(it, request_handler):
@@ -764,7 +754,7 @@ class newOrUpdateItem(BaseHandler):
     it = update_item_internal(self, self.user_id)
     # adjust the votes so my own is not added to the up/down score
     ndb_models.mark_place_as_updated(str(it.key()),self.user_id)
-    json.dump(it.json_adjusted_votes(self.user_id), self.response.out)
+    json.dump(it.get_json(), self.response.out)
 
 class UpdateVote(BaseHandler):
   @user_required

@@ -263,6 +263,7 @@ class Item(db.Model):
       return None
 
 
+
   def to_json(self, request, uid_for_votes=None):
     """
     create a json object for the web.
@@ -332,31 +333,6 @@ class Item(db.Model):
       logging.exception('to_json', exc_info=True)
 
 
-  def json_adjusted_votes(self, user_id=None):
-    """
-    The up & down scores in a json pt include the vote of the current user
-    This routine removes the vote of the current user from the calculation
-    :param user_id: string: the current logged in user
-    :return: dict: the amended jsonPt
-    """
-    if hasattr(self, 'adjusted_json'):
-      return self.adjusted_json
-    json_pt = self.get_json()
-    self.adjusted_json = json_pt
-    user_rec, votes = get_user_votes(user_id)
-    for v in votes:
-      if v == str(self.key()):
-        json_pt['vote'] = votes[v]['vote']
-        json_pt['untried'] = votes[v]['untried']
-        if json_pt['vote'] == 1:
-          if json_pt['up'] > 0:
-            self.adjusted_json['up'] = json_pt['up'] - 1
-        elif json_pt['vote'] == -1:
-          if json_pt['down'] > 0:
-            self.adjusted_json['down'] = json_pt['down'] - 1
-        self.adjusted_json['descr'] = votes[v]['comment']
-        break
-    return self.adjusted_json
 
   @classmethod
   def get_unique_place(cls, request, return_existing=True):
@@ -494,6 +470,11 @@ class Vote(db.Model):
 
   @classmethod
   def get_user_votes(cls, user_id):
+    """
+    Returns the list of votes for a user from the db
+    :param user_id string
+    :returns dict<place_key,list<Vote>>
+    """
     try:
       entry = {}
       user_vote_list = Vote.all().filter("voter =", user_id)
@@ -508,10 +489,15 @@ class Vote(db.Model):
                        "when": user_vote.when.strftime(
                          config['DATETIME_FORMAT']),
         }
-        entry[str(user_vote.item.key())] = vote_detail
+        place_key = vote_detail['key']
+        if place_key in entry:
+          entry[place_key].append(vote_detail)
+        else:
+          entry[place_key] = [vote_detail]
       return entry
     except Exception:
       logging.error("get_user_votes Exception", exc_info=True)
+      return {}
 
 class Trust(db.Model):
   # Trust value from first user to second user, where firstId < secondId
