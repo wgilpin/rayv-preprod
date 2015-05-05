@@ -135,7 +135,15 @@ class PlacesDB():
     results = {"item_count": 0,
                  "items": []}
     try:
-      escaped_name = urllib2.quote(name)
+      # remove AND or & from name
+      words = name.split(' ')
+      search_words = []
+      for w in words:
+        if w=='and' or w=='&':
+          continue
+        search_words.append(w)
+      search_text = " ".join(search_words)
+      escaped_name = urllib2.quote(search_text)
       url = ("https://maps.googleapis.com/maps/api/place/nearbysearch/"
             "json?rankby=distance&types=%s&location=%f,%f&name=%s&sensor=false&key=%s")\
             % \
