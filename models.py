@@ -227,6 +227,17 @@ class Item(db.Model):
       return json_data
     return json.loads(self.json)
 
+  def get_json_str_with_vote(self, userId):
+    self.get_json()
+    vote = self.votes.filter("voter =", userId).get()
+    if vote:
+      # if the user has voted for this item, and the user is excluded, next
+      myVoteStr = ',"mine": true,"vote":%d,"descr":"%s"'%(int(vote.vote), vote.comment)
+      if vote.untried:
+        myVoteStr += ',"untried": True'
+      res = self.json[0:len(self.json)-1]+myVoteStr+'}'
+      return res
+
   def qualified_title(self):
     return self.__unicode__()
 

@@ -133,7 +133,7 @@ def mark_place_as_updated(place_key, user_id):
                 params={'placeKey': place_key, 'userId': user_id})
 
 def mark_vote_as_updated(vote_key, user_id):
-  now_str= datetime.now(),datetime.strftime(
+  now_str= datetime.now().strftime(
             views.config['DATETIME_FORMAT'])
   taskqueue.add(url='/api/UpdateVote',
                 params={'voteKey': vote_key,

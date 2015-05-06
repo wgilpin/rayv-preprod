@@ -201,7 +201,12 @@ def findDbPlacesNearLoc(my_location,
 
     if len(result_list) == 0 and search_text:
       #didn't find the name so try splitting it
-      words = search_text.split(' ')
+      words_candidates = search_text.split(' ')
+      words = []
+      exclude = ['and','&','the','in','on']
+      for w in words_candidates:
+        if not w in exclude:
+          words.append(w)
       for point_key in query_result:
         if point_key in result_list:
             continue
@@ -210,8 +215,9 @@ def findDbPlacesNearLoc(my_location,
         it = cache[point_key]
         if not it:
           continue
+        place_name_words = it.place_name.lower().split(' ')
         for w in words:
-          if w in it.place_name.lower():
+          if w in place_name_words :
             result_list.append(point_key)
             break
 

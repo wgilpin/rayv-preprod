@@ -628,7 +628,7 @@ def update_votes(item, request_handler, user_id):
     logging.info ('update_votes for %s "%s"=%d'%
                   (item.place_name,vote.comment,vote.vote))
 
-  except Exception:
+  except Exception, ex:
     logging.error("newOrUpdateItem votes exception", exc_info=True)
 
 
@@ -754,7 +754,7 @@ class newOrUpdateItem(BaseHandler):
     it = update_item_internal(self, self.user_id)
     # adjust the votes so my own is not added to the up/down score
     ndb_models.mark_place_as_updated(str(it.key()),self.user_id)
-    json.dump(it.get_json(), self.response.out)
+    self.response.out.write(it.get_json_str_with_vote(self.user_id))
 
 class UpdateVote(BaseHandler):
   @user_required
