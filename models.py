@@ -221,7 +221,7 @@ class Item(db.Model):
     return self.place_name
 
   def get_json(self):
-    if self.json=="":
+    if self.json == 'null' or not self.json:
       json_data = self.set_json()
       self.put()
       return json_data

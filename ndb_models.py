@@ -4,6 +4,7 @@ from google.appengine.ext import ndb
 from google.appengine.ext.ndb import model
 import webapp2
 from auth_model import User
+import settings
 
 __author__ = 'Will'
 import json
@@ -209,7 +210,8 @@ class getUserRecordFastViaWorkers(BaseHandler):
         # logged in
         result = {
           "id": my_id,
-          "admin": self.user.profile().is_admin }
+          "admin": self.user.profile().is_admin,
+          "version": settings.config["version"]}
         since = None
         now = datetime.now()
         if 'since' in self.request.params:
