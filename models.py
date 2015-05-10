@@ -234,7 +234,7 @@ class Item(db.Model):
       # if the user has voted for this item, and the user is excluded, next
       myVoteStr = ',"mine": true,"vote":%d,"descr":"%s"'%(int(vote.vote), vote.comment)
       if vote.untried:
-        myVoteStr += ',"untried": True'
+        myVoteStr += ',"untried": true'
       res = self.json[0:len(self.json)-1]+myVoteStr+'}'
       return res
 
