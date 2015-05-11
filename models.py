@@ -341,7 +341,7 @@ class Item(db.Model):
 
       return data
     except Exception, E:
-      logging.exception('to_json', exc_info=True)
+      logging.exception('to_json %s'%self.key(), exc_info=True)
 
 
 
