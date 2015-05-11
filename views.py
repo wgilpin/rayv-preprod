@@ -698,6 +698,7 @@ def update_item_internal(self, user_id, allow_update=True):
   update_field('category', cat)
   if "place_name" in self.request.params:
     update_field('place_name', self.request.params['place_name'])
+  it.put() # so the key is set
   it.save()
   # refresh cache
   memcache_touch_place(it)
