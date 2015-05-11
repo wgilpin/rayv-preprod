@@ -351,7 +351,7 @@ class migrate(BaseHandler):
       self.remove_orphan_votes()
       self.response.out.write(json.dumps({
         'status':'OK',
-        'detail':'12 - votes clean - MEMCACHE'}))
+        'detail':'12 - votes clean - MEMCACHE\n \n MEMCACHE \n \  MEMCACHE'}))
     elif migration_name == "13":
       self.add_websites()
       self.response.out.write("13 - websites got from google OK")
