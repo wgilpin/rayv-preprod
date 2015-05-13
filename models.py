@@ -37,7 +37,6 @@ class Audit(db.Model):
 
   @classmethod
   def write(cls, kind, usr, msg, send_mail=True, subject=None, trace=None):
-    # print kind+' - '+str(usr)+' - '+msg
     if send_mail:
       try:
         if config['online']:  #DEBUG
@@ -562,14 +561,14 @@ def memcache_get_user_dict(UserId):
 
 
 def memcache_touch_user(id):
-  print "memcache_touch_user %d"%id
+  logging.debug ("memcache_touch_user %d"%id)
   ur = memcache_get_user_dict(id)
   ur['p'].last_write = datetime.datetime.now()
   ur['p'].put()
   memcache.delete(str(id))
 
 def memcache_update_user_votes(id):
-  print "memcache_update_user_votes %d"%id
+  logging.debug("memcache_update_user_votes %d"%id)
   ur = memcache_get_user_dict(id)
   ur['p'].last_write = datetime.datetime.now()
   # ur['p'].put()

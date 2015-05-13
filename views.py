@@ -579,9 +579,9 @@ def update_photo(it, request_handler):
       img.make_thumb()
       img.owner = request_handler.user_id
       img.put()
-      print 'update_photo Ins:',str(img.key())
+      logging.debug('update_photo Ins:',str(img.key()))
       if it.photo:  # the item has an image already?
-        print 'update_photo Del:',str(it.photo.key())
+        logging.debug( 'update_photo Del:',str(it.photo.key()))
         db.delete(it.photo)
     else:
       # no new image - rotate an existing image?
@@ -703,7 +703,7 @@ def update_item_internal(self, user_id, allow_update=True):
   memcache_touch_place(it)
   update_votes(it, self, user_id)
   # todo: why?
-  it.save()  # again
+  it.save()  # to save the json
   # mark user as dirty
   memcache_update_user_votes(user_id)
   logging.info("update_item_internal for "+it.place_name+": "+str(changed))
