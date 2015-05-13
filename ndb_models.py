@@ -247,6 +247,17 @@ class getUserRecordFastViaWorkers(BaseHandler):
         json_str = json.dumps(
           result,
           default=views.json_serial)
+        try:
+          since_str = str(since) if since else ""
+          logging.debug("GetFullUserRecord for %s %s P:%d, V:%d, F:%d"%(
+            self.user.screen_name,
+            since_str,
+            len(places),
+            len(votes),
+            len(friends_list)
+          ))
+        except:
+          pass
         self.response.out.write(json_str)
         #profile_out("getFullUserRecord")
         return
