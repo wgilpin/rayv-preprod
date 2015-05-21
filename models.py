@@ -474,16 +474,6 @@ class Vote(db.Model):
   cuisine = db.ReferenceProperty(Category)
 
   @property
-  def vote(self):
-    if self.vote == VoteValue.VOTE_UNTRIED:
-      return 0
-    return self.vote
-
-  @vote.setter
-  def vote(self, value):
-    self.vote = value
-
-  @property
   def is_untried(self):
     return self.vote == VoteValue.VOTE_UNTRIED
 
