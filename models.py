@@ -465,7 +465,7 @@ A vote for an item
 class Vote(db.Model):
   item = db.ReferenceProperty(Item, collection_name="votes")
   voter = db.IntegerProperty()
-  # vote = db.IntegerProperty()
+  vote = db.IntegerProperty()
   vote_value = db.IntegerProperty(default=VoteValue.VOTE_NONE)
   #untried = db.BooleanProperty(default=False)
   comment = db.TextProperty()
@@ -528,6 +528,7 @@ class Vote(db.Model):
     :returns dict<place_key,list<Vote>>
     """
     try:
+      logging.debug("get_user_votes for %s"%user_id)
       entry = {}
       user_vote_list = Vote.all().filter("voter =", user_id)
       for user_vote in user_vote_list:
