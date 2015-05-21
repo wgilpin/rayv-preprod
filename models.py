@@ -673,11 +673,12 @@ def get_user_votes(user_id):
     user_dict = memcache_get_user_dict(user_id)
     votes = {}
     good_user_dict = True
-    if not 'd' in user_dict:
+    if 'd' in user_dict:
+      if not user_dict['d']:
+        good_user_dict = False
+    else:
       good_user_dict = False
     if not 'v' in user_dict:
-      good_user_dict = False
-    if not user_dict['d']:
       good_user_dict = False
     if not good_user_dict:
       user_dict = memcache_update_user_votes(user_id)
