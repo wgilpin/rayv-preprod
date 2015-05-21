@@ -468,10 +468,8 @@ def google_point_to_json(it, request, GPS_origin=None, map_origin=None, uid_for_
       'key': str(it.key()) if type(it) is models.Item else "",
       'place_name': models.getProp(it, 'place_name'),
       'place_id': models.getProp(it,'place_id',''),
-      'category': category.title if category else "",
+      'cuisineName': category.title if category else "",
       'telephone': models.getProp(it, 'telephone', ''),
-      'untried': False,
-      'vote': 'null',
       'img': image_url,
       'edited': edit_time_unix,
       'thumbnail': thumbnail_url,
@@ -489,11 +487,8 @@ def google_point_to_json(it, request, GPS_origin=None, map_origin=None, uid_for_
         if vote:
           # if the user has voted for this item, and the user is excluded, next
           data["mine"] = True
-          data["vote"] = int(vote.vote)
+          data["vote"] = vote.vote_value
           data["descr"] = vote.comment
-          if vote.untried:
-            data["untried"] = True
-
     return data
   except Exception, E:
     logging.exception('to_json', exc_info=True)

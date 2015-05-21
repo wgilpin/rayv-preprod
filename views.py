@@ -13,7 +13,7 @@ from auth_model import User
 from dataloader import load_data
 from models import Item, DBImage, Vote, Category, getProp, \
   memcache_get_user_dict, memcache_touch_user, \
-  memcache_update_user_votes, memcache_touch_place, get_user_votes
+  memcache_update_user_votes, memcache_touch_place, get_user_votes, VoteValue
 from places_db import PlacesDB
 from profiler import profile_in, profile_out
 from settings import config
@@ -88,9 +88,8 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
       for place_key in votes:
         if not place_key in places:
           place_json = Item.key_to_json(place_key)
-          if user_id == current_user:
-            place_json['vote'] = votes[place_key]['vote']
-            place_json['untried'] = votes[place_key]['untried']
+          # if user_id == current_user:
+          #   place_json['vote'] = votes[place_key]['vote']
           if "category" in place_json:
             places[place_key] = place_json
       for place in places:
@@ -616,17 +615,30 @@ def update_votes(item, request_handler, user_id):
     vote.item = item
     vote.voter = user_id
     vote.comment =  request_handler.request.get('myComment')
-    if request_handler.request.get("untried") == 'true':
-      vote.untried = True
-      vote.vote = 0
-    else:
-      vote_str = request_handler.request.get("voteScore")
-      vote_score = 1 if vote_str == "1" or vote_str == "like" else -1
-      vote.vote = vote_score
+    vote.meal_kind =  int(request_handler.request.get('kind'))
+    vote.place_style=  int(request_handler.request.get('style'))
+    vote.cuisine = Category.get_by_key_name(request_handler.request.get('cuisine'))
+    vote_str = request_handler.request.get("voteScore")
+    try:
+      value = {
+          "1":1,
+          "like":1,
+          "Liked":1,
+          "-1":-1,
+          "dislike":-1,
+          "Disliked":-1,
+          "2":2,
+          "wish":2,
+          "Untried":2,
+          "None": 0
+      }[vote_str]
+    except:
+      value = 0
+    vote.vote_value = value
     vote.put()
     ndb_models.mark_vote_as_updated(str(vote.key()), user_id)
     logging.info ('update_votes for %s "%s"=%d'%
-                  (item.place_name,vote.comment,vote.vote))
+                  (item.place_name,vote.comment,vote.vote_value))
 
   except Exception, ex:
     logging.error("newOrUpdateItem votes exception", exc_info=True)
@@ -687,10 +699,7 @@ def update_item_internal(self, user_id, allow_update=True):
     it.website = self.request.get('website')
 
   # category
-  if "new-item-category" in self.request.params:
-    posted_cat = self.request.get("new-item-category")
-  else:
-    posted_cat = self.request.get("category")
+  posted_cat = self.request.get("cuisine")
   try:
     cat = Category.get_by_key_name(posted_cat)
   except:
@@ -752,9 +761,10 @@ class newOrUpdateItem(BaseHandler):
   @user_required
   def post(self):
     it = update_item_internal(self, self.user_id)
-    # adjust the votes so my own is not added to the up/down score
     ndb_models.mark_place_as_updated(str(it.key()),self.user_id)
-    self.response.out.write(it.get_json_str_with_vote(self.user_id))
+    res = {'place':it.get_json(),
+           'vote': it.votes.filter("voter =", self.user_id).get().to_json(self.user_id)}
+    json.dump(res, self.response.out)
 
 class UpdateVote(BaseHandler):
   @user_required
@@ -830,7 +840,7 @@ class getItem_ajax(BaseHandler):
       it = Item.get_item(key)
       res = {"place_name": it.place_name,
              "address": it.address,
-             "category": it.category.title,
+             "cuisineName": it.category.title,
              "lat": str(it.lat),
              "lng": str(it.lng),
              "key": str(it.key())
@@ -995,21 +1005,21 @@ class addVote_ajax(BaseHandler):
     else:
       # roll back the old vote
       new_vote = my_votes.get()
-      oldVote = new_vote.vote
+      oldVote = new_vote.vote_value
       if oldVote:
-        if oldVote > 0:
+        if oldVote == VoteValue.VOTE_LIKED:
           it.votesUp -= oldVote
-        else:
+        elif oldVote == VoteValue.VOTE_DISLIKED:
           # all votes are abs()
           it.votesDown -= oldVote
-    new_vote.vote = voteScore
+    new_vote.vote_value = voteScore
     new_vote.comment = self.request.get("comment")
     new_vote.when = datetime.datetime.now()
     new_vote.put()
-    if voteScore > 0:
-      it.votesUp += voteScore
-    else:
-      it.votesDown += abs(voteScore)
+    if voteScore == VoteValue.VOTE_LIKED:
+      it.votesUp += 1
+    elif voteScore == VoteValue.VOTE_DISLIKED:
+      it.votesDown -= 1
     it.save()
     # refresh cache
     memcache.set(it_key, it)

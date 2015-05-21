@@ -269,8 +269,11 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
           if idx >= Max:
             break
         vote = models.Vote()
-        vote_score = 1 if (vote_item.key().id() % 2) == 0 else -1
-        vote.vote = vote_score
+        if (vote_item.key().id() % 2) == 0:
+          vote_score = models.VoteValue.VOTE_LIKED
+        else:
+          vote_score = models.VoteValue.VOTE_DISLIKED
+        vote.vote_value = vote_score
         vote.comment = "blah v" + str(i)
         vote.voter = a_sample_user.key.id()
         vote.item = vote_item

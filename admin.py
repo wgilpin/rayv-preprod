@@ -5,7 +5,7 @@ from google.appengine.ext import db
 from auth_logic import BaseHandler
 from webapp2_extras import auth
 from auth_model import User
-from models import Item, DBImage
+from models import Item, DBImage, VoteValue
 import urllib
 from google.appengine.api import urlfetch
 import geo
@@ -57,9 +57,9 @@ class SyncToProd(BaseHandler):
             vote = it.votes.filter("voter =", seed_user).get()
             if vote:
               form_fields['myComment'] = vote.comment
-              form_fields['voteScore'] = vote.vote
+              form_fields['voteScore'] = vote.vote_value
             else:
-              form_fields['voteScore'] = 1
+              form_fields['voteScore'] = VoteValue.VOTE_LIKED
               form_fields['myComment'] = ""
             form_data = urllib.urlencode(form_fields)
             result = urlfetch.fetch(url=url,

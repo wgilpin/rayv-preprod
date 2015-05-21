@@ -219,8 +219,8 @@ class Item(db.Model):
   def __unicode__(self):
     return self.place_name
 
-  def get_json(self):
-    if self.json == 'null' or not self.json:
+  def get_json(self, force_refresh = False):
+    if self.json == 'null' or not self.json or force_refresh:
       json_data = self.set_json()
       self.put()
       return json_data
@@ -231,9 +231,7 @@ class Item(db.Model):
     vote = self.votes.filter("voter =", userId).get()
     if vote:
       # if the user has voted for this item, and the user is excluded, next
-      myVoteStr = ',"mine": true,"vote":%d,"descr":"%s"'%(int(vote.vote), vote.comment)
-      if vote.untried:
-        myVoteStr += ',"untried": true'
+      myVoteStr = ',"mine": true,"vote":%d,"descr":"%s"'%(int(vote.vote_value), vote.comment)
       res = self.json[0:len(self.json)-1]+myVoteStr+'}'
       return res
 
@@ -282,6 +280,8 @@ class Item(db.Model):
     :return: dict - json repr of the place
     """
     try:
+      if not self.is_saved():
+        self.put()
       if request:
         base_url = request.url[:request.url.find(request.path)]
       else:
@@ -315,10 +315,8 @@ class Item(db.Model):
         'key': str(self.key()) ,
         'place_name': self.place_name,
         'place_id': '',
-        'category': self.category.title,
+        'cuisineName': self.category.title,
         'telephone': self.telephone,
-        'untried': False,
-        'vote': 'null',
         'img': image_url,
         'edited': edit_time_unix,
         'thumbnail': thumbnail_url,
@@ -333,11 +331,8 @@ class Item(db.Model):
         if vote:
           # if the user has voted for this item, and the user is excluded, next
           data["mine"] = True
-          data["vote"] = int(vote.vote)
+          data["vote"] = vote.vote_value
           data["descr"] = vote.comment
-          if vote.untried:
-            data["untried"] = True
-
       return data
     except Exception, E:
       logging.exception('to_json %s'%self.key(), exc_info=True)
@@ -388,7 +383,7 @@ class Item(db.Model):
     """
     users_vote = self.votes.filter("voter =", user_id).get()
     if users_vote:
-      return users_vote.comment, users_vote.vote
+      return users_vote.comment, users_vote.vote_value
     else:
       return "", 0
 
@@ -443,19 +438,64 @@ class Item(db.Model):
 
 
 
+class PlaceStyle:
+  STYLE_QUICK = 1
+  STYLE_RELAXED = 2
+  STYLE_FANCY = 3
+
+class MealKind:
+  KIND_BREAKFAST = 1
+  KIND_LUNCH = 2
+  KIND_DINNER = 4
+  KIND_COFFEE = 8
+
+  @classmethod
+  def KIND_ALL(self):
+    return self.KIND_BREAKFAST+self.KIND_COFFEE+self.KIND_DINNER+self.KIND_LUNCH
+
+class VoteValue:
+  VOTE_NONE = 0
+  VOTE_LIKED = 1
+  VOTE_DISLIKED = -1
+  VOTE_UNTRIED = 2
 
 """
 A vote for an item
 """
-
-
 class Vote(db.Model):
   item = db.ReferenceProperty(Item, collection_name="votes")
   voter = db.IntegerProperty()
-  vote = db.IntegerProperty()
-  untried = db.BooleanProperty(default=False)
+  # vote = db.IntegerProperty()
+  vote_value = db.IntegerProperty(default=VoteValue.VOTE_NONE)
+  #untried = db.BooleanProperty(default=False)
   comment = db.TextProperty()
   when = db.DateTimeProperty(auto_now=True)
+  place_style = db.IntegerProperty(default=PlaceStyle.STYLE_RELAXED)
+  meal_kind = db.IntegerProperty(default=MealKind.KIND_ALL())
+  cuisine = db.ReferenceProperty(Category)
+
+  @property
+  def vote(self):
+    if self.vote_value == VoteValue.VOTE_UNTRIED:
+      return 0
+    return self.vote_value
+
+  @vote.setter
+  def vote(self, value):
+    self.vote_value = value
+
+  @property
+  def is_untried(self):
+    return self.vote_value == VoteValue.VOTE_UNTRIED
+
+  @is_untried.setter
+  def is_untried(self, value):
+    if value:
+      self.vote_value = VoteValue.VOTE_UNTRIED
+    else:
+      # we only reset if untried is set
+      if self.vote_value == VoteValue.VOTE_UNTRIED:
+        self.vote_value = VoteValue.VOTE_NONE
 
   @property
   def voter_name(self):
@@ -468,9 +508,11 @@ class Vote(db.Model):
     
   def to_json(self, voter_id):
      return {"key": str(self.item.key()),
-                       "vote": self.vote,
-                       "untried": self.untried,
+                       "vote": self.vote_value,
+                       "style": self.place_style,
+                       "kind": self.meal_kind,
                        "comment": self.comment,
+                       "cuisineName": self.cuisine.title,
                        "voter": voter_id,
                        "place_name": self.item.place_name,
                        # Json date format 1984-10-02T01:00:00
@@ -490,8 +532,10 @@ class Vote(db.Model):
       user_vote_list = Vote.all().filter("voter =", user_id)
       for user_vote in user_vote_list:
         vote_detail = {"key": str(user_vote.item.key()),
-                       "vote": user_vote.vote,
-                       "untried": user_vote.untried,
+                       "vote": user_vote.vote_value,
+                       "kind": user_vote.meal_kind,
+                       "style": user_vote.place_style,
+                       "cuisineName": user_vote.cuisine.title,
                        "comment": user_vote.comment,
                        "voter": user_id,
                        "place_name": user_vote.item.place_name,

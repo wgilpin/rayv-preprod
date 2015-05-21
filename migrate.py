@@ -7,7 +7,7 @@ from google.appengine.ext.db import ReferencePropertyResolveError
 from auth_logic import BaseHandler, user_required
 from auth_model import User
 import geohash
-from models import Item, Vote, DBImage, Category
+from models import Item, Vote, DBImage, Category, VoteValue, MealKind, PlaceStyle
 import geo
 
 __author__ = 'Will'
@@ -187,10 +187,10 @@ class migrate(BaseHandler):
       up = 0
       down = 0
       for v in it.votes:
-        if v.vote > 0:
-          up += v.vote
-        else:
-          down += abs(v.vote)
+        if v.vote_value == VoteValue.VOTE_LIKED:
+          up += 1
+        elif v.vote_value == VoteValue.VOTE_DISLIKED:
+          down -= 1
       it.votesUp = up
       it.votesDown = down
       it.save()
@@ -235,17 +235,17 @@ class migrate(BaseHandler):
       if not vote:
         vote = Vote()
         vote.item = it
-        vote.vote = 1
+        vote.vote_value = VoteValue.VOTE_LIKED
         vote.voter = it.owner
         vote.comment = "blah"
         it.upVotes = 1
         vote.put()
         it.save()
       if it.votesUp == it.votesDown == 0:
-        if vote.vote > 0:
-          it.votesUp = vote.vote
-        else:
-          it.votesDown = abs(vote.vote)
+        if vote.vote_value == VoteValue.VOTE_LIKED:
+          it.votesUp = 1
+        elif vote.vote_value == VoteValue.VOTE_DISLIKED:
+          it.votesDown = -1
         it.save()
 
   @user_required
@@ -297,6 +297,36 @@ class migrate(BaseHandler):
         it.save()
 
   @user_required
+  def wipe_item_json(self):
+    n = 0
+    for p in Item.all():
+      p.set_json()
+      p.put()
+      n += 1
+    self.response.out.write("\n%d "%n)
+
+  @user_required
+  def change_votes_to_votevalue(self):
+    n=0
+    votes = Vote.all()
+    for v in votes:
+      if v.vote == 1:
+        v.vote_value = VoteValue.VOTE_LIKED
+      elif v.vote == -1:
+        v.vote_value = VoteValue.VOTE_DISLIKED
+      elif v.is_untried:
+        v.vote_value = VoteValue.VOTE_UNTRIED
+      else:
+        v.vote_value = VoteValue.VOTE_NONE
+      v.cuisine = v.item.category
+      if v.cuisine.title in ["Burger","Cafe","Fast food","Deli","Fish and chips"]:
+        v.place_style = PlaceStyle.STYLE_QUICK
+      v.put()
+      n += 1
+    self.response.out.write("\n%d "%n)
+
+
+  @user_required
   def get(self):
     migration_name = self.request.get("no")
     if migration_name == '1':
@@ -306,11 +336,11 @@ class migrate(BaseHandler):
       for v in votes:
         dirty = False
         try:
-          if v.vote == True:
-            v.vote = 1
+          if v.vote_value == True:
+            v.vote_value = 1
             dirty = True
         except:
-          v.vote = 1
+          v.vote_value = 1
           dirty = True
         if dirty:
           v.put()
@@ -373,6 +403,12 @@ class migrate(BaseHandler):
     elif migration_name == "add-cuisine":
       self.add_new_cuisine()
       self.response.out.write("Cuisine added")
+    elif migration_name == "set-vote-value":
+      self.change_votes_to_votevalue()
+      self.response.out.write("Vote values added")
+    elif migration_name == "reset-items-json":
+      self.wipe_item_json()
+      self.response.out.write("Places reset\n\nMEMCACHE ********")
     else:
       self.response.out.write("No Migration")
 

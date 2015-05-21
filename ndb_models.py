@@ -161,11 +161,13 @@ class getUserRecordFastViaWorkers(BaseHandler):
     for uv in updated_votes:
       v = models.Vote().get(uv.voteId)
       if v:
-        votes.append(v.to_json(my_id))
-        #adjust
-        place_key = str(v.item.key())
-        if not place_key in places:
-          places[place_key] = v.item.get_json()
+        try:
+          votes.append(v.to_json(my_id))
+          place_key = str(v.item.key())
+          if not place_key in places:
+            places[place_key] = v.item.get_json()
+        except:
+          pass
     return votes, places
 
   def getFullUserRecord(self, my_id, now=None):
@@ -180,7 +182,7 @@ class getUserRecordFastViaWorkers(BaseHandler):
             votes.append(vote)
           if not place_key in places:
             place_json = models.Item.key_to_json(place_key, my_id)
-            if "category" in place_json:
+            if "cuisineName" in place_json:
               places[place_key] = place_json
         except Exception, e:
           if place_json:
