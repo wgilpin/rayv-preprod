@@ -487,7 +487,7 @@ def google_point_to_json(it, request, GPS_origin=None, map_origin=None, uid_for_
         if vote:
           # if the user has voted for this item, and the user is excluded, next
           data["mine"] = True
-          data["vote"] = vote.vote_value
+          data["vote"] = vote.vote
           data["descr"] = vote.comment
     return data
   except Exception, E:

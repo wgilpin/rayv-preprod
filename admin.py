@@ -57,7 +57,7 @@ class SyncToProd(BaseHandler):
             vote = it.votes.filter("voter =", seed_user).get()
             if vote:
               form_fields['myComment'] = vote.comment
-              form_fields['voteScore'] = vote.vote_value
+              form_fields['voteScore'] = vote.vote
             else:
               form_fields['voteScore'] = VoteValue.VOTE_LIKED
               form_fields['myComment'] = ""

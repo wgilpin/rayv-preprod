@@ -231,7 +231,7 @@ class Item(db.Model):
     vote = self.votes.filter("voter =", userId).get()
     if vote:
       # if the user has voted for this item, and the user is excluded, next
-      myVoteStr = ',"mine": true,"vote":%d,"descr":"%s"'%(int(vote.vote_value), vote.comment)
+      myVoteStr = ',"mine": true,"vote":%d,"descr":"%s"'%(int(vote.vote), vote.comment)
       res = self.json[0:len(self.json)-1]+myVoteStr+'}'
       return res
 
@@ -331,7 +331,7 @@ class Item(db.Model):
         if vote:
           # if the user has voted for this item, and the user is excluded, next
           data["mine"] = True
-          data["vote"] = vote.vote_value
+          data["vote"] = vote.vote
           data["descr"] = vote.comment
       return data
     except Exception, E:
@@ -383,7 +383,7 @@ class Item(db.Model):
     """
     users_vote = self.votes.filter("voter =", user_id).get()
     if users_vote:
-      return users_vote.comment, users_vote.vote_value
+      return users_vote.comment, users_vote.vote
     else:
       return "", 0
 
@@ -466,8 +466,7 @@ class Vote(db.Model):
   item = db.ReferenceProperty(Item, collection_name="votes")
   voter = db.IntegerProperty()
   vote = db.IntegerProperty()
-  vote_value = db.IntegerProperty(default=VoteValue.VOTE_NONE)
-  #untried = db.BooleanProperty(default=False)
+  untried = db.BooleanProperty(default=False)
   comment = db.TextProperty()
   when = db.DateTimeProperty(auto_now=True)
   place_style = db.IntegerProperty(default=PlaceStyle.STYLE_RELAXED)
@@ -476,26 +475,26 @@ class Vote(db.Model):
 
   @property
   def vote(self):
-    if self.vote_value == VoteValue.VOTE_UNTRIED:
+    if self.vote == VoteValue.VOTE_UNTRIED:
       return 0
-    return self.vote_value
+    return self.vote
 
   @vote.setter
   def vote(self, value):
-    self.vote_value = value
+    self.vote = value
 
   @property
   def is_untried(self):
-    return self.vote_value == VoteValue.VOTE_UNTRIED
+    return self.vote == VoteValue.VOTE_UNTRIED
 
   @is_untried.setter
   def is_untried(self, value):
     if value:
-      self.vote_value = VoteValue.VOTE_UNTRIED
+      self.vote = VoteValue.VOTE_UNTRIED
     else:
       # we only reset if untried is set
-      if self.vote_value == VoteValue.VOTE_UNTRIED:
-        self.vote_value = VoteValue.VOTE_NONE
+      if self.vote == VoteValue.VOTE_UNTRIED:
+        self.vote = VoteValue.VOTE_NONE
 
   @property
   def voter_name(self):
@@ -508,7 +507,7 @@ class Vote(db.Model):
     
   def to_json(self, voter_id):
      return {"key": str(self.item.key()),
-                       "vote": self.vote_value,
+                       "vote": self.vote,
                        "style": self.place_style,
                        "kind": self.meal_kind,
                        "comment": self.comment,
@@ -533,7 +532,7 @@ class Vote(db.Model):
       user_vote_list = Vote.all().filter("voter =", user_id)
       for user_vote in user_vote_list:
         vote_detail = {"key": str(user_vote.item.key()),
-                       "vote": user_vote.vote_value,
+                       "vote": user_vote.vote,
                        "kind": user_vote.meal_kind,
                        "style": user_vote.place_style,
                        "cuisineName": user_vote.cuisine.title,

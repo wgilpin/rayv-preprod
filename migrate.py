@@ -187,9 +187,9 @@ class migrate(BaseHandler):
       up = 0
       down = 0
       for v in it.votes:
-        if v.vote_value == VoteValue.VOTE_LIKED:
+        if v.vote == VoteValue.VOTE_LIKED:
           up += 1
-        elif v.vote_value == VoteValue.VOTE_DISLIKED:
+        elif v.vote == VoteValue.VOTE_DISLIKED:
           down -= 1
       it.votesUp = up
       it.votesDown = down
@@ -235,16 +235,16 @@ class migrate(BaseHandler):
       if not vote:
         vote = Vote()
         vote.item = it
-        vote.vote_value = VoteValue.VOTE_LIKED
+        vote.vote = VoteValue.VOTE_LIKED
         vote.voter = it.owner
         vote.comment = "blah"
         it.upVotes = 1
         vote.put()
         it.save()
       if it.votesUp == it.votesDown == 0:
-        if vote.vote_value == VoteValue.VOTE_LIKED:
+        if vote.vote == VoteValue.VOTE_LIKED:
           it.votesUp = 1
-        elif vote.vote_value == VoteValue.VOTE_DISLIKED:
+        elif vote.vote == VoteValue.VOTE_DISLIKED:
           it.votesDown = -1
         it.save()
 
@@ -311,16 +311,27 @@ class migrate(BaseHandler):
     votes = Vote.all()
     for v in votes:
       if v.vote == 1:
-        v.vote_value = VoteValue.VOTE_LIKED
+        v.vote = VoteValue.VOTE_LIKED
       elif v.vote == -1:
-        v.vote_value = VoteValue.VOTE_DISLIKED
-      elif v.is_untried:
-        v.vote_value = VoteValue.VOTE_UNTRIED
+        v.vote = VoteValue.VOTE_DISLIKED
+      elif v.untried:
+        v.vote = VoteValue.VOTE_UNTRIED
       else:
-        v.vote_value = VoteValue.VOTE_NONE
+        v.vote = VoteValue.VOTE_NONE
       v.cuisine = v.item.category
       if v.cuisine.title in ["Burger","Cafe","Fast food","Deli","Fish and chips"]:
         v.place_style = PlaceStyle.STYLE_QUICK
+      v.put()
+      n += 1
+    self.response.out.write("\n%d "%n)
+
+  @user_required
+  def change_votes_to_4_dot(self):
+    n=0
+    votes = Vote.all()
+    for v in votes:
+      if v.untried:
+        v.vote = VoteValue.VOTE_UNTRIED
       v.put()
       n += 1
     self.response.out.write("\n%d "%n)
@@ -336,11 +347,11 @@ class migrate(BaseHandler):
       for v in votes:
         dirty = False
         try:
-          if v.vote_value == True:
-            v.vote_value = 1
+          if v.vote == True:
+            v.vote = 1
             dirty = True
         except:
-          v.vote_value = 1
+          v.vote = 1
           dirty = True
         if dirty:
           v.put()
@@ -409,6 +420,12 @@ class migrate(BaseHandler):
     elif migration_name == "reset-items-json":
       self.wipe_item_json()
       self.response.out.write("Places reset\n\nMEMCACHE ********")
+    elif migration_name == "change-votes-to-4-dot":
+      self.change_votes_to_4_dot()
+      self.response.out.write("Places reset\n\nMEMCACHE ********")
+
+
+
     else:
       self.response.out.write("No Migration")
 

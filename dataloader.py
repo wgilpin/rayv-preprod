@@ -273,7 +273,7 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
           vote_score = models.VoteValue.VOTE_LIKED
         else:
           vote_score = models.VoteValue.VOTE_DISLIKED
-        vote.vote_value = vote_score
+        vote.vote = vote_score
         vote.comment = "blah v" + str(i)
         vote.voter = a_sample_user.key.id()
         vote.item = vote_item

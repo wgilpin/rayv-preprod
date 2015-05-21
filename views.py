@@ -634,11 +634,11 @@ def update_votes(item, request_handler, user_id):
       }[vote_str]
     except:
       value = 0
-    vote.vote_value = value
+    vote.vote = value
     vote.put()
     ndb_models.mark_vote_as_updated(str(vote.key()), user_id)
     logging.info ('update_votes for %s "%s"=%d'%
-                  (item.place_name,vote.comment,vote.vote_value))
+                  (item.place_name,vote.comment,vote.vote))
 
   except Exception, ex:
     logging.error("newOrUpdateItem votes exception", exc_info=True)
@@ -1005,14 +1005,14 @@ class addVote_ajax(BaseHandler):
     else:
       # roll back the old vote
       new_vote = my_votes.get()
-      oldVote = new_vote.vote_value
+      oldVote = new_vote.vote
       if oldVote:
         if oldVote == VoteValue.VOTE_LIKED:
           it.votesUp -= oldVote
         elif oldVote == VoteValue.VOTE_DISLIKED:
           # all votes are abs()
           it.votesDown -= oldVote
-    new_vote.vote_value = voteScore
+    new_vote.vote = voteScore
     new_vote.comment = self.request.get("comment")
     new_vote.when = datetime.datetime.now()
     new_vote.put()
