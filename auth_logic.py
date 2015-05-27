@@ -38,7 +38,7 @@ def api_login_required(handler):
   def check_login(self, *args, **kwargs):
     auth = self.auth
     if not auth.get_user_by_session():
-      self.response.out.write("LOGIN")
+      self.abort(401)
     else:
       return handler(self, *args, **kwargs)
 

@@ -642,6 +642,7 @@ def update_votes(item, request_handler, user_id):
 
   except Exception, ex:
     logging.error("newOrUpdateItem votes exception", exc_info=True)
+    raise
 
 
 def update_item_internal(self, user_id, allow_update=True):
@@ -769,7 +770,8 @@ class newOrUpdateItem(BaseHandler):
 class UpdateVote(BaseHandler):
   @user_required
   def post(self):
-    it = Item.get_item(self.request.get('key'))
+    key = self.request.get('key')
+    it = Item.get_item(key)
     if it:
       update_votes(it, self, self.user_id)
       # mark user as dirty
@@ -777,7 +779,7 @@ class UpdateVote(BaseHandler):
       self.response.out.write('OK')
       logging.debug("UpdateVote OK")
       return
-    logging.error("UpdateVote 404")
+    logging.error("UpdateVote 404 for %s"%key)
     self.abort(404)
 
 class loadTestData(BaseHandler):
@@ -953,12 +955,13 @@ class loginAPI(BaseHandler):
     except (InvalidAuthIdError, InvalidPasswordError, HTTPUnauthorized) :
       logging.info(
         'LoginAPI failed for userId %s',
-        username, exc_info=True)
+        username)
       self.abort(401)
     except Exception:
       logging.exception(
         'LoginAPI failed because of unexpected error', exc_info=True)
       self.abort(500)
+
 
 class login(BaseHandler):
   def post(self):

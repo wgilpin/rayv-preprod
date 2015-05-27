@@ -11,7 +11,7 @@ import json
 import logging
 import models
 from base_handler import BaseHandler
-from auth_logic import user_required
+from auth_logic import user_required, api_login_required
 import views
 
 
@@ -191,7 +191,7 @@ class getUserRecordFastViaWorkers(BaseHandler):
             logging.error("getFullUserRecord Exception %s"%place_key, exc_info=True)
     return votes, places
 
-  @user_required
+  @api_login_required
   def get(self):
     """ get the user record, including friends' places """
     try:
