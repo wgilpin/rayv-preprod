@@ -5,10 +5,12 @@ from google.appengine.ext import db
 from auth_logic import BaseHandler
 from webapp2_extras import auth
 from auth_model import User
-from models import Item, DBImage, VoteValue
+from models import Item, DBImage, VoteValue, memcache_update_user_votes, Vote
 import urllib
 from google.appengine.api import urlfetch
 import geo
+import ndb_models
+from views import update_votes
 
 __author__ = 'Will'
 
@@ -98,3 +100,35 @@ class updatePhotoFromGoogle(BaseHandler):
       except:
         logging.error('updatePhotoFromGoogle', exc_info=True)
 
+class UpdateAdminVote(BaseHandler):
+  def post(self):
+    vote_key = self.request.get('vote_key')
+    item_key = self.request.get('item_key')
+    vote = Vote.get(vote_key)
+    it = Item.get_item(item_key)
+    if it:
+      try:
+        old_votes = it.votes.filter("voter =", vote.voter)
+        for v in old_votes:
+          if str(v.key()) != vote_key:
+            v.delete()
+        vote = Vote.get(vote_key)
+        vote.meal_kind =  int(self.request.get('kind'))
+        vote.place_style=  int(self.request.get('style'))
+        if not vote.cuisine:
+          vote.cuisine = vote.item.category
+        vote.put()
+        it.set_json()
+        ndb_models.mark_vote_as_updated(str(vote.key()), vote.voter)
+        logging.info ('UpdateAdminVote for %s, %s'%(it.place_name,vote_key))
+      except Exception, ex:
+        logging.error("UpdateAdminVote votes exception", exc_info=True)
+        raise
+
+      # mark user as dirty
+      memcache_update_user_votes(vote.voter)
+      self.response.out.write('OK')
+      logging.debug("UpdateAdminVote OK")
+      return
+    logging.error("UpdateAdminVote 404 for %s"%vote_key)
+    self.abort(404)

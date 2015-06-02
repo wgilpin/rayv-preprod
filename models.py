@@ -473,6 +473,18 @@ class Vote(db.Model):
   meal_kind = db.IntegerProperty(default=MealKind.KIND_ALL())
   cuisine = db.ReferenceProperty(Category)
 
+  def kind_str(self):
+    kinds = []
+    if MealKind.KIND_BREAKFAST & self.meal_kind:
+      kinds.append("Breakfast")
+    if MealKind.KIND_LUNCH & self.meal_kind:
+      kinds.append("Lunch")
+    if MealKind.KIND_DINNER & self.meal_kind:
+      kinds.append("Dinner")
+    if MealKind.KIND_COFFEE & self.meal_kind:
+      kinds.append("Coffee")
+    return ', '.join(kinds)
+
   @property
   def is_untried(self):
     return self.vote == VoteValue.VOTE_UNTRIED

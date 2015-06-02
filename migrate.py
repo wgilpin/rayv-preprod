@@ -2,6 +2,7 @@ import json
 import logging
 import urllib2
 from datetime import datetime
+from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.ext.db import ReferencePropertyResolveError
 from auth_logic import BaseHandler, user_required
@@ -57,6 +58,7 @@ class migrate(BaseHandler):
         self.response.out.write('Delete 1')
       except Exception:
         self.response.out.write("FAIL ")
+    memcache.flush_all()
 
   @user_required
   def add_cuisines(self):
@@ -303,6 +305,7 @@ class migrate(BaseHandler):
       p.set_json()
       p.put()
       n += 1
+    memcache.flush_all()
     self.response.out.write("\n%d "%n)
 
   @user_required
@@ -323,6 +326,7 @@ class migrate(BaseHandler):
         v.place_style = PlaceStyle.STYLE_QUICK
       v.put()
       n += 1
+    memcache.flush_all()
     self.response.out.write("\n%d "%n)
 
   @user_required
@@ -332,10 +336,51 @@ class migrate(BaseHandler):
     for v in votes:
       if v.untried:
         v.vote = VoteValue.VOTE_UNTRIED
+      v.cuisine = v.item.category
       v.put()
       n += 1
+    memcache.flush_all()
     self.response.out.write("\n%d "%n)
 
+  @user_required
+  def add_google_data_if_missing(self):
+    # add google img where missing
+    items = Item.all()
+    for it in items:
+      try:
+        good = True
+        if not it.address:
+          good=False
+        if not it.photo:
+          good = False
+        else:
+          if not it.photo.thumb:
+            good = False
+        if good:
+          self.response.out.write("photo %s<br>\n" % it.title)
+          continue
+        goog = geo.getPlaceDetailFromGoogle(it)
+        remoteURL = goog['photo']
+        if remoteURL:
+          main_url = remoteURL % 250
+          data = urllib2.urlopen(main_url)
+          it.photo.picture = db.Blob(data.read())
+          it.photo.remoteURL = None
+          thumb_url = remoteURL % 65
+          thumb_data = urllib2.urlopen(thumb_url)
+          it.photo.thumb = db.Blob(thumb_data.read())
+          it.photo.put()
+        if 'address' in goog:
+            it.address = goog['address']
+        if not it.address:
+          it.address = geo.geoCodeLatLng(it.lat, it.lng)
+        it.set_json()
+        it.put()
+        self.response.out.write("Added %s"%it.title)
+      except Exception, e:
+        self.response.out.write("FAIL %s<br>" % it.title)
+        self.response.out.write("FAIL %s-%s<br>" % (it.title, str(e)))
+    memcache.flush_all()
 
   @user_required
   def get(self):
@@ -392,7 +437,7 @@ class migrate(BaseHandler):
       self.remove_orphan_votes()
       self.response.out.write(json.dumps({
         'status':'OK',
-        'detail':'12 - votes clean - MEMCACHE\n \n MEMCACHE \n \  MEMCACHE'}))
+        'detail':'12 - votes clean'}))
     elif migration_name == "13":
       self.add_websites()
       self.response.out.write("13 - websites got from google OK")
@@ -419,12 +464,13 @@ class migrate(BaseHandler):
       self.response.out.write("Vote values added")
     elif migration_name == "reset-items-json":
       self.wipe_item_json()
-      self.response.out.write("Places reset\n\nMEMCACHE ********")
+      self.response.out.write("Places reset")
     elif migration_name == "change-votes-to-4-dot":
       self.change_votes_to_4_dot()
-      self.response.out.write("Places reset\n\nMEMCACHE ********")
-
-
+      self.response.out.write("Places reset")
+    elif migration_name == "add_google_data":
+      self.add_google_data_if_missing()
+      self.response.out.write("Google data added")
 
     else:
       self.response.out.write("No Migration")

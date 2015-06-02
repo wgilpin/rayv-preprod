@@ -277,6 +277,7 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
         vote.comment = "blah v" + str(i)
         vote.voter = a_sample_user.key.id()
         vote.item = vote_item
+        vote.cuisine = vote_item.category
         vote.put()
         i += 1
       res.append("Votes")

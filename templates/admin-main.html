@@ -23,9 +23,11 @@
     <a href="#" id="admin-send" class="btn btn-default">Sync to Prod</a>
     <a href="#" id="admin-photos" class="btn btn-default">Reload Photos</a>
     <a href="#" id="admin-clean-votes" class="btn btn-default">Cleanup after Delete</a>
+    <a href="#" id="admin-expand-all" class="btn btn-default">Expand All</a>
+    <a href="#" id="admin-collapse-all" class="btn btn-default">Collapse All</a>
     <div class="panel-group">
         {% for item in items %}
-            <div class="panel panel-default">
+            <div class="panel panel-default" data-key="{{ item.key }}">
                 <div class="panel-heading">
                     <h4 class="panel-title">
                         <input type="checkbox" data-key="{{ item.key }}">
@@ -63,13 +65,75 @@
                                         <div class="col-md-1">Voter</div>
                                         <div class="col-md-1">Vote</div>
                                         <div class="col-md-1">Untried</div>
-                                        <div class="col-md-3">Comment</div>
+                                        <div class="col-md-3">Kind</div>
+                                        <div class="col-md-2">Style</div>
+                                        <div class="col-md-1">Cuisine</div>
+                                        <div class="col-md-2">Comment</div>
+                                        <div class="col-md-1"><a href="#" class="btn btn-primary vote-save-btn">Save</a></div>
                                     </div>
                                     {% for vote in item.votes %}
-                                        <div class="row">
-                                            <div class="col-md-1">{{ vote.voter_name }}</div>
-                                            <div class="col-md-1">{{ vote.vote }}</div>
-                                            <div class="col-md-1">{{ vote.untried }}</div>
+                                        <div class="row vote" data-key="{{ vote.key }}">
+                                            <div class="col-md-1 vote-voter">{{ vote.voter_name }}</div>
+                                            <div class="col-md-1 vote-vote">{{ vote.vote }}</div>
+                                            <div class="col-md-1 vote-untried">{{ vote.untried }}</div>
+                                            <div class="col-md-3">
+                                                  <div class="btn-group" role="group" aria-label="First group">
+                                                    <button type="button"
+                                                      {%  if "Breakfast" in vote.kind_str %}
+                                                      class="btn btn-primary btn-kind"
+                                                      {% else %}
+                                                      class="btn btn-default btn-kind"
+                                                      {% endif %}
+                                                    >B'fast</button>
+                                                    <button type="button"
+                                                        {%  if "Lunch" in vote.kind_str %}
+                                                          class="btn btn-primary btn-kind"
+                                                          {% else %}
+                                                          class="btn btn-default btn-kind"
+                                                          {% endif %}
+                                                        >Lunch</button>
+                                                    <button type="button"
+                                                        {%  if "Dinner" in vote.kind_str %}
+                                                          class="btn btn-primary btn-kind"
+                                                          {% else %}
+                                                          class="btn btn-default btn-kind"
+                                                          {% endif %}
+                                                        >Dinner</button>
+                                                    <button type="button"
+                                                        {%  if "Coffee" in vote.kind_str %}
+                                                          class="btn btn-primary btn-kind"
+                                                          {% else %}
+                                                          class="btn btn-default btn-kind"
+                                                          {% endif %}
+                                                        >Coffee</button>
+                                                  </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="btn-group vote-style-group" role="group" aria-label="First group">
+                                                    <button type="button"
+                                                        {%  if vote.place_style == 1 %}
+                                                          class="btn btn-primary btn-style"
+                                                          {% else %}
+                                                          class="btn btn-default btn-style"
+                                                        {% endif %}
+                                                        >Quick</button>
+                                                    <button type="button"
+                                                        {%  if vote.place_style == 2 %}
+                                                          class="btn btn-primary btn-style"
+                                                          {% else %}
+                                                          class="btn btn-default btn-style"
+                                                        {% endif %}
+                                                        >Relaxed</button>
+                                                    <button type="button"
+                                                        {%  if vote.place_style == 3 %}
+                                                          class="btn btn-primary btn-style"
+                                                          {% else %}
+                                                          class="btn btn-default btn-style"
+                                                        {% endif %}
+                                                        >Fancy</button>
+                                                  </div>
+                                            </div>
+                                            <div class="col-md-1">{{ vote.cuisine.title }}</div>
                                             <div class="col-md-3">{{ vote.comment }}</div>
                                         </div>
                                     {% endfor %}

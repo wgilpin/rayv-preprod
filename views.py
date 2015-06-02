@@ -782,6 +782,8 @@ class UpdateVote(BaseHandler):
     logging.error("UpdateVote 404 for %s"%key)
     self.abort(404)
 
+
+
 class loadTestData(BaseHandler):
   def get(self):
     results = None
