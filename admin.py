@@ -5,7 +5,8 @@ from google.appengine.ext import db
 from auth_logic import BaseHandler
 from webapp2_extras import auth
 from auth_model import User
-from models import Item, DBImage, VoteValue, memcache_update_user_votes, Vote
+from models import Item, DBImage, VoteValue, memcache_update_user_votes, Vote, \
+  Category
 import urllib
 from google.appengine.api import urlfetch
 import geo
@@ -115,6 +116,9 @@ class UpdateAdminVote(BaseHandler):
         vote = Vote.get(vote_key)
         vote.meal_kind =  int(self.request.get('kind'))
         vote.place_style=  int(self.request.get('style'))
+        cuisine = self.request.get('cuisine')
+        if cuisine:
+          vote.cuisine = Category.get_by_key_name(cuisine)
         if not vote.cuisine:
           vote.cuisine = vote.item.category
         vote.put()

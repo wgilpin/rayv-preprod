@@ -55,6 +55,61 @@ Admin.cleanup_after_delete = function(){
     });
 };
 
+Admin.GetCuisines = function(){
+
+    $.ajax({
+        url:'/getCuisines_ajax',
+        method:'GET',
+        data:{},
+        success:function(d){
+            Admin.cuisineList = d["categories"];
+            console.log("Cuisines got");
+        },
+        error:function(jqXHR, textStatus, errorThrown){
+            alert('Cusine fetch Failed - see server logs');
+            console.error('GetCuisines: '+
+                jqXHR+', '+
+                textStatus+', '+
+                errorThrown);
+        },
+        dataType: "json"
+    });
+
+};
+
+Admin.SelectCuisine = function(){
+
+    var optionSelected = $("option:selected", this);
+    var valueSelected = this.value;
+    $(".cuisine-btn").show();
+    $(this).parent().find('.cuisine-btn').text(valueSelected);
+    $(".cuisine-picker").remove();
+};
+
+Admin.CreateCuisinePicker = function (){
+    var el = $(this);
+
+    // kill old ones
+    $(".cuisine-picker").remove();
+    $(".cuisine-btn").show();
+
+    var s = $('<select class="cuisine-picker" />');
+
+    for(var val in Admin.cuisineList) {
+            $('<option />', {
+                value: Admin.cuisineList[val],
+                text: Admin.cuisineList[val]
+            }).appendTo(s);
+    }
+    s.val($(el).text());
+
+
+    s.appendTo(el.parent());
+    el.hide();
+    $('.cuisine-picker').change(Admin.SelectCuisine);
+};
+
+
 Admin.update_vote = function(){
     var voteKey = $(this).parent().parent().parent().find('.vote').data('key');
     var placeKey = $(this).parent().parent().parent().parent().parent().parent().parent().parent().data('key');
@@ -81,6 +136,9 @@ Admin.update_vote = function(){
         style = 2;
     if (fancy.hasClass('btn-primary')||fancy.hasClass('btn-danger'))
         style = 3;
+    var cuisine =  $(this).parent().parent().parent().find("option:selected").text();
+    if (!cuisine)
+        cuisine = $(this).parent().parent().parent().find(".cuisine-btn").text();
 
     $.ajax({
         url:'/admin/update_vote',
@@ -90,6 +148,7 @@ Admin.update_vote = function(){
             'item_key': placeKey,
             'kind':kind,
             'style':style,
+            'cuisine': cuisine
         },
         success:function(d){
             alert('Done')
@@ -143,7 +202,10 @@ Admin.toggle_style = function(){
     $(this).addClass('btn-danger');
 };
 
+
+
 $(function(){
+    Admin.GetCuisines();
     $("#admin-send").click(Admin.send);
     $("#admin-photos").click(Admin.updatePhotos);
     $("#admin-clean-votes").click(Admin.cleanup_after_delete);
@@ -152,4 +214,5 @@ $(function(){
     $(".vote-save-btn").click(Admin.update_vote);
     $(".btn-style").click(Admin.toggle_style);
     $(".btn-kind").click(Admin.toggle_kind);
+    $(".cuisine-btn").click(Admin.CreateCuisinePicker);
 })
