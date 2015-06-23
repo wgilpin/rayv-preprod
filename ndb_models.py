@@ -162,7 +162,7 @@ class getUserRecordFastViaWorkers(BaseHandler):
       v = models.Vote().get(uv.voteId)
       if v:
         try:
-          votes.append(v.to_json(my_id))
+          votes.append(v.to_json())
           place_key = str(v.item.key())
           if not place_key in places:
             places[place_key] = v.item.get_json()
@@ -258,6 +258,11 @@ class getUserRecordFastViaWorkers(BaseHandler):
             len(votes),
             len(friends_list)
           ))
+        except:
+          pass
+        try:
+          #logging
+          logging.debug("getUserRecordFastViaWorkers result "+json_str)
         except:
           pass
         self.response.out.write(json_str)

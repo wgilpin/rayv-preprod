@@ -762,9 +762,10 @@ class newOrUpdateItem(BaseHandler):
   @user_required
   def post(self):
     it = update_item_internal(self, self.user_id)
+    logging.info('newOrUpdateItem %s by %s'%(it.place_name, self.user_id))
     ndb_models.mark_place_as_updated(str(it.key()),self.user_id)
     res = {'place':it.get_json(),
-           'vote': it.votes.filter("voter =", self.user_id).get().to_json(self.user_id)}
+           'vote': it.votes.filter("voter =", self.user_id).get().to_json()}
     json.dump(res, self.response.out)
 
 class UpdateVote(BaseHandler):
@@ -983,7 +984,7 @@ class login(BaseHandler):
       return self.render_template("index.html", con)
     except (InvalidAuthIdError, InvalidPasswordError) :
       logging.info(
-        'Login failed for userId %s'%username, exc_info=True)
+        'Login failed for userId %s'%username)
       return self.render_template("login.html", {"message": "Login Failed"})
     except Exception:
       logging.exception(

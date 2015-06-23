@@ -507,14 +507,14 @@ class Vote(db.Model):
     name = user.screen_name
     memcache.set('USERNAME' + str(self.voter), name)
     
-  def to_json(self, voter_id):
+  def to_json(self):
      return {"key": str(self.item.key()),
                        "vote": self.vote,
                        "style": self.place_style,
                        "kind": self.meal_kind,
                        "comment": self.comment,
                        "cuisineName": self.cuisine.title,
-                       "voter": voter_id,
+                       "voter": self.voter,
                        "place_name": self.item.place_name,
                        # Json date format 1984-10-02T01:00:00
                        "when": self.when.strftime(
