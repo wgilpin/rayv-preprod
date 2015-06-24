@@ -251,6 +251,18 @@ class migrate(BaseHandler):
         it.save()
 
   @user_required
+  def only_one_vote_per_user_per_item(self):
+    # make sure each item has 1 vote
+    items = Item.all()
+    for it in items:
+      votes_per_voter = {}
+      for v in it.votes:
+        if v.voter in votes_per_voter:
+          db.delete(v)
+        else:
+          votes_per_voter[v.voter] = True
+
+  @user_required
   def item_title_to_StringProperty(self):
     # change Item title property to a StringProp not a textProp (place_name)
     items = Item.all()
@@ -471,6 +483,9 @@ class migrate(BaseHandler):
     elif migration_name == "add_google_data":
       self.add_google_data_if_missing()
       self.response.out.write("Google data added")
+    elif migration_name == "dedup_votes":
+      self.only_one_vote_per_user_per_item()
+      self.response.out.write("Votes Deduplicated")
 
     else:
       self.response.out.write("No Migration")

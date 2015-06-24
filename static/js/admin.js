@@ -67,10 +67,7 @@ Admin.GetCuisines = function(){
         },
         error:function(jqXHR, textStatus, errorThrown){
             alert('Cusine fetch Failed - see server logs');
-            console.error('GetCuisines: '+
-                jqXHR+', '+
-                textStatus+', '+
-                errorThrown);
+            console.error('GetCuisines: '+jqXHR+', '+textStatus+', '+errorThrown);
         },
         dataType: "json"
     });
@@ -111,12 +108,12 @@ Admin.CreateCuisinePicker = function (){
 
 
 Admin.update_vote = function(){
-    var voteKey = $(this).parent().parent().parent().find('.vote').data('key');
+    var voteKey = $(this).parent().parent().data('key');
     var placeKey = $(this).parent().parent().parent().parent().parent().parent().parent().parent().data('key');
-    var kind_bfast = $(this).parent().parent().parent().find("button:contains('fast')");
-    var kind_lunch = $(this).parent().parent().parent().find("button:contains('Lunch')");
-    var kind_dinner = $(this).parent().parent().parent().find("button:contains('Dinner')");
-    var kind_coffee= $(this).parent().parent().parent().find("button:contains('Coffee')");
+    var kind_bfast = $(this).parent().parent().find("button:contains('fast')");
+    var kind_lunch = $(this).parent().parent().find("button:contains('Lunch')");
+    var kind_dinner = $(this).parent().parent().find("button:contains('Dinner')");
+    var kind_coffee= $(this).parent().parent().find("button:contains('Coffee')");
     var kind = 0;
     if (kind_bfast.hasClass('btn-primary') || kind_bfast.hasClass('btn-danger'))
         kind += 1;
@@ -126,9 +123,9 @@ Admin.update_vote = function(){
         kind += 2;
     if (kind_dinner.hasClass('btn-primary') || kind_dinner.hasClass('btn-danger'))
       kind += 4;
-    var quick = $(this).parent().parent().parent().find("button:contains('Quick')");
-    var relaxed = $(this).parent().parent().parent().find("button:contains('Relaxed')");
-    var fancy = $(this).parent().parent().parent().find("button:contains('Fancy')");
+    var quick = $(this).parent().parent().find("button:contains('Quick')");
+    var relaxed = $(this).parent().parent().find("button:contains('Relaxed')");
+    var fancy = $(this).parent().parent().find("button:contains('Fancy')");
     var style=0;
     if (quick.hasClass('btn-primary')||quick.hasClass('btn-danger'))
         style = 1;

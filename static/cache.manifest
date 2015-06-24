@@ -28,39 +28,39 @@ CACHE MANIFEST
  static/images/2.png
  static/images/3.png
  static/images/4.png
- static/images/5.png
- static/images/6.png
- static/images/6.png
- static/images/blue_dot.png
- static/images/icons-18-black.png
- static/images/icons-36-black.png
- static/images/icons-18-white.png
- static/images/icons-36-white.png
- static/images/marker-btn.png
- static/images/phone.png
- static/images/web-icon.png
- static/images/search.png
- static/images/rotate.png
- static/images/86-camera.png
- static/templates/add-search-nearby-template.htt
- static/templates/item-votes-list.htt
- static/templates/list-item-template.htt
- static/js/binaryajax.js
- static/js/black-book.js
- static/js/canvasResize.jquery.json
- static/js/canvasResize.js
- static/js/codiqa.ext.js
- static/js/codiqa.ext.min.js
- static/js/exif.js
- static/js/jquery.canvasResize.js
- static/js/jquery.exif.js
- static/js/jquery-1.11.1.min.js
- static/js/jquery-1.11.1.min.map
- static/js/jquery.mobile-1.3.2.min.js
- static/js/markup.min.js
- static/js/shout-login.js
- static/js/shout-reset.js
- static/js/zepto.min.js
+# static/images/5.png
+# static/images/6.png
+# static/images/6.png
+# static/images/blue_dot.png
+# static/images/icons-18-black.png
+# static/images/icons-36-black.png
+# static/images/icons-18-white.png
+# static/images/icons-36-white.png
+# static/images/marker-btn.png
+# static/images/phone.png
+# static/images/web-icon.png
+# static/images/search.png
+# static/images/rotate.png
+#3 static/images/86-camera.png
+# static/templates/add-search-nearby-template.htt
+# static/templates/item-votes-list.htt
+# static/templates/list-item-template.htt
+# static/js/binaryajax.js
+# static/js/black-book.js
+## static/js/canvasResize.jquery.json
+#3 static/js/canvasResize.js
+# static/js/codiqa.ext.js
+# static/js/codiqa.ext.min.js
+# static/js/exif.js
+# static/js/jquery.canvasResize.js
+# static/js/jquery.exif.js
+# static/js/jquery-1.11.1.min.js
+# static/js/jquery-1.11.1.min.map
+# static/js/jquery.mobile-1.3.2.min.js
+ #static/js/markup.min.js
+ #static/js/shout-login.js
+ #static/js/shout-reset.js
+# static/js/zepto.min.js
 
 NETWORK:
 # All URLs that start with the following lines
@@ -70,4 +70,4 @@ NETWORK:
 CACHE:
 # Additional items to cache.
 
-FALLBACK:
+#FALLBACK:
