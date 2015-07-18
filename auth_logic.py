@@ -1,3 +1,4 @@
+import base64
 from google.appengine.api import mail
 import settings
 
@@ -29,6 +30,30 @@ def user_required(handler):
 
   return check_login
 
+def CheckAPILogin(handler):
+  username = ""
+  logging.debug("Login headers " + str(handler.request.headers.environ))
+  token = None
+  if 'HTTP_AUTHORIZATION' in handler.request.headers.environ:
+    token = handler.request.headers.environ['HTTP_AUTHORIZATION']
+  elif 'Authorization' in handler.request.headers:
+    token = handler.request.headers['Authorization']
+  if token:
+    (username, password) = base64.b64decode(token.split(' ')[1]).split(':')
+    user = handler.user_model.get_by_auth_id(username)
+    if user and user.blocked:
+      logging.info('views.loginAPI: Blocked user ' + username)
+      handler.abort(403)
+    handler.auth.get_user_by_password(username, password, remember=True,
+                                   save_session=True)
+    logging.info('LoginAPI: Logged in')
+    # tok = user.create_auth_token(handler.user_id)
+    # handler.response.out.write('{"auth":"%s"}'%tok)
+  else:
+    logging.warning('LoginAPI no auth header')
+    handler.abort(401)
+  return username, True
+
 def api_login_required(handler):
   """
     Decorator that checks if there's a userId associated with the current session.
@@ -38,9 +63,10 @@ def api_login_required(handler):
   def check_login(self, *args, **kwargs):
     auth = self.auth
     if not auth.get_user_by_session():
-      self.abort(401)
-    else:
-      return handler(self, *args, **kwargs)
+      username, isOk = CheckAPILogin(self)
+      if not isOk:
+        self.abort(401)
+    return handler(self, *args, **kwargs)
 
   return check_login
 
@@ -116,10 +142,19 @@ class SignupHandler(BaseHandler):
     verification_url = self.uri_for('verification', type='v', user_id=user_id,
                                     signup_token=token, _full=True)
 
-    msg = 'Send an email to userId in order to verify their address. \
-            They will be able to do so by visiting <a href="{url}">{url}</a>'
+    msg = 'Click on this link to verify your address and complete the sign-up process \
+            <a href="%s">Click Here</a>'%verification_url
 
-    self.display_message(msg.format(url=verification_url))
+    mail.send_mail(sender=settings.config['system_email'],
+                     to=email,
+                     subject="Welcome to Taste 5",
+                     body=msg)
+    #self.display_message(msg.format(url=verification_url))
+    params = {
+      'email':email,
+      'password':password
+    }
+    self.render_template('signup-verify.html', params)
 
 
 class ForgotPasswordHandler(BaseHandler):

@@ -8,7 +8,7 @@ from google.appengine.api.mail import EmailMessage
 from google.appengine.ext import db
 import json
 from webob.exc import HTTPUnauthorized
-from auth_logic import user_required, api_login_required
+from auth_logic import user_required, api_login_required, CheckAPILogin
 from auth_model import User
 from dataloader import load_data
 from models import Item, DBImage, Vote, Category, getProp, \
@@ -511,16 +511,26 @@ class register(BaseHandler):
     token = self.user_model.create_signup_token(user_id)
     verification_url = self.uri_for('verification', type='v', user_id=user_id,
                                     signup_token=token, _full=True)
-    msg = 'An email has been sent to your account'
     message = EmailMessage(
       sender=config['system_email'],
       to=email,
       subject="Rayv Registration",
-      body="Click here to confirm your email address " + verification_url
+      body='Click on this link to verify your address and complete the sign-up process \
+            <a href="%s">Click Here</a>'%verification_url
     )
     message.send()
     logging.info('Verification email sent to '+email)
-    self.display_message(msg.format(url=verification_url))
+
+
+    msg = 'Click on this link to verify your address and complete the sign-up process \
+            <a href="%s">Click Here</a>'%verification_url
+
+    #self.display_message(msg.format(url=verification_url))
+    params = {
+      'email':email,
+      'password':password
+    }
+    self.render_template('signup-verify.html', params)
 
 class getPlaceDetailsApi(BaseHandler):
   @api_login_required
@@ -930,40 +940,24 @@ class logout(BaseHandler):
     return self.render_template("login.html")
 
 
+
 class loginAPI(BaseHandler):
   def get(self):
-    username = ""
+    username = ''
     try:
       logging.debug("Login API Started")
-      logging.debug("Login headers " + str(self.request.headers.environ))
-      token = None
-      if 'HTTP_AUTHORIZATION' in self.request.headers.environ:
-        token = self.request.headers.environ['HTTP_AUTHORIZATION']
-      elif 'Authorization' in self.request.headers:
-        token = self.request.headers['Authorization']
-      if token:
-        (username, password) = base64.b64decode(token.split(' ')[1]).split(':')
-        user = self.user_model.get_by_auth_id(username)
-        if user and user.blocked:
-            logging.info('views.loginAPI: Blocked user '+username)
-            self.abort(403)
-        self.auth.get_user_by_password(username, password, remember=True,
-                                       save_session=True)
-        logging.info('LoginAPI: Logged in')
-        #tok = user.create_auth_token(self.user_id)
-        #self.response.out.write('{"auth":"%s"}'%tok)
-      else:
-        logging.warning('LoginAPI no auth header')
-        self.abort(401)
+      username, isOk = CheckAPILogin(self)
     except (InvalidAuthIdError, InvalidPasswordError, HTTPUnauthorized) :
       logging.info(
         'LoginAPI failed for userId %s',
         username)
       self.abort(401)
-    except Exception:
+    except Exception, ex:
       logging.exception(
         'LoginAPI failed because of unexpected error', exc_info=True)
       self.abort(500)
+
+
 
 
 class login(BaseHandler):

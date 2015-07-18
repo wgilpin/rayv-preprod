@@ -1,5 +1,6 @@
 /**
  * Created by Will on 03/10/2014.
+ * 0.4.3
  */
 
 var Admin = Admin||{};
@@ -81,6 +82,7 @@ Admin.SelectCuisine = function(){
     $(".cuisine-btn").show();
     $(this).parent().find('.cuisine-btn').text(valueSelected);
     $(".cuisine-picker").remove();
+    return false;
 };
 
 Admin.CreateCuisinePicker = function (){
@@ -104,6 +106,7 @@ Admin.CreateCuisinePicker = function (){
     s.appendTo(el.parent());
     el.hide();
     $('.cuisine-picker').change(Admin.SelectCuisine);
+    return false;
 };
 
 
@@ -133,9 +136,9 @@ Admin.update_vote = function(){
         style = 2;
     if (fancy.hasClass('btn-primary')||fancy.hasClass('btn-danger'))
         style = 3;
-    var cuisine =  $(this).parent().parent().parent().find("option:selected").text();
+    var cuisine =  $(this).parent().parent().find("option:selected").text();
     if (!cuisine)
-        cuisine = $(this).parent().parent().parent().find(".cuisine-btn").text();
+        cuisine = $(this).parent().parent().find(".cuisine-btn").text();
 
     $.ajax({
         url:'/admin/update_vote',
@@ -152,17 +155,18 @@ Admin.update_vote = function(){
         },
         error:function(jqXHR, textStatus, errorThrown){
             if (jqXHR.status = 200){
-                alert (Done);
+                alert ("Done");
                 return;
             }
             alert('Failed - see server logs');
-            console.error('cleanup_after_delete: '+
+            console.error('update_vote: '+
                 jqXHR+', '+
                 textStatus+', '+
                 errorThrown);
         },
         dataType: "json"
     });
+    return false;
 };
 
 Admin.expand_all = function(){

@@ -51,50 +51,13 @@
       <div class="starter-template">
           <br/><br/>
         <h1>Register</h1>
-        <p class="lead">You have been invited to register as a Taste 5 user<br>Please provide these basic facts:</p>
-          <form action="/register" method="POST">
-                <div data-controltype="htmlblock">
-                <span style="color:red">
-                    {{ message }}
-                </span>
-                </div>
-                <div class="form-group">
-                    <label for="textinput4">
-                        First Name
-                    </label>
-                    <input name="name" id="textinput4" placeholder="" value="" type="text"
-                           class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="textinput5">
-                        Last Name
-                    </label>
-                    <input name="lastname" id="textinput5" placeholder="" value="" type="text"
-                           class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="textinput6">
-                        Email Address
-                    </label>
-                    <input name="email" id="textinput6" placeholder="" value="" type="text"
-                           class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="textinput10">
-                        Enter a password
-                    </label>
-                    <input name="password" id="textinput10" placeholder="" value="" type="text"
-                           class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="textinput8">
-                        Re-type the password
-                    </label>
-                    <input name="password" id="textinput8" placeholder="" value="" type="text"
-                           class="form-control">
-                </div>
-                <input type="submit" class="btn btn-primary" value="Submit">
-            </form>
+        <p class="lead">An email has been sent to your account {{ email }}<br>
+            Don't forget your password - you will need it </p>
+        <h3>{{ password }}</h3>
+        <p class="lead">Now would be a good time to install the app.<br/> Press this button to get it from the App Store</p>
+        <a href="https://itunes.apple.com/gb/app/google-photos/id962194608?mt=8">
+            <img src="/static/css/icons-svg/Download_on_the_App_Store_Badge_US-UK_135x40.svg">
+        </a>
       </div>
 
     </div><!-- /.container -->

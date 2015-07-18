@@ -395,6 +395,21 @@ class migrate(BaseHandler):
     memcache.flush_all()
 
   @user_required
+  def remove_brunch(self):
+    items = Item.all()
+    for it in items:
+      if it.category.title == 'Brunch':
+        v = it.votes
+        if v:
+          first = v.get()
+          it.category = first.cuisine
+          it.put()
+          self.response.out.write("Set %s to %s<br>"%(it.place_name, first.cuisine.title))
+    for v in Vote.all():
+      if v.cuisine.title == 'Brunch':
+        self.response.out.write("BRUNCH: %s for %s<br>"%(v.key, v.item.place_name))
+
+  @user_required
   def get(self):
     migration_name = self.request.get("no")
     if migration_name == '1':
@@ -486,6 +501,9 @@ class migrate(BaseHandler):
     elif migration_name == "dedup_votes":
       self.only_one_vote_per_user_per_item()
       self.response.out.write("Votes Deduplicated")
+    elif migration_name == "remove_brunch":
+      self.remove_brunch()
+      self.response.out.write("Brunch removed")
 
     else:
       self.response.out.write("No Migration")
