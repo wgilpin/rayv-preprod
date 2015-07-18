@@ -692,3 +692,71 @@ def get_user_votes(user_id):
     logging.error("get_user_votes Exception", exc_info=True)
     return None, {}
 
+"""
+When someone is invited, their email is stored. If they accept they are made
+friends with the inviter
+"""
+class Invite(db.Model):
+  inviter = db.IntegerProperty()
+  token = db.TextProperty()
+  when = db.DateTimeProperty(auto_now=True)
+
+  @classmethod
+  def getInviteToken(cls, userId):
+    invite = Invite()
+    invite.inviter = userId
+    now = int(time.time())
+    token = str(hash(userId + now))
+    invite.token = token
+    invite.put()
+    return token
+
+  @classmethod
+  def delInviteToken(cls, token):
+    invite = Invite.all().filter("token =", token).get()
+    if invite:
+      invite.delete()
+      return True
+    return False
+
+  @classmethod
+  def checkInviteToken(cls, token):
+    # if the invite token exists, return the userId of the inviter
+    inv = Invite.all().filter("token =", token).get()
+    if inv:
+      return inv.inviter
+    return None
+
+class Friends(db.Model):
+  # integer userIds, the lower value always in Lower as it's commutative
+  lower = db.IntegerProperty
+  higher = db.IntegerProperty
+
+  @classmethod
+  def addFriends(cls,first, second):
+    lower = min(first, second)
+    higher = max(first, second)
+    f = Friends().all().filter("lower =",lower).filter("higher =",higher).get()
+    if not f:
+      f = Friends()
+      f.higher = higher
+      f.lower = lower
+      f.put()
+      lower_friend = User().get_by_id(lower)
+      Friends.update_friends(lower_friend)
+      higher_friend = User().get_by_id(lower)
+      Friends.update_friends(higher_friend)
+
+  @classmethod
+  def update_friends(cls, user):
+    friends = []
+    left_list = Friends.all().filter("lower =",user.get_id())
+    right_list = Friends.all().filter("higher =",user.get_id())
+    for f in left_list:
+      if not f in friends:
+        friends.append(f)
+    for f in right_list:
+      if not f in friends:
+        friends.append(f)
+    user.friends_str = ",".join(friends)
+    user.put()

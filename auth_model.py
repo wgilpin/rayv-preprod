@@ -1,6 +1,7 @@
 import datetime
 import logging
 from google.appengine.ext.ndb import model
+import settings
 
 __author__ = 'Will'
 
@@ -19,18 +20,17 @@ class UserProfile(db.Model):
   last_write = db.DateTimeProperty()
   last_read = db.DateTimeProperty()
   # list of key ids
-  friends = db.ListProperty(long)
   is_admin = db.BooleanProperty(default=False)
   sex = db.StringProperty(default="")
-
-
-
 
 
 class User(webapp2_extras.appengine.auth.models.User):
   screen_name = model.StringProperty()
   blocked = model.BooleanProperty(default=False)
   votes_json = db.StringProperty(default="")
+  friends_str = db.StringProperty(default="")
+
+
 
   def set_password(self, raw_password):
     """Sets the password for the current userId
@@ -108,13 +108,17 @@ class User(webapp2_extras.appengine.auth.models.User):
       new_profile.put()
       return new_profile
 
-  @classmethod
-  def get_user_friends(cls, userId):
-    # all are friends
-    users = User.all()
-    res = []
-    for u in users:
-      if not u.blocked:
-        res.append(u.userId)
-    return  res
+  def get_user_friends(self):
+    if  settings.config['all_are_friends']:
+      # all are friends
+      users = User.all()
+      res = []
+      for u in users:
+        if not u.blocked:
+          res.append(u.userId)
+      return  res
+    else:
+      # find friends
+      res = self.friends_str.split(',')
+      return  res
 

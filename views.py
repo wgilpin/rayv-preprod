@@ -13,7 +13,8 @@ from auth_model import User
 from dataloader import load_data
 from models import Item, DBImage, Vote, Category, getProp, \
   memcache_get_user_dict, memcache_touch_user, \
-  memcache_update_user_votes, memcache_touch_place, get_user_votes, VoteValue
+  memcache_update_user_votes, memcache_touch_place, get_user_votes, VoteValue, \
+  Invite, Friends
 from places_db import PlacesDB
 from profiler import profile_in, profile_out
 from settings import config
@@ -483,10 +484,24 @@ class MainHandler(BaseHandler):
       logging.info('MainHandler: Not logged in')
       self.render_template("login.html")
 
+class InviteUserAPI(BaseHandler):
+
+  @api_login_required
+  def get(self):
+    inviter = self.user_id
+    token = Invite.getInviteToken(self.user_id)
+    uri = self.uri_for('register',type='i', invite_token=token, _full=True)
+    self.response.out.write(uri)
+
 
 class register(BaseHandler):
   def get(self):
-    self.render_template('signup.html')
+    params = None
+    if 'type' in self.request.params:
+      if self.request.params["type"] == "i":
+        # it's an invite
+        params = {'invite_token':self.request.params['invite_token']}
+    self.render_template('signup.html', params)
 
   def post(self):
     email = self.request.get('email')
@@ -509,8 +524,11 @@ class register(BaseHandler):
     user = user_data[1]
     user_id = user.get_id()
     token = self.user_model.create_signup_token(user_id)
+    invite_token = self.request.params['invite_token'] if \
+      'invite' in self.request.params \
+      else ""
     verification_url = self.uri_for('verification', type='v', user_id=user_id,
-                                    signup_token=token, _full=True)
+                                    signup_token=token, invite_token=invite_token, _full=True)
     message = EmailMessage(
       sender=config['system_email'],
       to=email,
@@ -1099,6 +1117,9 @@ class passwordVerificationHandler(BaseHandler):
         user_id = kwargs['user_id']
         signup_token = kwargs['signup_token']
         verification_type = kwargs['type']
+        invite_token = self.request.params['invite_token']\
+          if 'invite_token' in self.request.params\
+          else None
 
         # it should be something more concise like
         # self.auth.get_user_by_token(user_id, signup_token)
@@ -1125,9 +1146,11 @@ class passwordVerificationHandler(BaseHandler):
             if not user.verified:
                 user.verified = True
                 user.put()
-
-            self.display_message('User email address has been verified.')
-            return
+            if invite_token:
+              inv = Invite.checkInviteToken(invite_token)
+              Friends.addFriends(inv, self.user_id)
+              Invite.delInviteToken(invite_token)
+            self.render_template('signup-complete.html')
         elif verification_type == 'p':
             # supply userId to the page
             params = {

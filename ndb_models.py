@@ -235,13 +235,22 @@ class getUserRecordFastViaWorkers(BaseHandler):
 
         friends_list = []
         if views.config['all_are_friends']:
-            q = User.gql('')
-            for u in q:
-              user_str = {
-                  "id": u.get_id(),
-                  # todo is it first_name?
-                  'name': u.screen_name}
-              friends_list.append(user_str)
+          q = User.gql('')
+          for u in q:
+            user_str = {
+                "id": u.get_id(),
+                # todo is it first_name?
+                'name': u.screen_name}
+            friends_list.append(user_str)
+        else:
+          friends = user.friends_str.split(',')
+          for uId in friends:
+            u = User.get_id(uId)
+            user_str = {
+                "id": u.get_id(),
+                # todo is it first_name?
+                'name': u.screen_name}
+            friends_list.append(user_str)
 
         result['votes'] = votes
         result["places"] = places
