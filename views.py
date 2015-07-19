@@ -485,10 +485,9 @@ class MainHandler(BaseHandler):
       self.render_template("login.html")
 
 class InviteUserAPI(BaseHandler):
-
   @api_login_required
   def get(self):
-    inviter = self.user_id
+    # invite a user to the system - get the invite URI
     token = Invite.getInviteToken(self.user_id)
     uri = self.uri_for('register',type='i', invite_token=token, _full=True)
     self.response.out.write(uri)
@@ -496,19 +495,25 @@ class InviteUserAPI(BaseHandler):
 
 class register(BaseHandler):
   def get(self):
+    # get the registration form. Embed the invite token in it
     params = None
     if 'type' in self.request.params:
       if self.request.params["type"] == "i":
         # it's an invite
         params = {'invite_token':self.request.params['invite_token']}
+    logging.info("register,GET token=%s"%self.request.params['invite_token'])
     self.render_template('signup.html', params)
 
   def post(self):
+    # posted a filled out reg form
+    # create the user,
+    # and send an email verification including token to the new user
     email = self.request.get('email')
     name = self.request.get('name')
     password = self.request.get('password')
     last_name = self.request.get('lastname')
     unique_properties = ['email_address']
+    logging.info("register,POST email=%s"%email)
     user_data = self.user_model.create_user(
       email,
       unique_properties,
@@ -526,24 +531,19 @@ class register(BaseHandler):
     token = self.user_model.create_signup_token(user_id)
     invite_token = self.request.params['invite_token'] if \
       'invite' in self.request.params \
-      else ""
+      else "none"
     verification_url = self.uri_for('verification', type='v', user_id=user_id,
                                     signup_token=token, invite_token=invite_token, _full=True)
     message = EmailMessage(
       sender=config['system_email'],
       to=email,
       subject="Rayv Registration",
-      body='Click on this link to verify your address and complete the sign-up process \
-            <a href="%s">Click Here</a>'%verification_url
+      body='Click on this link to verify your address and '
+           'complete the sign-up process \n'+
+            verification_url
     )
     message.send()
-    logging.info('Verification email sent to '+email)
-
-
-    msg = 'Click on this link to verify your address and complete the sign-up process \
-            <a href="%s">Click Here</a>'%verification_url
-
-    #self.display_message(msg.format(url=verification_url))
+    logging.info('Verification email sent to %s [%s]'%(email,verification_url))
     params = {
       'email':email,
       'password':password
@@ -1133,7 +1133,8 @@ class passwordVerificationHandler(BaseHandler):
               'Could not find any userId with id "%s" signup token "%s"',
               user_id,
               signup_token)
-            self.abort(404)
+            self.display_message("Not found - if you've already followed this link there is no need to do it again")
+            return
 
         # store userId data in the session
         self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)

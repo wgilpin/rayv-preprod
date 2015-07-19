@@ -1,21 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Shout</title>
-
-    <link href="/static/codiqa.ext.min.css" rel="stylesheet">
-    <link href="/static/css/jqm-neue.css" rel="stylesheet">
-    <link href="/static/css/shout.css" rel="stylesheet">
-    <script src="/static/js/jquery-1.9.1.min.js"></script>
-    <script src="/static/js/jquery.mobile-1.3.1.min.js"></script>
-    <script src="/static/js/codiqa.ext.min.js"></script>
-    <script src="/static/js/shout.js"></script>
-</head>
-<body>
+{% extends "bootstrap.html" %}
+{% block maincontent %}
+<br/><br/>
 <p>{% autoescape off %}{{ message }}{% endautoescape %}</p>
-</body>
-</html>
+{% endblock %}

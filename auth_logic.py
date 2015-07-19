@@ -1,5 +1,8 @@
 import base64
 from google.appengine.api import mail
+import google.appengine.ext.ndb
+
+from auth_model import User
 import settings
 
 __author__ = 'Will'
@@ -109,33 +112,38 @@ class SignupHandler(BaseHandler):
     self.render_template('signup.html')
 
   def post(self):
-    username = self.request.get('username')
+    logging.info('SignupHandler: In')
+    email = self.request.get('email')
+    username = email
     user = self.user_model.get_by_auth_id(username)
     if user and user.blocked:
       logging.info('SignupHandler: Blocked user ' + username)
       return self.display_message('Unable to sign up')
-    email = self.request.get('email')
     name = self.request.get('name')
     password = self.request.get('password')
     last_name = self.request.get('lastname')
 
     unique_properties = ['email_address']
+    logging.info('SignupHandler: Create User')
     user_data = self.user_model.create_user(username,
                                             unique_properties,
                                             email_address=email, name=name,
                                             password_raw=password,
                                             last_name=last_name, verified=False)
     if not user_data[0]:  #user_data is a tuple
+      logging.warning('SignupHandler: ERROR dup for '+email)
       self.display_message(
-        'Unable to create userId for email %s because of duplicate keys %s' %
-        (username, user_data[1]))
+        'Unable to create userId for email %s because it seems to be already registered' %
+        (username))
       return
 
     user = user_data[1]
     user_id = user.get_id()
 
     user.screen_name = self.request.get('screenname')
+    logging.info('SignupHandler: Put...')
     user.put()
+    logging.info('SignupHandler: Put done')
 
     token = self.user_model.create_signup_token(user_id)
 
@@ -144,12 +152,13 @@ class SignupHandler(BaseHandler):
 
     msg = 'Click on this link to verify your address and complete the sign-up process \
             <a href="%s">Click Here</a>'%verification_url
-
+    logging.info('SignupHandler: Send msg '+verification_url)
     mail.send_mail(sender=settings.config['system_email'],
                      to=email,
                      subject="Welcome to Taste 5",
                      body=msg)
     #self.display_message(msg.format(url=verification_url))
+    logging.info('SignupHandler: Sent')
     params = {
       'email':email,
       'password':password
@@ -163,25 +172,29 @@ class ForgotPasswordHandler(BaseHandler):
 
   def post(self):
     username = self.request.get('username')
-    user = self.user_model.get_by_auth_id(username)
+    user = User.query(google.appengine.ext.ndb.GenericProperty('email_address') == username).get()
+    # #user = self.user_model.get_by_auth_id(username)
     if not user:
       logging.info('Could not find any userId entry for username %s', username)
     else:
-      if user.blocked:
-        logging.info('ForgotPasswordHandler: Blocked user ' + username)
-        self.abort(403)
+      try:
+        if user.blocked:
+          logging.info('ForgotPasswordHandler: Blocked user ' + username)
+          self.abort(403)
+      except:
+        pass
       user_id = user.get_id()
       token = self.user_model.create_signup_token(user_id)
 
       verification_url = self.uri_for('verification', type='p', user_id=user_id,
                                       signup_token=token, _full=True)
 
-      msg = 'Please visit this link to reset your password <a href="{url}">{url}</a>'.format(
-        url=verification_url)
+      msg = 'Please visit this link to reset your password\n%s'%verification_url
       mail.send_mail(sender=settings.config['system_email'],
                      to=user.email_address,
                      subject="Password Reset",
                      body=msg)
+      logging.info("Reset email sent to %s"%user.email_address)
 
     params = {
       'message2': "If that account exists, an email was sent. "

@@ -1,38 +1,55 @@
-{% extends "main.html" %}
+{% extends "bootstrap.html" %}
 
-{% block title %}Register a new user{% endblock %}
+
 
 {% block maincontent %}
 
-    <h1>Register a new user</h1>
+    <h1>Register</h1>
+    <p class="lead">You have been invited to register as a Taste 5 user<br>Please provide these basic details:</p>
+
     <form action="/signup" method="POST">
-        <div class="form-group">
-            <label for="username">Username</label>
-            <input class="form-control" type="text" name="username"/>
-        </div>
-        <div class="form-group">
-            <label for="email">Email address</label>
-            <input class="form-control" type="text" name="email"/>
-        </div>
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input class="form-control" type="password" name="password"/>
-        </div>
-
-        <div class="form-group">
-            <label for="name">Name</label>
-            <input class="form-control" type="text" name="name"/>
-        </div>
-
-        <div class="form-group">
-            <label for="lastname">Last Name</label>
-            <input class="form-control" type="text" name="lastname"/>
-        </div>
-        <div class="form-group">
-            <label for="screenname">Last Name</label>
-            <input class="form-control" type="text" name="screenname"/>
-        </div>
-        <input type="submit" value="Create user"/>
+          <div data-controltype="htmlblock">
+            <span style="color:red">
+                {{ message }}
+            </span>
+            </div>
+            <div class="form-group">
+                <label for="textinput4">
+                    First Name
+                </label>
+                <input name="name" id="textinput4" placeholder="" value="" type="text"
+                       class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="textinput5">
+                    Last Name
+                </label>
+                <input name="lastname" id="textinput5" placeholder="" value="" type="text"
+                       class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="textinput6">
+                    Email Address
+                </label>
+                <input name="email" id="textinput6" placeholder="" value="" type="text"
+                       class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="textinput10">
+                    Enter a password
+                </label>
+                <input name="password" id="textinput10" placeholder="" value="" type="text"
+                       class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="textinput8">
+                    Re-type the password
+                </label>
+                <input name="password" id="textinput8" placeholder="" value="" type="text"
+                       class="form-control">
+            </div>
+            <input type="hidden" name="invite_token" value="{{ invite_token }}">
+            <input type="submit" class="btn btn-primary" value="Submit">
     </form>
 
 {% endblock %}
