@@ -742,7 +742,7 @@ class Friends(db.Model):
       f.higher = higher
       f.lower = lower
       f.put()
-      logging.debug("addFriends 1")
+      logging.debug("addFriends 1"+lower)
       lower_friend = User.get_by_id(lower)
       logging.debug("addFriends 2")
       Friends.update_friends(lower_friend)
