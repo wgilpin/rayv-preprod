@@ -127,7 +127,7 @@ class SignupHandler(BaseHandler):
     last_name = self.request.get('lastname')
 
     unique_properties = ['email_address']
-    logging.info('SignupHandler: Create User')
+    logging.info('SignupHandler: Create User '+email)
     user_data = self.user_model.create_user(username,
                                             unique_properties,
                                             email_address=email, name=name,
