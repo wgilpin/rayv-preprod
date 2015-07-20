@@ -543,7 +543,7 @@ class register(BaseHandler):
             verification_url
     )
     message.send()
-    logging.info('Verification email sent to %s [%s]'%(email,verification_url))
+    logging.info('Verification email sent to %s [%s] [%s]'%(email,verification_url, invite_token))
     params = {
       'email':email,
       'password':password

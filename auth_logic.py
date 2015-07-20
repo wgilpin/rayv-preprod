@@ -150,9 +150,9 @@ class SignupHandler(BaseHandler):
     verification_url = self.uri_for('verification', type='v', user_id=user_id,
                                     signup_token=token, _full=True)
 
-    msg = 'Click on this link to verify your address and complete the sign-up process \
-            <a href="%s">Click Here</a>'%verification_url
-    logging.info('SignupHandler: Send msg '+verification_url)
+    msg = 'Click on this link to confirm your address and complete the sign-up process \n'+\
+            verification_url
+    logging.info('SignupHandler: Send msg %s, token %s'%(verification_url, token))
     mail.send_mail(sender=settings.config['system_email'],
                      to=email,
                      subject="Welcome to Taste 5",
