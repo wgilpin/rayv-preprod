@@ -1152,6 +1152,7 @@ class passwordVerificationHandler(BaseHandler):
                 inv = Invite.checkInviteToken(invite_token)
                 Friends.addFriends(inv, self.user_id)
                 Invite.delInviteToken(invite_token)
+                logging.info("passwordVerificationHandler complete "+user.email_address)
             except:
               logging.error(
                 "Failed to add friend: passwordVerificationHandler GET",
