@@ -523,7 +523,7 @@ class register(BaseHandler):
       last_name=last_name,
       verified=False)
     if not user_data[0]:  # user_data is a tuple
-      logging.info("register,POST Duplicate %s"%email)
+      logging.warning("register,POST Duplicate %s"%email)
       self.render_template(
         'signup.html', {"message": "That userId is already registered", })
       return
