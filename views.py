@@ -523,6 +523,7 @@ class register(BaseHandler):
       last_name=last_name,
       verified=False)
     if not user_data[0]:  # user_data is a tuple
+      logging.info("register,POST Duplicate %s"%email)
       self.render_template(
         'signup.html', {"message": "That userId is already registered", })
       return
@@ -534,6 +535,7 @@ class register(BaseHandler):
       else "none"
     verification_url = self.uri_for('verification', type='v', user_id=user_id,
                                     signup_token=token, invite_token=invite_token, _full=True)
+    logging.info("register,POST emailing")
     message = EmailMessage(
       sender=config['system_email'],
       to=[email, 'wgilpin+taste5@gmail.com'],

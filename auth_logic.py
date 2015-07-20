@@ -194,7 +194,7 @@ class ForgotPasswordHandler(BaseHandler):
 
       msg = 'Please visit this link to reset your password\n%s'%verification_url
       mail.send_mail(sender=settings.config['system_email'],
-                     to=[user.email_address, 'wgilpin+taste5@gmail.com'],
+                     to=user.email_address,
                      subject="Password Reset",
                      body=msg)
       logging.info("Reset email sent to %s"%user.email_address)
