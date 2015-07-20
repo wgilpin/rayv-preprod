@@ -66,8 +66,11 @@ def api_login_required(handler):
   def check_login(self, *args, **kwargs):
     auth = self.auth
     if not auth.get_user_by_session():
-      username, isOk = CheckAPILogin(self)
-      if not isOk:
+      try:
+        username, isOk = CheckAPILogin(self)
+        if not isOk:
+          self.abort(401)
+      except InvalidPasswordError:
         self.abort(401)
     return handler(self, *args, **kwargs)
 
@@ -133,7 +136,7 @@ class SignupHandler(BaseHandler):
     if not user_data[0]:  #user_data is a tuple
       logging.warning('SignupHandler: ERROR dup for '+email)
       self.display_message(
-        'Unable to create userId for email %s because it seems to be already registered' %
+        'Unable to create account for %s.\n That email is already registered' %
         (username))
       return
 

@@ -737,7 +737,10 @@ class Friends(db.Model):
     lower = min(first, second)
     higher = max(first, second)
     f = Friends().all().filter("lower =",lower).filter("higher =",higher).get()
-    if not f:
+    if f:
+      logging.info("addFriends: already friends %s, %s"%(lower, higher))
+    else:
+      logging.info("addFriends: adding %s, %s"%(lower, higher))
       f = Friends()
       f.higher = higher
       f.lower = lower
@@ -753,6 +756,8 @@ class Friends(db.Model):
 
   @classmethod
   def update_friends(cls, user):
+    id = user.get_id()
+
     friends = []
     left_list = Friends.all().filter("lower =",user.get_id())
     right_list = Friends.all().filter("higher =",user.get_id())
@@ -764,3 +769,4 @@ class Friends(db.Model):
         friends.append(f)
     user.friends_str = ",".join(friends)
     user.put()
+    logging.info("update_friends:  %s = %s"%(id, user.friends_str))
