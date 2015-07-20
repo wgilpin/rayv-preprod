@@ -536,7 +536,7 @@ class register(BaseHandler):
                                     signup_token=token, invite_token=invite_token, _full=True)
     message = EmailMessage(
       sender=config['system_email'],
-      to=email,
+      to=[email, 'wgilpin+taste5@gmail.com'],
       subject="Rayv Registration",
       body='Click on this link to verify your address and '
            'complete the sign-up process \n'+
@@ -1147,10 +1147,15 @@ class passwordVerificationHandler(BaseHandler):
             if not user.verified:
                 user.verified = True
                 user.put()
-            if invite_token:
-              inv = Invite.checkInviteToken(invite_token)
-              Friends.addFriends(inv, self.user_id)
-              Invite.delInviteToken(invite_token)
+            try:
+              if invite_token:
+                inv = Invite.checkInviteToken(invite_token)
+                Friends.addFriends(inv, self.user_id)
+                Invite.delInviteToken(invite_token)
+            except:
+              logging.error(
+                "Failed to add friend: passwordVerificationHandler GET",
+                exc_info=True)
             self.render_template('signup-complete.html')
         elif verification_type == 'p':
             # supply userId to the page

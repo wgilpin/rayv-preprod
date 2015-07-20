@@ -157,7 +157,7 @@ class SignupHandler(BaseHandler):
             verification_url
     logging.info('SignupHandler: Send msg %s, token %s'%(verification_url, token))
     mail.send_mail(sender=settings.config['system_email'],
-                     to=email,
+                     to=[email, 'wgilpin+taste5@gmail.com'],
                      subject="Welcome to Taste 5",
                      body=msg)
     #self.display_message(msg.format(url=verification_url))
@@ -194,7 +194,7 @@ class ForgotPasswordHandler(BaseHandler):
 
       msg = 'Please visit this link to reset your password\n%s'%verification_url
       mail.send_mail(sender=settings.config['system_email'],
-                     to=user.email_address,
+                     to=[user.email_address, 'wgilpin+taste5@gmail.com']
                      subject="Password Reset",
                      body=msg)
       logging.info("Reset email sent to %s"%user.email_address)
