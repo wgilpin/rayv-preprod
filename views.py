@@ -384,24 +384,24 @@ def json_serial(o):
     return o.isoformat()
 
 
-def check_for_dirty_data(user_id, results, request):
+def check_for_dirty_data(handler, results):
   # every server call, we look for dirty data and append it if needed
-  prof = memcache_get_user_dict(user_id)['p']
+  prof = memcache_get_user_dict(handler.user_id)['p']
   my_last_check = prof.last_read
   dirty_friends = []
   dirty_places = {}
-  for friend in prof.friends:
+  for friend in handler.user.get_user_friends():
     if (not my_last_check) or \
         (memcache_get_user_dict(friend)['p'].last_write > my_last_check):
       dirty_friends.append(
-        serialize_user_details(friend, dirty_places, user_id, request))
+        serialize_user_details(friend, dirty_places, handler.user_id, handler.request))
   if len(dirty_friends) > 0:
     results['dirty_list'] = {"friends": dirty_friends,
                              "places": dirty_places}
 
 
 class getCuisines_ajax(BaseHandler):
-  @user_required
+  @api_login_required
   def get(self):
     cuisines_list = []
     cats =  Category.all()
@@ -449,7 +449,7 @@ class getAddresses_ajax(BaseHandler):
       self.user_id)
     if results:
       results['search'] = {'lat': lat,'lng':lng}
-      check_for_dirty_data(self.user_id, results, self.request)
+      check_for_dirty_data(self, results)
       json.dump(results,
                 self.response.out,
                 default=json_serial)

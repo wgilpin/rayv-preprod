@@ -111,11 +111,13 @@ class User(webapp2_extras.appengine.auth.models.User):
   def get_user_friends(self):
     if  settings.config['all_are_friends']:
       # all are friends
-      users = User.all()
+      users = User.query()
       res = []
       for u in users:
         if not u.blocked:
-          res.append(u.userId)
+          id = u.key.id()
+          if id != self.key.id():
+            res.append(id)
       return  res
     else:
       # find friends
