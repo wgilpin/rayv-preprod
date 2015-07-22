@@ -2,6 +2,7 @@ import base64
 import urllib
 import urllib2
 import datetime
+import google.appengine.ext.ndb
 from google.appengine.api import images, memcache
 from google.appengine.api.images import Image
 from google.appengine.api.mail import EmailMessage
@@ -11,6 +12,7 @@ from webob.exc import HTTPUnauthorized
 from auth_logic import user_required, api_login_required, CheckAPILogin
 from auth_model import User
 from dataloader import load_data
+import mail_wrapper
 from models import Item, DBImage, Vote, Category, getProp, \
   memcache_get_user_dict, memcache_touch_user, \
   memcache_update_user_votes, memcache_touch_place, get_user_votes, VoteValue, \
@@ -25,6 +27,7 @@ from base_handler import BaseHandler
 
 import ndb_models
 import geo
+import settings
 
 __author__ = 'Will'
 
@@ -536,7 +539,7 @@ class register(BaseHandler):
     verification_url = self.uri_for('verification', type='v', user_id=user_id,
                                     signup_token=token, invite_token=invite_token, _full=True)
     logging.info("register,POST emailing")
-    message = EmailMessage(
+    mail_wrapper.send_mail(
       sender=config['system_email'],
       to=[email, 'wgilpin+taste5@gmail.com'],
       subject="Rayv Registration",
@@ -544,13 +547,33 @@ class register(BaseHandler):
            'complete the sign-up process \n'+
             verification_url
     )
-    message.send()
     logging.info('Verification email sent to %s [%s] [%s]'%(email,verification_url, invite_token))
     params = {
       'email':email,
       'password':password
     }
     self.render_template('signup-verify.html', params)
+
+class findFriend(BaseHandler):
+  @api_login_required
+  def get(self):
+    user_email = self.request.get('email')
+    user = User.query(google.appengine.ext.ndb.GenericProperty('email_address') == user_email).get()
+    if user:
+      fr = Friends.addFriends(self.user_id, user.key.id())
+      self.response.out.write("FOUND")
+    else:
+      token = Invite.getInviteToken(self.user_id)
+      uri = self.uri_for('register',type='i', invite_token=token, _full=True)
+      msg = "Hi,\n I'd like to share my favourite eateries with you using the Taste5 app, "+\
+      "Click this link to join for free!\n\n"+uri+"\n\n"+self.user.screen_name
+      mail_wrapper.send_mail(sender=settings.config['system_email'],
+                     to=user_email,
+                     subject="Share my list of places to eat!",
+                     body=msg)
+      logging.info("Email invite sent to %s by %s"%(user_email,self.user_id))
+      self.response.out.write("FOUND")
+
 
 class getPlaceDetailsApi(BaseHandler):
   @api_login_required

@@ -34,7 +34,7 @@ urls = [
   webapp2.Route('/api/delete',views.api_delete),
   webapp2.Route('/api/geocode',geo.geoCodeAddressMultiple),
   webapp2.Route('/api/place_details',views.getPlaceDetailsApi),
-
+  webapp2.Route('/api/find_friend',views.findFriend),
   webapp2.Route('/api/UpdateVote',ndb_models.AddVoteChangesWorker),
   webapp2.Route('/api/UpdatePlace',ndb_models.AddPlaceChangesWorker),
   webapp2.Route('/api/ClearUserChanges',ndb_models.ClearUserChangesWorker),

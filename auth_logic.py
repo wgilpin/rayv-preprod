@@ -3,6 +3,7 @@ from google.appengine.api import mail
 import google.appengine.ext.ndb
 
 from auth_model import User
+import mail_wrapper
 import settings
 
 __author__ = 'Will'
@@ -156,7 +157,7 @@ class SignupHandler(BaseHandler):
     msg = 'Click on this link to confirm your address and complete the sign-up process \n'+\
             verification_url
     logging.info('SignupHandler: Send msg %s, token %s'%(verification_url, token))
-    mail.send_mail(sender=settings.config['system_email'],
+    mail_wrapper.send_mail(sender=settings.config['system_email'],
                      to=[email, 'wgilpin+taste5@gmail.com'],
                      subject="Welcome to Taste 5",
                      body=msg)
@@ -193,7 +194,7 @@ class ForgotPasswordHandler(BaseHandler):
                                       signup_token=token, _full=True)
 
       msg = 'Please visit this link to reset your password\n%s'%verification_url
-      mail.send_mail(sender=settings.config['system_email'],
+      mail_wrapper.send_mail(sender=settings.config['system_email'],
                      to=user.email_address,
                      subject="Password Reset",
                      body=msg)

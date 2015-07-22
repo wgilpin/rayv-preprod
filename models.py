@@ -731,9 +731,10 @@ class Friends(db.Model):
   # integer userIds, the lower value always in Lower as it's commutative
   lower = db.IntegerProperty
   higher = db.IntegerProperty
+  invite = db.BooleanProperty(default=False)
 
   @classmethod
-  def addFriends(cls,first, second):
+  def addFriends(cls,first, second, invite=False):
     lower = min(first, second)
     higher = max(first, second)
     f = Friends().all().filter("lower =",lower).filter("higher =",higher).get()
@@ -744,8 +745,9 @@ class Friends(db.Model):
       f = Friends()
       f.higher = higher
       f.lower = lower
+      f.invite = invite
       f.put()
-      logging.debug("addFriends 1: "+lower)
+      logging.debug("addFriends 1: "+str(lower))
       lower_friend = User.get_by_id(lower)
       logging.debug("addFriends 2")
       Friends.update_friends(lower_friend)
@@ -753,6 +755,7 @@ class Friends(db.Model):
       higher_friend = User.get_by_id(lower)
       logging.debug("addFriends 4")
       Friends.update_friends(higher_friend)
+
 
   @classmethod
   def update_friends(cls, user):
