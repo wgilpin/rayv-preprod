@@ -558,9 +558,10 @@ class findFriend(BaseHandler):
   @api_login_required
   def get(self):
     user_email = self.request.get('email')
-    user = User.query(google.appengine.ext.ndb.GenericProperty('email_address') == user_email).get()
+    logging.info("findFriend "+user_email.lower())
+    user = User.query(google.appengine.ext.ndb.GenericProperty('email_address') == user_email.lower()).get()
     if user:
-      fr = Friends.addFriends(self.user_id, user.key.id())
+      Friends.addFriends(self.user_id, user.key.id())
       self.response.out.write("FOUND")
     else:
       token = Invite.getInviteToken(self.user_id)
