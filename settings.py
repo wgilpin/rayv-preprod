@@ -24,7 +24,7 @@ config = {
   'system_email': 'wgilpin+rayv@gmail.com',
   'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S',
   'memcache_life': timedelta(1), #1 day,
-  'version':"0.4",
+  'version':"0.5",
 }
 
 auth.default_config['token_max_age'] = 86400 * 7 * 8  # 8 weeks login auth token timeout
