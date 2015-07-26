@@ -450,10 +450,11 @@ def check_for_dirty_data(handler, results):
   dirty_places = {}
   if user_dict['f']:
     for friend in user_dict['f'].split(','):
+      friend_id = int(friend.split(':')[0])
       if (not my_last_check) or \
-          (memcache_get_user_dict(friend)['p'].last_write > my_last_check):
+          (memcache_get_user_dict(friend_id)['p'].last_write > my_last_check):
         dirty_friends.append(
-          serialize_user_details(friend, dirty_places, handler.user_id, handler.request))
+          serialize_user_details(friend_id, dirty_places, handler.user_id, handler.request))
     if len(dirty_friends) > 0:
       results['dirty_list'] = {"friends": dirty_friends,
                                "places": dirty_places}
