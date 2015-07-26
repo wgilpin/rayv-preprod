@@ -1,4 +1,5 @@
 import base64
+import re
 import urllib
 import urllib2
 import datetime
@@ -16,7 +17,7 @@ import mail_wrapper
 from models import Item, DBImage, Vote, Category, getProp, \
   memcache_get_user_dict, memcache_touch_user, \
   memcache_update_user_votes, memcache_touch_place, get_user_votes, VoteValue, \
-  Invite, Friends
+  Invite, Friends, InviteInternal
 from places_db import PlacesDB
 from profiler import profile_in, profile_out
 from settings import config
@@ -125,8 +126,61 @@ class FriendsVotesApi(BaseHandler):
     json.dump(res, self.response.out, default=json_serial)
     return
 
+class FriendsApiRemove(BaseHandler):
+  @api_login_required
+  def post(self):
+    """
+    accept a friend request
+    :return:
+    """
+    other_id = int(self.request.params['unfriend_id'])
+    my_id = int(self.user_id)
+    low = min(other_id, my_id)
+    high = max(other_id, my_id)
+    record = Friends.all().filter("lower =", low).filter("higher =", high).get()
+    if record:
+      db.delete(record)
+      memcache_touch_user(low)
+      memcache_touch_user(high)
+      # delete invites
+      inv_from = InviteInternal.all().filter("inviter =",other_id).filter("invitee =", my_id)
+      for i in inv_from:
+        db.delete(i)
+      inv_to = InviteInternal.all().filter("inviter =",my_id).filter("invitee =", other_id)
+      for i in inv_to:
+        db.delete(i)
+      self.response.out.write("OK")
+      return
+    self.response.out.write("FAIL")
+
+
+
+class FriendsApiAccept(BaseHandler):
+  @api_login_required
+  def post(self):
+    """
+    accept a friend request
+    :return:
+    """
+    from_id = self.request.params['from_id']
+    #find the invite
+    # inv = InviteInternal.all().get()
+    # inv = InviteInternal.all().filter("invitee =", self.user_id).get()
+    inv = InviteInternal.all().filter("invitee =", self.user_id).filter("inviter =", int(from_id)).get()
+    #5348024557502464
+    if not inv:
+      self.response.out.write("NO INVITE")
+      return
+    Friends.addFriends(self.user_id, from_id)
+    logging.info("FriendsApiAccept %s from %s"%(self.user_id, from_id))
+    #delete invite
+    inv.accepted = True
+    inv.when = datetime.datetime.now()
+    inv.put()
+    self.response.out.write("OK")
+
 class FriendsApi(BaseHandler):
-  @user_required
+  @api_login_required
   def get(self):
     """
     get the users friends
@@ -148,7 +202,7 @@ class FriendsApi(BaseHandler):
     return
 
 class itemsAPI(BaseHandler):
-  @user_required
+  @api_login_required
   def get(self):
     """
     A list of keys is supplied in 'key_list', returns detail list
@@ -389,18 +443,20 @@ def json_serial(o):
 
 def check_for_dirty_data(handler, results):
   # every server call, we look for dirty data and append it if needed
-  prof = memcache_get_user_dict(handler.user_id)['p']
+  user_dict = memcache_get_user_dict(handler.user_id)
+  prof = user_dict['p']
   my_last_check = prof.last_read
   dirty_friends = []
   dirty_places = {}
-  for friend in handler.user.get_user_friends():
-    if (not my_last_check) or \
-        (memcache_get_user_dict(friend)['p'].last_write > my_last_check):
-      dirty_friends.append(
-        serialize_user_details(friend, dirty_places, handler.user_id, handler.request))
-  if len(dirty_friends) > 0:
-    results['dirty_list'] = {"friends": dirty_friends,
-                             "places": dirty_places}
+  if user_dict['f']:
+    for friend in user_dict['f'].split(','):
+      if (not my_last_check) or \
+          (memcache_get_user_dict(friend)['p'].last_write > my_last_check):
+        dirty_friends.append(
+          serialize_user_details(friend, dirty_places, handler.user_id, handler.request))
+    if len(dirty_friends) > 0:
+      results['dirty_list'] = {"friends": dirty_friends,
+                               "places": dirty_places}
 
 
 class getCuisines_ajax(BaseHandler):
@@ -561,19 +617,29 @@ class findFriend(BaseHandler):
     logging.info("findFriend "+user_email.lower())
     user = User.query(google.appengine.ext.ndb.GenericProperty('email_address') == user_email.lower()).get()
     if user:
-      Friends.addFriends(self.user_id, user.key.id())
+      InviteInternal.add_invite(self.user_id, user.key.id())
       self.response.out.write("FOUND")
     else:
-      token = Invite.getInviteToken(self.user_id)
-      uri = self.uri_for('register',type='i', invite_token=token, _full=True)
-      msg = "Hi,\n I'd like to share my favourite eateries with you using the Taste5 app, "+\
-      "Click this link to join for free!\n\n"+uri+"\n\n"+self.user.screen_name
-      mail_wrapper.send_mail(sender=settings.config['system_email'],
-                     to=user_email,
-                     subject="Share my list of places to eat!",
-                     body=msg)
-      logging.info("Email invite sent to %s by %s"%(user_email,self.user_id))
-      self.response.out.write("FOUND")
+      self.response.out.write("NOT FOUND")
+
+class emailInviteFriend(BaseHandler):
+  @api_login_required
+  def post(self):
+    user_email = self.request.get('email')
+    if not re.match('[^@]+@[^@]+\.[^@]+',user_email):
+      self.response.out.write("BAD EMAIL")
+      return
+    logging.info("emailInviteFriend "+user_email.lower())
+    token = Invite.getInviteToken(self.user_id)
+    uri = self.uri_for('register',type='i', invite_token=token, _full=True)
+    msg = "Hi,\n I'd like to share my favourite eateries with you using the Taste5 app, "+\
+    "Click this link to join for free!\n\n"+uri+"\n\n"+self.user.screen_name
+    mail_wrapper.send_mail(sender=settings.config['system_email'],
+                   to=user_email,
+                   subject="Share my list of places to eat!",
+                   body=msg)
+    logging.info("Email invite sent to %s by %s"%(user_email,self.user_id))
+    self.response.out.write("OK")
 
 
 class getPlaceDetailsApi(BaseHandler):

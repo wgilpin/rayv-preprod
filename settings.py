@@ -19,7 +19,7 @@ config = {
   'place_types': 'food|restaurant|bar|cafe|meal_delivery|meal_takeaway',
   'ALLOWED_INCLUDE_ROOTS': "/templates",
   'google_api_key': 'AIzaSyDiTThta8R7EFuFo8cGfPHxIGYoFkc77Bw',
-  'all_are_friends': True,
+  'all_are_friends': False,
   'TIMING_DELTA': timedelta(0,5 * 60), # 5 mins
   'system_email': 'wgilpin+rayv@gmail.com',
   'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S',

@@ -9,6 +9,7 @@ import time
 from auth_model import User
 import geohash
 from settings import config
+import settings
 
 __author__ = 'Will'
 
@@ -261,7 +262,7 @@ class Item(db.Model):
     return json_data
 
   @classmethod
-  def key_to_json(cls, key, request=None):
+  def key_to_json(cls, key):
     try:
       # memcache has item entries under Key, and JSON entries under JSON:key
       item = Item.get(key)
@@ -503,7 +504,7 @@ class Vote(db.Model):
     name = memcache.get('USERNAME' + str(self.voter))
     if name:
       return name
-    user = User.get_by_id(self.voter)
+    user = User().get_by_id(self.voter)
     name = user.screen_name
     memcache.set('USERNAME' + str(self.voter), name)
     
@@ -580,6 +581,24 @@ class Trust(db.Model):
 
 #caching
 
+def get_friends_str(user_id):
+  friends = []
+  left_list = Friends.all().filter("lower =",user_id)
+  right_list = Friends.all().filter("higher =",user_id)
+  for f in left_list:
+    if not f.higher in friends:
+      friends.append(f.higher)
+  for f in right_list:
+    if not f.lower in friends:
+      friends.append(f.lower)
+  friends_with_name = []
+  for f in friends:
+    friends_with_name.append("%s:%s"%(f,User().get_by_id(f).screen_name))
+  if friends_with_name:
+    return ",".join(friends_with_name)
+  else:
+    return "";
+
 def memcache_get_user_dict(UserId):
   """
   memcache enabled get User
@@ -587,6 +606,7 @@ def memcache_get_user_dict(UserId):
   @return user:
   """
   try:
+    UserId = int(UserId)
     user_rec = memcache.get(str(UserId))
     if user_rec:
       return user_rec
@@ -595,6 +615,7 @@ def memcache_get_user_dict(UserId):
       uprof = user.profile()
       record = {'u': user,
                 'p': uprof,
+                'f': get_friends_str(user.key.id()),
                 'v': Vote.get_user_votes(UserId),
                 'd': datetime.datetime.now()}
       if not memcache.set(str(UserId), record):
@@ -607,6 +628,7 @@ def memcache_get_user_dict(UserId):
 
 
 def memcache_touch_user(id):
+  id = int(id)
   logging.debug ("memcache_touch_user %d"%id)
   ur = memcache_get_user_dict(id)
   ur['p'].last_write = datetime.datetime.now()
@@ -729,47 +751,60 @@ class Invite(db.Model):
 
 class Friends(db.Model):
   # integer userIds, the lower value always in Lower as it's commutative
-  lower = db.IntegerProperty
-  higher = db.IntegerProperty
-  invite = db.BooleanProperty(default=False)
+  lower = db.IntegerProperty(default=0)
+  higher = db.IntegerProperty(default=0)
+
 
   @classmethod
-  def addFriends(cls,first, second, invite=False):
-    lower = min(first, second)
-    higher = max(first, second)
+  def addFriends(cls,first, second):
+    i1 = int(first)
+    i2 = int(second)
+    lower = min(i1, i2)
+    higher = max(i1, i2)
     f = Friends().all().filter("lower =",lower).filter("higher =",higher).get()
     if f:
       logging.info("addFriends: already friends %s, %s"%(lower, higher))
     else:
+      lower_friend = User().get_by_id(lower)
+      higher_friend = User().get_by_id(lower)
       logging.info("addFriends: adding %s, %s"%(lower, higher))
       f = Friends()
       f.higher = higher
       f.lower = lower
-      f.invite = invite
       f.put()
-      logging.debug("addFriends 1: "+str(lower))
-      lower_friend = User.get_by_id(lower)
-      logging.debug("addFriends 2")
-      Friends.update_friends(lower_friend)
-      logging.debug("addFriends 3")
-      higher_friend = User.get_by_id(lower)
-      logging.debug("addFriends 4")
-      Friends.update_friends(higher_friend)
+      memcache_touch_user(lower)
+      memcache_touch_user(higher)
 
+
+
+
+""" These are internal invites - both are users
+"""
+class InviteInternal(db.Model):
+  inviter = db.IntegerProperty(default=0)
+  invitee = db.IntegerProperty(default=0)
+  accepted = db.BooleanProperty(default=False)
+  when = db.DateTimeProperty(auto_now=True)
+  name = db.TextProperty(default="")
 
   @classmethod
-  def update_friends(cls, user):
-    id = user.get_id()
+  def add_invite(cls,from_id, to_id):
+    inv = InviteInternal.all().filter("inviter =",from_id).filter("invitee =",to_id).get()
+    if not inv:
+      inv = InviteInternal()
+    inv.inviter = from_id
+    inv.invitee = to_id
+    u = memcache_get_user_dict(from_id)['u']
+    inv.name = u.screen_name
+    inv.put()
 
-    friends = []
-    left_list = Friends.all().filter("lower =",user.get_id())
-    right_list = Friends.all().filter("higher =",user.get_id())
-    for f in left_list:
-      if not f in friends:
-        friends.append(f)
-    for f in right_list:
-      if not f in friends:
-        friends.append(f)
-    user.friends_str = ",".join(friends)
-    user.put()
-    logging.info("update_friends:  %s = %s"%(id, user.friends_str))
+  def to_json(self):
+    timestr = self.when.strftime(
+            settings.config['DATETIME_FORMAT'])
+    dict = {
+      'inviter':self.inviter,
+    'invitee':self.invitee,
+    'accepted':self.accepted,
+    'name':self.name,
+    'when':timestr}
+    return dict

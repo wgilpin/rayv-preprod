@@ -28,9 +28,6 @@ class User(webapp2_extras.appengine.auth.models.User):
   screen_name = model.StringProperty()
   blocked = model.BooleanProperty(default=False)
   votes_json = db.StringProperty(default="")
-  friends_str = db.StringProperty(default="")
-
-
 
   def set_password(self, raw_password):
     """Sets the password for the current userId
@@ -107,20 +104,4 @@ class User(webapp2_extras.appengine.auth.models.User):
       new_profile.last_read = datetime.datetime.now()
       new_profile.put()
       return new_profile
-
-  def get_user_friends(self):
-    if  settings.config['all_are_friends']:
-      # all are friends
-      users = User.query()
-      res = []
-      for u in users:
-        if not u.blocked:
-          id = u.key.id()
-          if id != self.key.id():
-            res.append(id)
-      return  res
-    else:
-      # find friends
-      res = self.friends_str.split(',')
-      return  res
 

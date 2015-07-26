@@ -170,10 +170,23 @@ class getUserRecordFastViaWorkers(BaseHandler):
           pass
     return votes, places
 
-  def getFullUserRecord(self, my_id, now=None):
+  def getFullUserRecord(self, user_dict, now=None):
     places = {}
     votes = []
-    q = User.gql('')
+    if settings.config['all_are_friends']:
+      q = User.gql('')
+    else:
+      # start with me
+      q = [user_dict['u']]
+      # then get my friends
+      if user_dict['f']:
+        f_list = user_dict['f'].split(',')
+        for f_id in f_list:
+          f_data = f_id.split(':')
+          f_user_id = f_data[0]
+          q.append(models.memcache_get_user_dict(f_user_id)['u'])
+    place_json = None
+    place_key = None
     for u in q:
       user_dict, user_votes = models.get_user_votes(u.get_id())
       for place_key in user_votes:
@@ -181,12 +194,12 @@ class getUserRecordFastViaWorkers(BaseHandler):
           for vote in user_votes[place_key]:
             votes.append(vote)
           if not place_key in places:
-            place_json = models.Item.key_to_json(place_key, my_id)
+            place_json = models.Item.key_to_json(place_key)
             if "cuisineName" in place_json:
               places[place_key] = place_json
         except Exception, e:
           if place_json:
-            logging.error("getFullUserRecord Exception %s"%place_json['place_name'], exc_info=True)
+            logging.error("getFullUserRecord Exception 1 %s"%place_json['place_name'], exc_info=True)
           else:
             logging.error("getFullUserRecord Exception %s"%place_key, exc_info=True)
     return votes, places
@@ -207,8 +220,8 @@ class getUserRecordFastViaWorkers(BaseHandler):
       return
 
     if my_id:
-      user = views.memcache_get_user_dict(my_id)
-      if user:
+      my_user_dict = views.memcache_get_user_dict(my_id)
+      if my_user_dict:
         # logged in
         result = {
           "id": my_id,
@@ -228,10 +241,10 @@ class getUserRecordFastViaWorkers(BaseHandler):
             logging.error("getFullUserRecord Time error with %s"%since,
                           exc_info=True)
             #full update
-            votes, places = self.getFullUserRecord(my_id)
+            votes, places = self.getFullUserRecord(my_user_dict)
         else:
           #full update
-          votes, places = self.getFullUserRecord(my_id)
+          votes, places = self.getFullUserRecord(my_user_dict)
 
         friends_list = []
         if views.config['all_are_friends']:
@@ -243,15 +256,26 @@ class getUserRecordFastViaWorkers(BaseHandler):
                 'name': u.screen_name}
             friends_list.append(user_str)
         else:
-          friends = user.friends_str.split(',')
-          for uId in friends:
-            u = User.get_id(uId)
-            user_str = {
-                "id": u.get_id(),
-                # todo is it first_name?
-                'name': u.screen_name}
-            friends_list.append(user_str)
+          if my_user_dict['f']:
+            friends = my_user_dict['f'].split(',')
+            for f in friends:
+              vals = f.split(':')
+              user_str = {
+                  "id": vals[0],
+                  # todo is it first_name?
+                  'name': vals[1]}
+              friends_list.append(user_str)
 
+        sentInvites = models.InviteInternal.all().filter("inviter =",my_id)
+        recdInvites = models.InviteInternal.all().filter("invitee =",my_id)
+        sent = []
+        for i in sentInvites:
+          sent.append(i.to_json())
+        recd = []
+        for i in recdInvites:
+          recd.append(i.to_json())
+        result["sentInvites"] = sent
+        result["receivedInvites"] = recd
         result['votes'] = votes
         result["places"] = places
         result["friendsData"] = friends_list
