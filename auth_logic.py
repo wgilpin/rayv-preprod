@@ -48,8 +48,12 @@ def CheckAPILogin(handler):
     if user and user.blocked:
       logging.info('views.loginAPI: Blocked user ' + username)
       handler.abort(403)
-    handler.auth.get_user_by_password(username, password, remember=True,
-                                   save_session=True)
+    try:
+      handler.auth.get_user_by_password(username, password, remember=True,
+                                     save_session=True)
+    except InvalidAuthIdError:
+      logging.warning('LoginAPI bad login')
+      handler.abort(401)
     logging.info('LoginAPI: Logged in')
     # tok = user.create_auth_token(handler.user_id)
     # handler.response.out.write('{"auth":"%s"}'%tok)

@@ -74,7 +74,7 @@ LatLongItems = [
   # ['Shit broadband', 51.381, -2.428, 'local'],
 ]
 
-Friends = [['Will', 'pegah']]
+FriendsList = [['Will', 'pegah']]
 
 
 def fakeGeoCode():
@@ -284,20 +284,14 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
       print "votes"
 
     if not section or section == 'friends':
-      for idx, pair in enumerate(Friends):
+      for idx, pair in enumerate(FriendsList):
         if Max:
           if idx >= Max:
             break
         left = User.get_by_auth_id(pair[0])
         right = User.get_by_auth_id(pair[1])
         left_prof = left.profile()
-        right_prof = right.profile()
-        if not left.key.id() in right_prof.friends:
-          right_prof.friends.append(left.key.id())
-          right_prof.put()
-        if not right.key.id() in left_prof.friends:
-          left_prof.friends.append(right.key.id())
-          left_prof.put()
+        models.Friends.addFriends(left.get_id(), right.get_id())
         res.append("Friends %s - %s" % (pair[0], pair[1]))
     print "friends"
     return res
