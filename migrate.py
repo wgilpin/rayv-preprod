@@ -63,17 +63,11 @@ class migrate(BaseHandler):
   @user_required
   def add_cuisines(self):
     try:
-      new_cats = [
-        "Brunch",
-        "Middle Eastern",
-        "African",
-        "Brazilian"]
-      for cat in new_cats:
-        new_cat = Category(key_name=cat)
-        new_cat.title = cat
-        new_cat.put()
-        self.response.out.write('Added Category %s<br>'%cat)
-      self.response.out.write('Adding Categories succeeded')
+      new_cat = self.request.params['cuisine']
+      new_cat = Category(key_name=new_cat)
+      new_cat.title = new_cat
+      new_cat.put()
+      self.response.out.write('Added Category %s<br>'%new_cat)
     except Exception, ex:
       self.response.out.write('Adding categories failed %s'%ex)
       

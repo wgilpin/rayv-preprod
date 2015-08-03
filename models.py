@@ -449,16 +449,18 @@ class MealKind:
   KIND_LUNCH = 2
   KIND_DINNER = 4
   KIND_COFFEE = 8
+  KIND_BAR = 16
 
   @classmethod
   def KIND_ALL(self):
-    return self.KIND_BREAKFAST+self.KIND_COFFEE+self.KIND_DINNER+self.KIND_LUNCH
+    return self.KIND_BREAKFAST +self.KIND_LUNCH +self.KIND_DINNER +self.KIND_COFFEE +self.KIND_BAR
 
 class VoteValue:
   VOTE_NONE = 0
   VOTE_LIKED = 1
   VOTE_DISLIKED = -1
   VOTE_UNTRIED = 2
+
 
 """
 A vote for an item
@@ -484,6 +486,8 @@ class Vote(db.Model):
       kinds.append("Dinner")
     if MealKind.KIND_COFFEE & self.meal_kind:
       kinds.append("Coffee")
+    if MealKind.KIND_BAR & self.meal_kind:
+      kinds.append("Bar")
     return ', '.join(kinds)
 
   @property

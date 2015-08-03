@@ -179,6 +179,22 @@ class FriendsApiAccept(BaseHandler):
     inv.put()
     self.response.out.write("OK")
 
+class FriendsApiReject(BaseHandler):
+  @api_login_required
+  def post(self):
+    """
+    accept a friend request
+    :return:
+    """
+    from_id = self.request.params['from_id']
+    #find the invite
+    # inv = InviteInternal.all().get()
+    # inv = InviteInternal.all().filter("invitee =", self.user_id).get()
+    inv = InviteInternal.all().filter("invitee =", self.user_id).filter("inviter =", int(from_id)).get()
+    if inv:
+      db.delete(inv)
+    self.response.out.write("OK")
+
 class FriendsApi(BaseHandler):
   @api_login_required
   def get(self):
@@ -611,12 +627,15 @@ class register(BaseHandler):
     }
     self.render_template('signup-verify.html', params)
 
-class findFriend(BaseHandler):
+class AddUserAsFriend(BaseHandler):
   @api_login_required
   def get(self):
     user_email = self.request.get('email')
-    logging.info("findFriend "+user_email.lower())
+    logging.info("AddUserAsFriend "+user_email.lower())
     user = User.query(google.appengine.ext.ndb.GenericProperty('email_address') == user_email.lower()).get()
+    if user.get_id() == self.user_id:
+      self.response.out.write("EMAIL TO SELF")
+      return
     if user:
       InviteInternal.add_invite(self.user_id, user.key.id())
       self.response.out.write("FOUND")
