@@ -4,6 +4,7 @@ import google.appengine.ext.ndb
 
 from auth_model import User
 import mail_wrapper
+from models import Invite
 import settings
 
 __author__ = 'Will'
@@ -154,24 +155,31 @@ class SignupHandler(BaseHandler):
     logging.info('SignupHandler: Put done')
 
     token = self.user_model.create_signup_token(user_id)
+    invite_token = self.request.params.get('invite_token')
+    inviter = Invite.checkInviteToken(invite_token)
+    if inviter:
+      #invited
+      self.render_template('signup-complete.html')
+    else:
+      if not invite_token:
+        invite_token = 'none'
+      verification_url = self.uri_for('verification', type='v', user_id=user_id,
+                                      signup_token=token,invite_token=invite_token,_full=True)
 
-    verification_url = self.uri_for('verification', type='v', user_id=user_id,
-                                    signup_token=token, _full=True)
-
-    msg = 'Click on this link to confirm your address and complete the sign-up process \n'+\
-            verification_url
-    logging.info('SignupHandler: Send msg %s, token %s'%(verification_url, token))
-    mail_wrapper.send_mail(sender=settings.config['system_email'],
-                     to=[email, 'wgilpin+taste5@gmail.com'],
-                     subject="Welcome to Taste 5",
-                     body=msg)
-    #self.display_message(msg.format(url=verification_url))
-    logging.info('SignupHandler: Sent')
-    params = {
-      'email':email,
-      'password':password
-    }
-    self.render_template('signup-verify.html', params)
+      msg = 'Click on this link to confirm your address and complete the sign-up process \n'+\
+              verification_url
+      logging.info('SignupHandler: Send msg %s, token %s'%(verification_url, token))
+      mail_wrapper.send_mail(sender=settings.config['system_email'],
+                       to=[email, 'wgilpin+taste5@gmail.com'],
+                       subject="Welcome to Taste 5",
+                       body=msg)
+      #self.display_message(msg.format(url=verification_url))
+      logging.info('SignupHandler: Sent')
+      params = {
+        'email':email,
+        'password':password
+      }
+      self.render_template('signup-verify.html', params)
 
 
 class ForgotPasswordHandler(BaseHandler):

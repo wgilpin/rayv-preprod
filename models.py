@@ -117,11 +117,6 @@ class Address(db.Model):
   country = db.TextProperty()
 
 
-"""
-The semantic tree for items
-"""
-
-
 class Category(db.Model):
   # key_name is the slug
   title = db.TextProperty()
@@ -724,7 +719,7 @@ friends with the inviter
 """
 class Invite(db.Model):
   inviter = db.IntegerProperty()
-  token = db.TextProperty()
+  token = db.StringProperty()
   when = db.DateTimeProperty(auto_now=True)
 
   @classmethod
@@ -789,7 +784,7 @@ class InviteInternal(db.Model):
   invitee = db.IntegerProperty(default=0)
   accepted = db.BooleanProperty(default=False)
   when = db.DateTimeProperty(auto_now=True)
-  name = db.TextProperty(default="")
+  name = db.StringProperty(default="")
 
   @classmethod
   def add_invite(cls,from_id, to_id):

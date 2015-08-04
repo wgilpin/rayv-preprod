@@ -1,4 +1,4 @@
-import base64
+import os
 import re
 import urllib
 import urllib2
@@ -609,23 +609,28 @@ class register(BaseHandler):
     invite_token = self.request.params['invite_token'] if \
       'invite' in self.request.params \
       else "none"
-    verification_url = self.uri_for('verification', type='v', user_id=user_id,
-                                    signup_token=token, invite_token=invite_token, _full=True)
-    logging.info("register,POST emailing")
-    mail_wrapper.send_mail(
-      sender=config['system_email'],
-      to=[email, 'wgilpin+taste5@gmail.com'],
-      subject="Rayv Registration",
-      body='Click on this link to verify your address and '
-           'complete the sign-up process \n'+
-            verification_url
-    )
-    logging.info('Verification email sent to %s [%s] [%s]'%(email,verification_url, invite_token))
-    params = {
-      'email':email,
-      'password':password
-    }
-    self.render_template('signup-verify.html', params)
+    inviter = Invite.checkInviteToken(invite_token)
+    if inviter:
+       passwordVerificationHandler.handle_verification(self,user_id,token,"v",invite_token)
+    else:
+        verification_url = self.uri_for('verification', type='v', user_id=user_id,
+                                        signup_token=token, _full=True)
+        verification_url += "&invite_token=" + str(invite_token)
+        logging.info("register,POST emailing")
+        mail_wrapper.send_mail(
+          sender=config['system_email'],
+          to=[email, 'wgilpin+taste5@gmail.com'],
+          subject="Rayv Registration",
+          body='Click on this link to verify your address and '
+               'complete the sign-up process \n'+
+                verification_url
+        )
+        logging.info('Verification email sent to %s [%s] [%s]'%(email,verification_url, invite_token))
+        params = {
+          'email':email,
+          'password':password
+        }
+        self.render_template('signup-verify.html', params)
 
 class AddUserAsFriend(BaseHandler):
   @api_login_required
@@ -1222,7 +1227,59 @@ class deleteItem(BaseHandler):
       logging.error("delete_item", exc_info=True)
       handler.abort(500)
 
+
 class passwordVerificationHandler(BaseHandler):
+    @classmethod
+    def handle_verification(cls, handler, user_id,signup_token,verification_type,invite_token):
+        # it should be something more concise like
+        # self.auth.get_user_by_token(user_id, signup_token)
+        # unfortunately the auth interface does not (yet) allow to manipulate
+        # signup tokens concisely
+        user, ts = handler.user_model.get_by_auth_token(int(user_id), signup_token,
+                                                     'signup')
+
+        if not user:
+            logging.info(
+              'Could not find any userId with id "%s" signup token "%s"',
+              user_id,
+              signup_token)
+            handler.display_message("Not found - if you've already followed this link there is no need to do it again")
+            return
+
+        # store userId data in the session
+        handler.auth.set_session(handler.auth.store.user_to_dict(user), remember=True)
+
+        if verification_type == 'v':
+            # remove signup token,
+            # we don't want users to come back with an old link
+            handler.user_model.delete_signup_token(handler.user_id, signup_token)
+
+            if not user.verified:
+                user.verified = True
+                user.put()
+            try:
+              if invite_token and invite_token != 'none':
+                inv = Invite.checkInviteToken(invite_token)
+                Friends.addFriends(inv, handler.user_id)
+                Invite.delInviteToken(invite_token)
+                logging.info("passwordVerificationHandler complete "+user.email_address)
+            except:
+              logging.error(
+                "Failed to add friend: passwordVerificationHandler GET",
+                exc_info=True)
+            handler.render_template('signup-complete.html')
+        elif verification_type == 'p':
+            # supply userId to the page
+            params = {
+                'userId': user,
+                'token': signup_token
+            }
+            handler.render_template('resetpassword.html', params)
+        else:
+            logging.info('verification type not supported')
+            handler.abort(404)
+
+
     def get(self, *args, **kwargs):
 
         user = None
@@ -1233,51 +1290,5 @@ class passwordVerificationHandler(BaseHandler):
           if 'invite_token' in self.request.params\
           else None
 
-        # it should be something more concise like
-        # self.auth.get_user_by_token(user_id, signup_token)
-        # unfortunately the auth interface does not (yet) allow to manipulate
-        # signup tokens concisely
-        user, ts = self.user_model.get_by_auth_token(int(user_id), signup_token,
-                                                     'signup')
-
-        if not user:
-            logging.info(
-              'Could not find any userId with id "%s" signup token "%s"',
-              user_id,
-              signup_token)
-            self.display_message("Not found - if you've already followed this link there is no need to do it again")
-            return
-
-        # store userId data in the session
-        self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)
-
-        if verification_type == 'v':
-            # remove signup token,
-            # we don't want users to come back with an old link
-            self.user_model.delete_signup_token(self.user_id, signup_token)
-
-            if not user.verified:
-                user.verified = True
-                user.put()
-            try:
-              if invite_token:
-                inv = Invite.checkInviteToken(invite_token)
-                Friends.addFriends(inv, self.user_id)
-                Invite.delInviteToken(invite_token)
-                logging.info("passwordVerificationHandler complete "+user.email_address)
-            except:
-              logging.error(
-                "Failed to add friend: passwordVerificationHandler GET",
-                exc_info=True)
-            self.render_template('signup-complete.html')
-        elif verification_type == 'p':
-            # supply userId to the page
-            params = {
-                'userId': user,
-                'token': signup_token
-            }
-            self.render_template('resetpassword.html', params)
-        else:
-            logging.info('verification type not supported')
-            self.abort(404)
+        self.handle_verification(self,user_id,signup_token,verification_type,invite_token)
 

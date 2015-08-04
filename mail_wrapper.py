@@ -5,9 +5,9 @@ __author__ = 'Will'
 
 def send_mail(sender, to, subject, body):
   server = os.environ['SERVER_NAME']
-  if server == 'localhost':
+  if server == 'localhost' or server.find('192.')== 0:
     print "SEND EMAIL"
-    print 'to: '+to
+    print 'to: '+str(to)
     print 'Re: '+subject
     print body
   else:
