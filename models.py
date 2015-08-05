@@ -303,6 +303,8 @@ class Item(db.Model):
           edit_time_unix = 0
       else:
         edit_time_unix = 0
+      if self.category == None or self.category.title == None:
+        logging.error("%s has no cuisine"%self.place_name)
       data = {
         'lat': self.lat,
         'lng': self.lng,

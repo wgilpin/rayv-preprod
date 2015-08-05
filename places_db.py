@@ -32,15 +32,16 @@ class PlacesDB():
     :param user_id: int userId of the current user
     :return: dict {"local": [points]}
     """
+    points = []
     def add_if_unique (point):
-      for p in points['points']:
+      for p in points:
         if point["place_name"] == p["place_name"]:
           distance = geo.approx_distance(point, p)
           if distance < 0.05:
             #found, don't add
             return
       #wasn't found in list, add
-      includeList.append(point)
+      points.append(point)
 
     logging.debug("map_and_db_search")
     search_filter = {
@@ -49,7 +50,12 @@ class PlacesDB():
       "exclude_user": exclude_user_id}
     calc_dist_from = my_locn if include_maps_data else None
     list_of_place_names = []
-    points = geo.findDbPlacesNearLoc(
+    points=[]
+    if include_maps_data:
+      g_points = cls.get_google_db_places(lat, lng, text_to_search, 3000)
+      points = g_points["items"]
+
+    db_points = geo.findDbPlacesNearLoc(
       my_locn,
       request,
       search_text=text_to_search,
@@ -58,32 +64,22 @@ class PlacesDB():
       position=geo.LatLng(lat, lng),
       place_names=list_of_place_names,
       ignore_votes=True)
-    if include_maps_data:
-      googPts = cls.get_google_db_places(lat, lng, text_to_search, 3000)
-      if googPts == None:
-        return None
-      includeList = []
-      # todo: step through both in sequence
-      try:
-        # deDup the list - if it's come back from google check if we had it already:
-        # same name AND nearby
 
-        for gpt in googPts["items"]:
-          add_if_unique(gpt)
+    # todo: step through both in sequence
+    try:
+      # deDup the list - if it's come back from google check if we had it already:
+      # same name AND nearby
 
-      except Exception, e:
-        pass
-      # points["points"] = []
-      #points["count"] = 0
-      # todo: this returns all items - limit?
-      for gpt in includeList:
-        points["points"].append(gpt)
-        points["count"] += 1
+      for pt in db_points["points"]:
+        add_if_unique(pt)
 
-      sorted_results = points["points"]
-      # this is sorted as the client doesnt for map items
-      points["points"] = sorted_results
-    result = {"local": points}
+    except Exception, e:
+      pass
+
+    result = {"local": {
+      "points": points,
+      "count": len(points)
+    }}
     return result
 
   @classmethod
@@ -152,7 +148,7 @@ class PlacesDB():
              lng,
              escaped_name,
              settings.config['google_api_key'] )
-      response = urllib2.urlopen(url)
+      response = urllib2.urlopen(url, timeout=15)
       jsonResult = response.read()
       addressResult = json.loads(jsonResult)
       addresses = []
