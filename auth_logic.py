@@ -150,6 +150,8 @@ class SignupHandler(BaseHandler):
     user_id = user.get_id()
 
     user.screen_name = self.request.get('screenname')
+    if not user.screen_name:
+      user.screen_name = name.title() + last_name.upper()[0]
     logging.info('SignupHandler: Put...')
     user.put()
     logging.info('SignupHandler: Put done')

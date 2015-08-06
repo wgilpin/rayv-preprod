@@ -638,6 +638,9 @@ class AddUserAsFriend(BaseHandler):
     user_email = self.request.get('email')
     logging.info("AddUserAsFriend "+user_email.lower())
     user = User.query(google.appengine.ext.ndb.GenericProperty('email_address') == user_email.lower()).get()
+    if not user:
+          user = User.query(google.appengine.ext.ndb.GenericProperty('email_address') == user_email).get()
+
     if user.get_id() == self.user_id:
       self.response.out.write("EMAIL TO SELF")
       return
