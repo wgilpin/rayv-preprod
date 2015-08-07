@@ -89,7 +89,7 @@ class RegisterInOne(BaseHandler):
     if user and user.blocked:
       logging.info('SignupHandler: Blocked user ' + username)
       self.response.out.write("BLOCKED")
-    email = self.request.get('email')
+    email = self.request.get('email').lower()
     name = self.request.get('name')
     password = self.request.get('password')
     last_name = self.request.get('lastname')
@@ -122,7 +122,7 @@ class SignupHandler(BaseHandler):
 
   def post(self):
     logging.info('SignupHandler: In')
-    email = self.request.get('email')
+    email = self.request.get('email').lower()
     username = email
     user = self.user_model.get_by_auth_id(username)
     if user and user.blocked:

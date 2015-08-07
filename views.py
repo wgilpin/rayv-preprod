@@ -584,7 +584,7 @@ class register(BaseHandler):
     # posted a filled out reg form
     # create the user,
     # and send an email verification including token to the new user
-    email = self.request.get('email')
+    email = self.request.get('email').lower()
     name = self.request.get('name')
     password = self.request.get('password')
     last_name = self.request.get('lastname')
