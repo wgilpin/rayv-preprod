@@ -50,12 +50,8 @@ class PlacesDB():
       "exclude_user": exclude_user_id}
     calc_dist_from = my_locn if include_maps_data else None
     list_of_place_names = []
-    points=[]
-    if include_maps_data:
-      g_points = cls.get_google_db_places(lat, lng, text_to_search, 3000)
-      points = g_points["items"]
 
-    db_points = geo.findDbPlacesNearLoc(
+    points = geo.findDbPlacesNearLoc(
       my_locn,
       request,
       search_text=text_to_search,
@@ -63,14 +59,19 @@ class PlacesDB():
       uid=user_id,
       position=geo.LatLng(lat, lng),
       place_names=list_of_place_names,
-      ignore_votes=True)
+      ignore_votes=True)["points"]
+
+    if include_maps_data:
+      g_points = cls.get_google_db_places(lat, lng, text_to_search, 3000)
+      points_2 = g_points["items"]
+
 
     # todo: step through both in sequence
     try:
       # deDup the list - if it's come back from google check if we had it already:
       # same name AND nearby
 
-      for pt in db_points["points"]:
+      for pt in points_2:
         add_if_unique(pt)
 
     except Exception, e:

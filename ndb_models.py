@@ -179,7 +179,7 @@ class getUserRecordFastViaWorkers(BaseHandler):
       # start with me
       q = [user_dict['u']]
       # then get my friends
-      if user_dict['f']:
+      if 'f' in user_dict:
         f_list = user_dict['f'].split(',')
         for f_id in f_list:
           f_data = f_id.split(':')
@@ -256,7 +256,7 @@ class getUserRecordFastViaWorkers(BaseHandler):
                 'name': u.screen_name}
             friends_list.append(user_str)
         else:
-          if my_user_dict['f']:
+          if 'f' in my_user_dict:
             friends = my_user_dict['f'].split(',')
             for f in friends:
               vals = f.split(':')

@@ -464,7 +464,7 @@ def check_for_dirty_data(handler, results):
   my_last_check = prof.last_read
   dirty_friends = []
   dirty_places = {}
-  if user_dict['f']:
+  if 'f' in user_dict:
     for friend in user_dict['f'].split(','):
       friend_id = int(friend.split(':')[0])
       if (not my_last_check) or \
