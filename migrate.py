@@ -403,6 +403,31 @@ class migrate(BaseHandler):
       if v.cuisine.title == 'Brunch':
         self.response.out.write("BRUNCH: %s for %s<br>"%(v.key, v.item.place_name))
 
+  @user_required
+  def votes_to_5_star(self):
+    votes = Vote.all()
+    for v in votes:
+      if v.vote == VoteValue.VOTE_UNTRIED:
+        v.untried = True
+        v.stars = 0
+      elif v.vote == VoteValue.VOTE_DISLIKED:
+        if v.stars <=1:
+          # ignore if we've amended the vote
+          v.stars = 1
+          v.untried = False
+      elif v.vote == VoteValue.VOTE_LIKED:
+        if v.stars <=1:
+          # ignore if we've amended the vote
+          v.stars = 5
+          v.untried = False
+      else:
+        self.response.out.write("ERROR on vote %s for %s vote is %d"%(v.key,v.place_name.v.vote))
+      v.put()
+    memcache.flush_all()
+
+
+
+
 
   @user_required
   def get(self):
@@ -499,6 +524,9 @@ class migrate(BaseHandler):
     elif migration_name == "remove_brunch":
       self.remove_brunch()
       self.response.out.write("Brunch removed")
+    elif migration_name == "five_star":
+      self.votes_to_5_star()
+      self.response.out.write("Stars set")
 
     else:
       self.response.out.write("No Migration")

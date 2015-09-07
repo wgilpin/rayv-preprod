@@ -65,7 +65,7 @@ class TestItem(TestCase):
   def test_vote_from(self):
     self.load_user_and_item()
     self.load_votes(self.user,1,"Good Place")
-    comment, vote = self.item.vote_from(self.user.key.id())
+    comment, vote, untried = self.item.vote_from(self.user.key.id())
     assert comment == "Good Place"
     assert vote == 1
 

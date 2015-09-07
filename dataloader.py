@@ -1,5 +1,5 @@
 import logging
-from random import random
+from random import random, randint
 import urllib2
 from google.appengine.ext import db
 import time
@@ -269,11 +269,13 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
           if idx >= Max:
             break
         vote = models.Vote()
-        if (vote_item.key().id() % 2) == 0:
-          vote_score = models.VoteValue.VOTE_LIKED
+        vote_score = randint(0,5)
+        if vote_score == 0:
+          vote.vote = 0
+          vote.untried = True
         else:
-          vote_score = models.VoteValue.VOTE_DISLIKED
-        vote.vote = vote_score
+          vote.vote = vote_score
+          vote.untried = False
         vote.comment = "blah v" + str(i)
         vote.voter = a_sample_user.key.id()
         vote.item = vote_item

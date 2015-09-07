@@ -1,12 +1,22 @@
 import json
 import logging
+import os
 import urllib2
+from datetime import datetime
 import settings
 import geo
 
 __author__ = 'Will'
 
 class PlacesDB():
+
+  @classmethod
+  def log_to_console(cls, message):
+    server = os.environ['SERVER_NAME']
+    if server == 'localhost' or server.find('192.')== 0:
+      print datetime.now()," LOG: ", message
+    else:
+      logging.info(message)
 
   @classmethod
   def map_and_db_search(
@@ -51,6 +61,7 @@ class PlacesDB():
     calc_dist_from = my_locn if include_maps_data else None
     list_of_place_names = []
 
+    cls.log_to_console("Enter DB search")
     points = geo.findDbPlacesNearLoc(
       my_locn,
       request,
@@ -60,10 +71,12 @@ class PlacesDB():
       position=geo.LatLng(lat, lng),
       place_names=list_of_place_names,
       ignore_votes=True)["points"]
+    cls.log_to_console("Exit DB search")
 
     if include_maps_data:
       g_points = cls.get_google_db_places(lat, lng, text_to_search, 3000)
       points_2 = g_points["items"]
+      cls.log_to_console("Exit Google search")
 
 
     # todo: step through both in sequence
@@ -73,6 +86,8 @@ class PlacesDB():
 
       for pt in points_2:
         add_if_unique(pt)
+      cls.log_to_console("Deduped")
+
 
     except Exception, e:
       pass

@@ -209,6 +209,7 @@ class Item(db.Model):
   website = db.StringProperty(default='', required=False)
   json = db.TextProperty(required=False, default = "")
 
+
   def prop(self, name):
     return getProp(self, name)
 
@@ -227,7 +228,7 @@ class Item(db.Model):
     vote = self.votes.filter("voter =", userId).get()
     if vote:
       # if the user has voted for this item, and the user is excluded, next
-      myVoteStr = ',"mine": true,"vote":%d,"descr":"%s"'%(int(vote.vote), vote.comment)
+      myVoteStr = ',"mine": true,"stars":%d,"descr":"%s"'%(vote.stars, vote.comment)
       res = self.json[0:len(self.json)-1]+myVoteStr+'}'
       return res
 
@@ -318,8 +319,7 @@ class Item(db.Model):
         'img': image_url,
         'edited': edit_time_unix,
         'thumbnail': thumbnail_url,
-        'up': self.votes.filter("vote =", 1).count(),
-        'down': self.votes.filter("vote =", -1).count(),
+
         'owner': self.owner,
         # is_map is True if the point came
         # from a google places API search. Default False
@@ -329,7 +329,7 @@ class Item(db.Model):
         if vote:
           # if the user has voted for this item, and the user is excluded, next
           data["mine"] = True
-          data["vote"] = vote.vote
+          data["vote"] = vote.stars
           data["descr"] = vote.comment
       return data
     except Exception, E:
@@ -381,9 +381,9 @@ class Item(db.Model):
     """
     users_vote = self.votes.filter("voter =", user_id).get()
     if users_vote:
-      return users_vote.comment, users_vote.vote
+      return users_vote.comment, users_vote.stars, users_vote.untried
     else:
-      return "", 0
+      return "", 0, false
 
   def closest_vote_from(self, user_record):
     """
@@ -466,6 +466,7 @@ class Vote(db.Model):
   item = db.ReferenceProperty(Item, collection_name="votes")
   voter = db.IntegerProperty()
   vote = db.IntegerProperty()
+  stars = db.IntegerProperty(required=True, default=0)
   untried = db.BooleanProperty(default=False)
   comment = db.TextProperty()
   when = db.DateTimeProperty(auto_now=True)
@@ -487,18 +488,6 @@ class Vote(db.Model):
       kinds.append("Bar")
     return ', '.join(kinds)
 
-  @property
-  def is_untried(self):
-    return self.vote == VoteValue.VOTE_UNTRIED
-
-  @is_untried.setter
-  def is_untried(self, value):
-    if value:
-      self.vote = VoteValue.VOTE_UNTRIED
-    else:
-      # we only reset if untried is set
-      if self.vote == VoteValue.VOTE_UNTRIED:
-        self.vote = VoteValue.VOTE_NONE
 
   @property
   def voter_name(self):
@@ -511,7 +500,8 @@ class Vote(db.Model):
     
   def to_json(self):
      return {"key": str(self.item.key()),
-                       "vote": self.vote,
+                       "vote": self.stars,
+                       "untried": self.untried,
                        "style": self.place_style,
                        "kind": self.meal_kind,
                        "comment": self.comment,
@@ -536,7 +526,8 @@ class Vote(db.Model):
       user_vote_list = Vote.all().filter("voter =", user_id)
       for user_vote in user_vote_list:
         vote_detail = {"key": str(user_vote.item.key()),
-                       "vote": user_vote.vote,
+                       "vote": user_vote.stars,
+                       "untried": user_vote.untried,
                        "kind": user_vote.meal_kind,
                        "style": user_vote.place_style,
                        "cuisineName": user_vote.cuisine.title,

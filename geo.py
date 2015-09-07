@@ -473,9 +473,6 @@ def google_point_to_json(it, request, GPS_origin=None, map_origin=None, uid_for_
       'img': image_url,
       'edited': edit_time_unix,
       'thumbnail': thumbnail_url,
-      'up': it.votes.filter("vote =", 1).count() if hasattr(it, 'votes') else 0,
-      'down': it.votes.filter("vote =", -1).count() if
-                                                hasattr(it, 'votes') else 0,
       'owner': models.getProp(it, 'owner',''),
       # is_map is True if the point came
       # from a google places API search. Default False
@@ -487,7 +484,8 @@ def google_point_to_json(it, request, GPS_origin=None, map_origin=None, uid_for_
         if vote:
           # if the user has voted for this item, and the user is excluded, next
           data["mine"] = True
-          data["vote"] = vote.vote
+          data["stars"] = vote.stars
+          data["untried"] = vote.untried
           data["descr"] = vote.comment
     return data
   except Exception, E:

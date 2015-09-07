@@ -525,7 +525,7 @@ class getAddresses_ajax(BaseHandler):
       self.user_id)
     if results:
       results['search'] = {'lat': lat,'lng':lng}
-      check_for_dirty_data(self, results)
+      # check_for_dirty_data(self, results)
       json.dump(results,
                 self.response.out,
                 default=json_serial)
@@ -766,27 +766,14 @@ def update_votes(item, request_handler, user_id):
     vote.meal_kind =  int(request_handler.request.get('kind'))
     vote.place_style=  int(request_handler.request.get('style'))
     vote.cuisine = Category.get_by_key_name(request_handler.request.get('cuisine'))
-    vote_str = request_handler.request.get("voteScore")
-    try:
-      value = {
-          "1":1,
-          "like":1,
-          "Liked":1,
-          "-1":-1,
-          "dislike":-1,
-          "Disliked":-1,
-          "2":2,
-          "wish":2,
-          "Untried":2,
-          "None": 0
-      }[vote_str]
-    except:
-      value = 0
-    vote.vote = value
+    vote_stars = int(request_handler.request.get("voteScore"))
+    vote.stars = vote_stars
+    vote_untried= bool(request_handler.request.get("voteUntried"))
+    vote.untried = vote_untried
     vote.put()
     ndb_models.mark_vote_as_updated(str(vote.key()), user_id)
     logging.info ('update_votes for %s "%s"=%d'%
-                  (item.place_name,vote.comment,vote.vote))
+                  (item.place_name,vote.comment,vote.stars))
 
   except Exception, ex:
     logging.error("newOrUpdateItem votes exception", exc_info=True)
@@ -1002,10 +989,10 @@ class getItem_ajax(BaseHandler):
         res["img"] = str(it.key())
       if it.owner == self.user_id:
         res["mine"] = True
-        res["descr"], res["vote"] = it.vote_from(it.owner)
+        res["descr"], res["stars"], res["untried"] = it.vote_from(it.owner)
       else:
         res["mine"] = False
-        res["descr"], res["vote"] = it.vote_from(self.user_id)
+        res["descr"], res["stars"], res["untried"] = it.vote_from(self.user_id)
       json.dump(res, self.response.out)
     except Exception:
       logging.error("getItem_ajax Exception", exc_info=True)
@@ -1134,6 +1121,7 @@ class addVote_ajax(BaseHandler):
     it_key = self.request.get('item_id')
     it = Item.get_item(it_key)
     voteScore = int(self.request.get("vote"))
+    voteUntried = bool(self.request.get("untried"))
     my_votes = it.votes.filter('voter =', self.user_id)
     if my_votes.count() == 0:
       # a new vote
@@ -1143,21 +1131,12 @@ class addVote_ajax(BaseHandler):
     else:
       # roll back the old vote
       new_vote = my_votes.get()
-      oldVote = new_vote.vote
-      if oldVote:
-        if oldVote == VoteValue.VOTE_LIKED:
-          it.votesUp -= oldVote
-        elif oldVote == VoteValue.VOTE_DISLIKED:
-          # all votes are abs()
-          it.votesDown -= oldVote
-    new_vote.vote = voteScore
+      oldVote, oldUntried = new_vote.stars, new_vote.untried
+    new_vote.stars = voteScore
+    new_vote.untried = voteUntried
     new_vote.comment = self.request.get("comment")
     new_vote.when = datetime.datetime.now()
     new_vote.put()
-    if voteScore == VoteValue.VOTE_LIKED:
-      it.votesUp += 1
-    elif voteScore == VoteValue.VOTE_DISLIKED:
-      it.votesDown -= 1
     it.save()
     # refresh cache
     memcache.set(it_key, it)
