@@ -1,8 +1,9 @@
 import json
 import logging
-import os
+from random import random
 import urllib2
 from datetime import datetime
+from logging_ext import logging_ext
 import settings
 import geo
 
@@ -12,8 +13,7 @@ class PlacesDB():
 
   @classmethod
   def log_to_console(cls, message):
-    server = os.environ['SERVER_NAME']
-    if server == 'localhost' or server.find('192.')== 0:
+    if settings.running_on_test_server():
       print datetime.now()," LOG: ", message
     else:
       logging.info(message)
@@ -164,13 +164,34 @@ class PlacesDB():
              lng,
              escaped_name,
              settings.config['google_api_key'] )
+      addresses = []
       response = urllib2.urlopen(url, timeout=15)
       jsonResult = response.read()
       addressResult = json.loads(jsonResult)
-      addresses = []
+
     except Exception, e:
-      logging.error('get_google_db_places Exception in Load', exc_info=True)
-      return None
+      if settings.running_on_test_server():
+        # make up a test
+        print "get_google_db_places OFFLINE - Making Up Fake Data"
+        addressResult = {
+          'status':'OK',
+          'results':[
+            {
+              'formatted_address':'1 Crouch Hill, London',
+              'name':'A Madeup Place',
+              'place_id':'0',
+              'geometry':{
+                'location':{
+                  'lat':54.0 + random(),
+                  'lng': -(1.0 + random())
+                }
+              }
+            }
+          ]
+        }
+      else:
+        logging_ext.error('get_google_db_places Exception in Load', exc_info=True)
+        return None
     if addressResult['status'] == "OK":
       try:
         origin = geo.LatLng(lat=lat, lng=lng)
@@ -204,7 +225,7 @@ class PlacesDB():
         results['items'] = addresses
         return results
       except Exception, e:
-        logging.error('get_google_db_places Exception processing', exc_info=True)
+        logging_ext.error('get_google_db_places Exception processing', exc_info=True)
         return results
     elif addressResult['status'] == "ZERO_RESULTS":
       logging.info(
@@ -213,7 +234,7 @@ class PlacesDB():
         exc_info=True)
       return results
     else:
-      logging.error(
+      logging_ext.error(
         "get_google_db_places near [%f,%f]: %s" %
           (lat, lng, addressResult['status']),
         exc_info=True)

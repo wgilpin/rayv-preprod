@@ -7,6 +7,7 @@ from auth_model import User
 import models
 import geohash
 import geo
+import settings
 
 __author__ = 'Will'
 
@@ -159,8 +160,16 @@ def load_one_item(owner):
 
 
 
-def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
-  # TODO: THIS MUST BE REMOVED BEFORE LIVE!!
+def load_data(wipe=False, section=None, Max=None):
+  if not settings.running_on_test_server():
+    return "Forbidden"
+  result_strings = []
+  if geo.geoCodeAddress("1 Crouch Hill, London"):
+    # if we can geocode, we will - no fake
+    fakeGeoCoder = None
+  else:
+    # if we cant geocode, use the fake one
+    fakeGeoCoder = fakeGeoCode
   if section == "addresses":
     return add_addresses_to_db()
   else:
@@ -170,7 +179,6 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
       wipe_table("Item")
       wipe_table("Vote")
       print "wiped"
-    res = []
     if not section or section == 'user':
       for idx, usr in enumerate(Users):
         if Max:
@@ -191,18 +199,18 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
                                        password_raw=password,
                                        last_name=last_name, verified=False)
           if not this_user[0]:  # user_data is a tuple
-            res.append("ERROR - User: " + usr[0])
+            result_strings.append("ERROR - User: " + usr[0])
           else:
             user = this_user[1]
             user.screen_name = name
             user.put()
             UserRecords.append(user)
-            res.append("User: " + usr[0])
+            result_strings.append("User: " + usr[0])
         else:
           this_user.set_password(usr[4])
           this_user.profile().is_admin = True
           this_user.profile().put()
-          res.append("User exists: " + usr[0])
+          result_strings.append("User exists: " + usr[0])
     a_sample_user = User.get_by_auth_id(Users[0][0])  # used for the owner of the records
     print "users ok"
     if not section or section == "category":
@@ -211,12 +219,12 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
           if idx >= Max:
             break
         if models.Category.get_by_key_name(cat):
-          res.append("Category exists: " + cat)
+          result_strings.append("Category exists: " + cat)
         else:
           new_cat = models.Category(key_name=cat)
           new_cat.title = cat
           new_cat.put()
-          res.append("Created: " + cat)
+          result_strings.append("Created: " + cat)
 
     print "category ok"
     if not section or section == "item":
@@ -227,14 +235,14 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
             break
         it = models.Item.all().filter('place_name =', item[0]).get()
         if it:
-          res.append("Item exists: " + item[0])
+          result_strings.append("Item exists: " + item[0])
           it.category = models.Category.get_by_key_name(item[2])
           it.save()
         else:
           new_it = models.Item()
           new_it.category = models.Category.get_by_key_name(item[2])
           new_it.place_name = item[0]
-          lat_long = fakeGeoCode() if useFakeGeoCoder else geo.geoCodeAddress(item[1], home)
+          lat_long = fakeGeoCode() if fakeGeoCoder else geo.geoCodeAddress(item[1], home)
           new_it.lat = lat_long['lat']
           new_it.lng = lat_long['lng']
           new_it.address = item[1]
@@ -258,7 +266,7 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
           new_it.photo = img
           new_it.telephone = detail['telephone']
           new_it.save()
-          res.append('Item: ' + item[0])
+          result_strings.append('Item: ' + item[0])
 
       print "items"
       # votes
@@ -282,7 +290,7 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
         vote.cuisine = vote_item.category
         vote.put()
         i += 1
-      res.append("Votes")
+      result_strings.append("Votes")
       print "votes"
 
     if not section or section == 'friends':
@@ -294,8 +302,8 @@ def load_data(wipe=False, section=None, useFakeGeoCoder=None, Max=None):
         right = User.get_by_auth_id(pair[1])
         left_prof = left.profile()
         models.Friends.addFriends(left.get_id(), right.get_id())
-        res.append("Friends %s - %s" % (pair[0], pair[1]))
+        result_strings.append("Friends %s - %s" % (pair[0], pair[1]))
     print "friends"
-    return res
+    return result_strings
 
 

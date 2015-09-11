@@ -25,7 +25,7 @@ import logging
 from webapp2_extras.auth import InvalidAuthIdError
 from webapp2_extras.auth import InvalidPasswordError
 from base_handler import BaseHandler
-
+from logging_ext import logging_ext
 import ndb_models
 import geo
 import settings
@@ -106,7 +106,7 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
       logging.debug("serialize_user_details: No Votes")
     return result
   except Exception, e:
-    logging.error("serialize_user_details Exception", exc_info=True)
+    logging_ext.error("serialize_user_details Exception", exc_info=True)
 
 class FriendsVotesApi(BaseHandler):
   @user_required
@@ -266,7 +266,7 @@ class getUserRecordFast(BaseHandler):
       my_id = self.user_id
 
     except:
-      logging.error('getFullUserRecord: User Exception')
+      logging_ext.error('getFullUserRecord: User Exception')
       json.dump({'result':'FAIL'},
                   self.response.out,
                   default=json_serial)
@@ -346,7 +346,7 @@ class getFullUserRecord(BaseHandler):
       my_id = self.user_id
 
     except:
-      logging.error('getFullUserRecord: User Exception')
+      logging_ext.error('getFullUserRecord: User Exception')
       json.dump({'result':'FAIL'},
                   self.response.out,
                   default=json_serial)
@@ -685,7 +685,7 @@ class getPlaceDetailsApi(BaseHandler):
       json_result = response.read()
       details_result = json.loads(json_result)
     except:
-      logging.error(
+      logging_ext.error(
         'getPlaceDetailFromGoogle: Exception [%s]',
         place_id,
         exc_info=True)
@@ -708,7 +708,7 @@ class updateItem(BaseHandler):
     try:
       json.dump(Item.key_to_json(key), self.response.out)
     except:
-      logging.error('updateItem GET Exception '+key,exc_info=True)
+      logging_ext.error('updateItem GET Exception '+key,exc_info=True)
 
 
 def update_photo(it, request_handler):
@@ -768,7 +768,10 @@ def update_votes(item, request_handler, user_id):
     vote.cuisine = Category.get_by_key_name(request_handler.request.get('cuisine'))
     vote_stars = int(request_handler.request.get("voteScore"))
     vote.stars = vote_stars
-    vote_untried= bool(request_handler.request.get("voteUntried"))
+    if vote_stars == 0:
+      vote_untried= bool(request_handler.request.get("voteUntried"))
+    else:
+      vote_untried = False
     vote.untried = vote_untried
     vote.put()
     ndb_models.mark_vote_as_updated(str(vote.key()), user_id)
@@ -776,7 +779,7 @@ def update_votes(item, request_handler, user_id):
                   (item.place_name,vote.comment,vote.stars))
 
   except Exception, ex:
-    logging.error("newOrUpdateItem votes exception", exc_info=True)
+    logging_ext.error("newOrUpdateItem votes exception", exc_info=True)
     raise
 
 
@@ -820,9 +823,9 @@ def update_item_internal(self, user_id, allow_update=True):
             it.photo = img
           except:
             if thumb_url:
-              logging.error("update_item_internal: remote url ["+str(thumb_url)+"] Exception", exc_info=True)
+              logging_ext.error("update_item_internal: remote url ["+str(thumb_url)+"] Exception", exc_info=True)
             else:
-              logging.error("update_item_internal: remote url Exception", exc_info=True)
+              logging_ext.error("update_item_internal: remote url Exception", exc_info=True)
             it.photo = None
       if 'telephone' in detail and detail['telephone'] != None:
         it.telephone = detail['telephone']
@@ -885,7 +888,7 @@ class UpdateItemFromAnotherAppAPI(BaseHandler):
           logging.debug("UpdateItemFromAnotherAppAPI Existed ")
         self.response.out.write("OK")
       else:
-        logging.error("UpdateItemFromAnotherAppAPI - couldn't get seed user",
+        logging_ext.error("UpdateItemFromAnotherAppAPI - couldn't get seed user",
                       exc_info=True)
         self.abort(500)
     else:
@@ -915,7 +918,7 @@ class UpdateVote(BaseHandler):
       self.response.out.write('OK')
       logging.debug("UpdateVote OK")
       return
-    logging.error("UpdateVote 404 for %s"%key)
+    logging_ext.error("UpdateVote 404 for %s"%key)
     self.abort(404)
 
 
@@ -925,8 +928,7 @@ class loadTestData(BaseHandler):
     results = None
     try:
       section = self.request.get("section")
-      geoCode = self.request.get("useFakeGeoCoder")
-      results = load_data(section=section, useFakeGeoCoder=geoCode)
+      results = load_data(section=section)
       self.render_template("dataLoader.html", {"results": results})
     except Exception, E:
       self.render_template(
@@ -995,7 +997,7 @@ class getItem_ajax(BaseHandler):
         res["descr"], res["stars"], res["untried"] = it.vote_from(self.user_id)
       json.dump(res, self.response.out)
     except Exception:
-      logging.error("getItem_ajax Exception", exc_info=True)
+      logging_ext.error("getItem_ajax Exception", exc_info=True)
       self.error(500)
 
 
@@ -1032,7 +1034,7 @@ class ImageHandler(BaseHandler):
         self.response.headers['Content-Type'] = 'image/png'
         self.response.out.write(photo.picture)
     except:
-      logging.error('ImageHandler '+key, exc_info=True)
+      logging_ext.error('ImageHandler '+key, exc_info=True)
 
 
 class ThumbHandler(BaseHandler):
@@ -1051,7 +1053,7 @@ class ThumbHandler(BaseHandler):
           self.response.out.write(default_thumb)
           memcache.set('DEFAULT-THUMB', default_thumb)
     except Exception:
-      logging.error('ThumbHandler '+key, exc_info=True)
+      logging_ext.error('ThumbHandler '+key, exc_info=True)
 
 class search(BaseHandler):
   def get(self):
@@ -1190,6 +1192,7 @@ class api_delete(BaseHandler):
 
 
 class deleteItem(BaseHandler):
+  # delete the votes for an item
   @user_required
   def post(self, key):
     self.delete_item(self, key)
@@ -1206,7 +1209,7 @@ class deleteItem(BaseHandler):
       memcache_touch_user(handler.user_id)
       handler.response.write('OK')
     except Exception:
-      logging.error("delete_item", exc_info=True)
+      logging_ext.error("delete_item", exc_info=True)
       handler.abort(500)
 
 
@@ -1246,7 +1249,7 @@ class passwordVerificationHandler(BaseHandler):
                 Invite.delInviteToken(invite_token)
                 logging.info("passwordVerificationHandler complete "+user.email_address)
             except:
-              logging.error(
+              logging_ext.error(
                 "Failed to add friend: passwordVerificationHandler GET",
                 exc_info=True)
             handler.render_template('signup-complete.html')

@@ -401,27 +401,28 @@ class migrate(BaseHandler):
           self.response.out.write("Set %s to %s<br>"%(it.place_name, first.cuisine.title))
     for v in Vote.all():
       if v.cuisine.title == 'Brunch':
-        self.response.out.write("BRUNCH: %s for %s<br>"%(v.key, v.item.place_name))
+        self.response.out.write("BRUNCH: %s for %s<br>"%(v.key(), v.item.place_name))
 
   @user_required
   def votes_to_5_star(self):
-    votes = Vote.all()
+    votes = Vote.all() #.filter("vote =",0)
     for v in votes:
       if v.vote == VoteValue.VOTE_UNTRIED:
         v.untried = True
         v.stars = 0
       elif v.vote == VoteValue.VOTE_DISLIKED:
-        if v.stars <=1:
-          # ignore if we've amended the vote
-          v.stars = 1
-          v.untried = False
+        v.stars = 1
+        v.untried = False
       elif v.vote == VoteValue.VOTE_LIKED:
-        if v.stars <=1:
-          # ignore if we've amended the vote
+        if v.stars == 0:
           v.stars = 5
           v.untried = False
       else:
-        self.response.out.write("ERROR on vote %s for %s vote is %d"%(v.key,v.place_name.v.vote))
+        self.response.out.write("ERROR on vote %s - %s vote is %s<BR>"%(
+          str(v.key()),
+          v.item.place_name,
+          str(v.vote))
+                                )
       v.put()
     memcache.flush_all()
 

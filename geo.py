@@ -129,7 +129,7 @@ class geoCodeAddressMultiple(base_handler.BaseHandler):
       logging.error( 'geoCodeAddressMultiple: Exception [%s]', address, exc_info=True)
       return None
 
-def geoCodeAddress(address, search_centre):
+def geoCodeAddress(address):
   url = ("https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor"
          "=false&key=%s") % \
         (urllib2.quote(address), settings.config['google_api_key' ])

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import os
 from webapp2_extras import auth
 
 
@@ -34,4 +35,8 @@ ALLOWED_APP_IDS = ('shout-about', 'rayv-prod')
 API_TARGET_APP_ID = 'rayv-app'
 
 FAKE_ATTR = 'True'
+
+def running_on_test_server():
+  server = os.environ['SERVER_NAME']
+  return server == 'localhost' or server.find('192.')== 0
 
