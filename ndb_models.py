@@ -11,7 +11,7 @@ import json
 import logging
 import models
 from base_handler import BaseHandler
-from auth_logic import user_required, api_login_required
+from auth_logic import api_login_required
 import views
 
 
@@ -36,7 +36,7 @@ class AddVoteChangesWorker(webapp2.RequestHandler):
       userId: string
     """
     vote_key = self.request.get('voteKey')
-    if len(vote_key) == 0:
+    if not vote_key:
       logging.error("AddVoteChangesWorker: 0 length voteKey")
       return
     user_id = self.request.get('userId')
@@ -50,11 +50,11 @@ class AddVoteChangesWorker(webapp2.RequestHandler):
         query(VoteChange.voteId==vote_key).\
         fetch(keys_only=True)
       ndb.delete_multi(old_votes)
-      friends_list = User.gql('')
+      friends_list = User.get_by_id(user_id).get_friends()
       for u in friends_list:
         change = VoteChange()
         change.voteId = vote_key
-        change.subscriberId = str(u.get_id())
+        change.subscriberId = u.urlsafe()
         change.when = datetime.strptime(
           time,
           views.config['DATETIME_FORMAT'])
@@ -73,27 +73,28 @@ class AddPlaceChangesWorker(webapp2.RequestHandler):
       placeKey: string
       userId: string
     """
-    place_key = self.request.get('placeKey')
+    place_key_str = self.request.get('placeKey')
     user_id = self.request.get('userId')
     # @ndb.transactional
     def update_place():
       place_entries = PlaceChange.\
-        query(PlaceChange.placeId == place_key)
+        query(PlaceChange.placeId == place_key_str)
       now = datetime.now()
       for p in place_entries:
         if p.when < now:
           p.when = now
           p.put()
-      friends_list = User.gql('')
+      user = User.get_by_id(user_id)
+      friends_list = user.get_friends()
       for u in friends_list:
         p = PlaceChange.\
           query(
             PlaceChange.subscriberId == user_id,
-            PlaceChange.placeId == place_key).get()
+            PlaceChange.placeId == place_key_str).get()
         if not p:
           p = PlaceChange()
-          p.subscriberId = str(u.get_id())
-          p.placeId = place_key
+          p.subscriberId = user_id
+          p.placeId = place_key_str
         p.when = now
         p.put()
     update_place()
@@ -154,47 +155,43 @@ class getUserRecordFastViaWorkers(BaseHandler):
     places = {}
     updated_places = get_updated_places_for_user(str(my_id), now)
     for up in updated_places:
-      p = models.Item.get(up.placeId)
+      p = models.Item.get_by_id(up.placeId)
       places[up.placeId] =p.get_json()
     updated_votes = VoteChange.query(VoteChange.subscriberId==str(my_id))
     votes=[]
     for uv in updated_votes:
-      v = models.Vote().get(uv.voteId)
+      v = models.Vote.get_by_id(uv.voteId)
       if v:
         try:
-          votes.append(v.to_json())
-          place_key = str(v.item.key())
+          votes.append(v.json)
+          place_key = v.item.key.urlsafe()
           if not place_key in places:
             places[place_key] = v.item.get_json()
         except:
           pass
     return votes, places
 
-  def getFullUserRecord(self, user_dict, now=None):
+  def getFullUserRecord(self, user, now=None):
     places = {}
     votes = []
     if settings.config['all_are_friends']:
       q = User.gql('')
     else:
       # start with me
-      q = [user_dict['u']]
+      q = [user]
       # then get my friends
-      if 'f' in user_dict:
-        f_list = user_dict['f'].split(',')
-        for f_id in f_list:
-          f_data = f_id.split(':')
-          f_user_id = f_data[0]
-          q.append(models.memcache_get_user_dict(f_user_id)['u'])
+      for f in user.get_friends():
+        q.append(f.get())
     place_json = None
     place_key = None
     for u in q:
-      user_dict, user_votes = models.get_user_votes(u.get_id())
-      for place_key in user_votes:
+      user_votes = models.Vote.query(models.Vote.voter == u.key.integer_id()).fetch()
+      for vote in user_votes:
         try:
-          for vote in user_votes[place_key]:
-            votes.append(vote)
+          place_key = vote.item.urlsafe()
+          votes.append(vote.to_json())
           if not place_key in places:
-            place_json = models.Item.key_to_json(place_key)
+            place_json = models.Item.urlsafe_key_to_json(place_key)
             if "cuisineName" in place_json:
               places[place_key] = place_json
         except Exception, e:
@@ -220,8 +217,6 @@ class getUserRecordFastViaWorkers(BaseHandler):
       return
 
     if my_id:
-      my_user_dict = views.memcache_get_user_dict(my_id)
-      if my_user_dict:
         # logged in
         result = {
           "id": my_id,
@@ -241,10 +236,10 @@ class getUserRecordFastViaWorkers(BaseHandler):
             logging.error("getFullUserRecord Time error with %s"%since,
                           exc_info=True)
             #full update
-            votes, places = self.getFullUserRecord(my_user_dict)
+            votes, places = self.getFullUserRecord(self.user)
         else:
           #full update
-          votes, places = self.getFullUserRecord(my_user_dict)
+          votes, places = self.getFullUserRecord(self.user)
 
         friends_list = []
         if views.config['all_are_friends']:
@@ -256,18 +251,17 @@ class getUserRecordFastViaWorkers(BaseHandler):
                 'name': u.screen_name}
             friends_list.append(user_str)
         else:
-          if 'f' in my_user_dict:
-            friends = my_user_dict['f'].split(',')
+            friends = self.user.get_friends()
             for f in friends:
-              vals = f.split(':')
+              friend = f.get()
               user_str = {
-                  "id": vals[0],
+                  "id": f.urlsafe(),
                   # todo is it first_name?
-                  'name': vals[1]}
+                  'name': friend.screen_name}
               friends_list.append(user_str)
 
-        sentInvites = models.InviteInternal.all().filter("inviter =",my_id)
-        recdInvites = models.InviteInternal.all().filter("invitee =",my_id)
+        sentInvites = models.InviteInternal.query(models.InviteInternal.inviter == my_id)
+        recdInvites = models.InviteInternal.query(models.InviteInternal.invitee == my_id)
         sent = []
         for i in sentInvites:
           sent.append(i.to_json())

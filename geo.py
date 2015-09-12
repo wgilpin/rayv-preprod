@@ -4,6 +4,7 @@ import urllib2
 import time
 from google.appengine.api import memcache
 import math
+from google.appengine.ext.ndb import QueryOptions
 import auth_logic
 from settings_per_server import server_settings
 import settings
@@ -161,45 +162,46 @@ def findDbPlacesNearLoc(my_location,
                         place_names=None,
                         ignore_votes=False):
   try:
-    cache = {}
+    map_id_to_item = {}
     logging.debug("findDbPlacesNearLoc Start")
-    result_list = []
+    result_key_list = []
     reject_list = []
     for geo_precision in range(5, 2, -1):
       geo_code = geohash.encode(
         my_location.lat, my_location.lng, precision=geo_precision)
-      query_result = models.Item.all(keys_only=True).\
-        filter("geo_hash >", geo_code).\
-        filter("geo_hash <", geo_code + "{")
+      query_result = models.Item.query(
+        default_options=QueryOptions(keys_only=True)).\
+        filter(models.Item.geo_hash > geo_code).\
+        filter(models.Item.geo_hash < geo_code + "{")
       if search_text:
         #if we're looking for a name, filter the results to find it
         for point_key in query_result:
-          if point_key in result_list:
+          if point_key in result_key_list:
             continue
           if point_key in reject_list:
             continue
-          if point_key in cache:
-            it = cache[point_key]
+          if point_key.id() in map_id_to_item:
+            it = map_id_to_item[point_key]
           else:
-            it = models.Item.get_item(str(point_key))
-            cache[point_key] = it
+            it = point_key.get()
+            map_id_to_item[point_key.id()] = it
           if search_text in it.place_name.lower():
-            result_list.append(point_key)
+            result_key_list.append(point_key)
             continue
           #reject_list.append(point_key)
-        if len(result_list)>5:
+        if len(result_key_list)>5:
           break
         continue
       else:
         for point_key in query_result:
-          if not point_key in result_list:
-            it = models.Item.get_item(str(point_key))
-            cache[point_key] = it
-            result_list.append(point_key)
+          if not point_key in result_key_list:
+            it = models.Item.get_by_id(str(point_key))
+            map_id_to_item[point_key.id()] = it
+            result_key_list.append(point_key)
       if query_result.count() > 10:
         break
 
-    if len(result_list) == 0 and search_text:
+    if len(result_key_list) == 0 and search_text:
       #didn't find the name so try splitting it
       words_candidates = search_text.split(' ')
       words = []
@@ -208,17 +210,17 @@ def findDbPlacesNearLoc(my_location,
         if not w in exclude:
           words.append(w)
       for point_key in query_result:
-        if point_key in result_list:
+        if point_key in result_key_list:
             continue
         if point_key in reject_list:
           continue
-        it = cache[point_key]
+        it = map_id_to_item[point_key.id()]
         if not it:
           continue
         place_name_words = it.place_name.lower().split(' ')
         for w in words:
           if w in place_name_words :
-            result_list.append(point_key)
+            result_key_list.append(point_key)
             break
 
     search_results = []
@@ -226,25 +228,12 @@ def findDbPlacesNearLoc(my_location,
       'count': 0,
       'points': []
     }
-    exclude_user_id = None
-    if filter:
-      if filter["kind"] == "mine":
-        # how does this fit? geo search and list of all mine are too different
-        logging.error("findDbPlacesNearLoc Assertion failure")
-        assert False
-        my_id = filter["userId"]
-        temp_results = []
-        for key in result_list:
-          if cache[key].owner == my_id:
-            temp_results.append(key)
-        # initial_results = Item.all(keys_only=True).\
-        #   filter("owner =", my_id)  # TODO: owner does not make it mine - votes
 
-    for point_key in result_list:
-      if point_key in cache:
-        it = cache[point_key]
+    for point_key in result_key_list:
+      if point_key in map_id_to_item:
+        it = map_id_to_item[point_key]
       else:
-        it = Item.get_item(str(point_key))
+        it = point_key.get()
       json_data = it.get_json()
       search_results.append(json_data)
       place_names.append(it.place_name)
@@ -295,7 +284,8 @@ def geoSearch(search_centre,
     count = 0
     geo_code = geohash.encode(search_centre.lat, search_centre.lng, geo_precision)
     #https://code.google.com/p/python-geohash/wiki/Tips
-    points_list = models.Item.all(keys_only=True).\
+    points_list = models.Item.query(default_options=QueryOptions(
+                      keys_only=True)).\
       filter("geo_hash >", geo_code).\
       filter("geo_hash <", geo_code + "{")
     #we now have a bounded rectangle with maybe some points in it.
@@ -318,7 +308,7 @@ def geoSearch(search_centre,
     if filter["kind"] == "mine":
       my_id = filter["userId"]
   for point_key in initial_results:
-    jit = models.Item.key_to_json(point_key)
+    jit = models.Item.urlsafe_key_to_json(point_key)
     if search_text:
       #we only want ones that match the search text
       if not search_text in jit['place_name'].lower():
@@ -404,11 +394,6 @@ def geoSearch(search_centre,
   # profile_out("geoSearch")
   return return_data
 
-
-
-
-
-
 class LatLng():
   lat = 0
   lng = 0
@@ -416,82 +401,6 @@ class LatLng():
   def __init__(self, lat, lng):
     self.lat = lat
     self.lng = lng
-
-
-
-def google_point_to_json(it, request, GPS_origin=None, map_origin=None, uid_for_votes=None):
-  """
-  create a json object for the web.
-  :param it: Gooogle result
-  :param request: BaseHandler
-  :param GPS_origin: LatLng
-  :param map_origin: bool - do we calculate distances from where the map is
-          centred, as opposed to from my location?
-  :return: dict - json repr of the place
-  """
-  try:
-    if request:
-      base_url = request.url[:request.url.find(request.path)]
-    else:
-      base_url = ""
-    if models.getProp(it, 'photo'):
-      if it.photo.picture:
-        image_url = base_url+'/img/' + str(it.photo.key())
-        thumbnail_url = base_url+'/thumb/' + str(it.photo.key())
-        image_url.replace('https','http')
-        thumbnail_url.replace('https','http')
-      else:
-        image_url = ''
-        thumbnail_url = ''
-    else:
-      image_url = ''
-      thumbnail_url = ''
-      # image_url = "/static/images/noImage.jpeg"
-    # get key only from referenceProperty
-    if type(it) is models.Item:
-      category = models.get_category(str(models.Item.category.get_value_for_datastore(it)))
-    else:
-      category = None
-    edit_time = models.getProp(it,'edited')
-    if edit_time:
-      try:
-        edit_time_unix = int(time.mktime(edit_time.timetuple())) * 1000
-      except:
-        edit_time_unix = 0
-    else:
-      edit_time_unix = 0
-    data = {
-      'lat': models.getProp(it, 'lat'),
-      'lng': models.getProp(it, 'lng'),
-      'website': models.getProp(it, 'website',''),
-      'address': models.getProp(it, 'address',''),
-      'key': str(it.key()) if type(it) is models.Item else "",
-      'place_name': models.getProp(it, 'place_name'),
-      'place_id': models.getProp(it,'place_id',''),
-      'cuisineName': category.title if category else "",
-      'telephone': models.getProp(it, 'telephone', ''),
-      'img': image_url,
-      'edited': edit_time_unix,
-      'thumbnail': thumbnail_url,
-      'owner': models.getProp(it, 'owner',''),
-      # is_map is True if the point came
-      # from a google places API search. Default False
-      'is_map': False}
-    if hasattr(it, 'key'):
-      memcache.add("JSON:" + str(it.key()), data)
-      if uid_for_votes:
-        vote = it.votes.filter("voter =", uid_for_votes).get()
-        if vote:
-          # if the user has voted for this item, and the user is excluded, next
-          data["mine"] = True
-          data["stars"] = vote.stars
-          data["untried"] = vote.untried
-          data["descr"] = vote.comment
-    return data
-  except Exception, E:
-    logging.exception('to_json', exc_info=True)
-
-
 
 def approx_distance(point, place):
   # params are dicts.

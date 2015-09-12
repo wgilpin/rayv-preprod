@@ -24,7 +24,7 @@ class migrate(BaseHandler):
   def add_addresses(self):
     #add address to any that don't have one
     try:
-      items = Item.all()
+      items = Item.query()
       count = 0
       for it in items:
         if not it.address:
@@ -49,7 +49,7 @@ class migrate(BaseHandler):
   @user_required
   def remove_orphan_votes(self):
     # remove orphan votes after an item is deleted
-    votes = Vote.all()
+    votes = Vote.query()
     for v in votes:
       try:
         it = v.item.place_name
@@ -86,7 +86,7 @@ class migrate(BaseHandler):
   @user_required
   def add_websites(self):
     # add websites
-    items = Item.all()
+    items = Item.query()
     for it in items:
       try:
         if it.website:
@@ -107,7 +107,7 @@ class migrate(BaseHandler):
   @user_required
   def remote_urls_to_blobs(self):
     # add convert remote urls to blobs
-    items = Item.all()
+    items = Item.query()
     for it in items:
       try:
         if it.photo and it.photo.thumb:
@@ -133,7 +133,7 @@ class migrate(BaseHandler):
   @user_required
   def add_phone_numbers(self):
     # add phone nos
-    items = Item.all()
+    items = Item.query()
     for it in items:
       try:
         if it.telephone:
@@ -154,7 +154,7 @@ class migrate(BaseHandler):
   @user_required
   def add_google_img_if_missing(self):
     # add google img where missing
-    items = Item.all()
+    items = Item.query()
     for it in items:
       try:
         if it.photo and it.photo.thumb:
@@ -178,7 +178,7 @@ class migrate(BaseHandler):
   @user_required
   def recalc_votes_totals(self):
     # recalc vote totals
-    items = Item.all()
+    items = Item.query()
     for it in items:
       up = 0
       down = 0
@@ -194,14 +194,14 @@ class migrate(BaseHandler):
   @user_required
   def add_geohash(self):
     # add GeoHash
-    for it in Item().all():
+    for it in Item.query():
       it.geo_hash = geohash.encode(it.lat, it.lng)
       it.save()
 
   @user_required
   def votes_down_to_abs(self):
     # make sure votesDown is +ve (abs())
-    items = Item.all()
+    items = Item.query()
     for it in items:
       if it.votesDown < 0:
         it.votesDown = abs(it.votesDown)
@@ -210,7 +210,7 @@ class migrate(BaseHandler):
   @user_required
   def one_vote_per_item(self):
     # make sure each item has 1 vote
-    items = Item.all()
+    items = Item.query()
     for it in items:
       try:
         it.lat = it.latitude
@@ -225,7 +225,7 @@ class migrate(BaseHandler):
   @user_required
   def at_least_one_vote_per_item(self):
     # make sure each item has 1 vote
-    items = Item.all()
+    items = Item.query()
     for it in items:
       vote = it.votes.filter("voter =", it.owner).get()
       if not vote:
@@ -247,7 +247,7 @@ class migrate(BaseHandler):
   @user_required
   def only_one_vote_per_user_per_item(self):
     # make sure each item has 1 vote
-    items = Item.all()
+    items = Item.query()
     for it in items:
       votes_per_voter = {}
       for v in it.votes:
@@ -259,7 +259,7 @@ class migrate(BaseHandler):
   @user_required
   def item_title_to_StringProperty(self):
     # change Item title property to a StringProp not a textProp (place_name)
-    items = Item.all()
+    items = Item.query()
     for it in items:
       it.place_name = it.title
       it.save()
@@ -267,7 +267,7 @@ class migrate(BaseHandler):
   @user_required
   def move_comment_to_vote(self):
     # move item comment from the item to the vote
-    items = Item.all()
+    items = Item.query()
     for it in items:
       vote = it.votes.filter("voter =", it.owner).get()
       if vote and it.descr and len(it.descr) > 0:
@@ -277,14 +277,14 @@ class migrate(BaseHandler):
 
   @user_required
   def set_vote_time_to_now(self):
-    votes = Vote.all()
+    votes = Vote.query()
     for v in votes:
       v.when = datetime.now()
       v.put()
 
   @user_required
   def set_votes_up_down(self):
-    items = Item.all()
+    items = Item.query()
     for it in items:
       dirty = False
       try:
@@ -307,7 +307,7 @@ class migrate(BaseHandler):
   @user_required
   def wipe_item_json(self):
     n = 0
-    for p in Item.all():
+    for p in Item.query():
       p.set_json()
       p.put()
       n += 1
@@ -315,9 +315,17 @@ class migrate(BaseHandler):
     self.response.out.write("\n%d "%n)
 
   @user_required
+  def wipe_votes_json(self):
+    n = 0
+    for v in Vote.query():
+      v.put()
+      n += 1
+    self.response.out.write("\n%d "%n)
+
+  @user_required
   def change_votes_to_votevalue(self):
     n=0
-    votes = Vote.all()
+    votes = Vote.query()
     for v in votes:
       if v.vote == 1:
         v.vote = VoteValue.VOTE_LIKED
@@ -338,7 +346,7 @@ class migrate(BaseHandler):
   @user_required
   def change_votes_to_4_dot(self):
     n=0
-    votes = Vote.all()
+    votes = Vote.query()
     for v in votes:
       if v.untried:
         v.vote = VoteValue.VOTE_UNTRIED
@@ -351,7 +359,7 @@ class migrate(BaseHandler):
   @user_required
   def add_google_data_if_missing(self):
     # add google img where missing
-    items = Item.all()
+    items = Item.query()
     for it in items:
       try:
         good = True
@@ -390,7 +398,7 @@ class migrate(BaseHandler):
 
   @user_required
   def remove_brunch(self):
-    items = Item.all()
+    items = Item.query()
     for it in items:
       if it.category.title == 'Brunch':
         v = it.votes
@@ -399,13 +407,13 @@ class migrate(BaseHandler):
           it.category = first.cuisine
           it.put()
           self.response.out.write("Set %s to %s<br>"%(it.place_name, first.cuisine.title))
-    for v in Vote.all():
+    for v in Vote.query():
       if v.cuisine.title == 'Brunch':
         self.response.out.write("BRUNCH: %s for %s<br>"%(v.key(), v.item.place_name))
 
   @user_required
   def votes_to_5_star(self):
-    votes = Vote.all() #.filter("vote =",0)
+    votes = Vote.query() #.filter("vote =",0)
     for v in votes:
       if v.vote == VoteValue.VOTE_UNTRIED:
         v.untried = True
@@ -436,7 +444,7 @@ class migrate(BaseHandler):
     if migration_name == '1':
       self.set_votes_up_down()
       self.response.out.write("1-items OK")
-      votes = Vote.all()
+      votes = Vote.query()
       for v in votes:
         dirty = False
         try:
@@ -528,6 +536,9 @@ class migrate(BaseHandler):
     elif migration_name == "five_star":
       self.votes_to_5_star()
       self.response.out.write("Stars set")
+    elif migration_name == "wipe_vote_json":
+      self.wipe_votes_json()
+      self.response.out.write("Json Wiped")
 
     else:
       self.response.out.write("No Migration")
@@ -536,7 +547,7 @@ class migrate(BaseHandler):
   @user_required
   def add_edited(self):
     # add the last edited field to each
-    items = Item.all()
+    items = Item.query()
     stamp = datetime.now()
     dirty = False
     for it in items:

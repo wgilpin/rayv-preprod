@@ -1,5 +1,4 @@
 import base64
-from google.appengine.api import mail
 import google.appengine.ext.ndb
 
 from auth_model import User

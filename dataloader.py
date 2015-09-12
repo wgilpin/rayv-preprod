@@ -97,7 +97,7 @@ def wipe_table(model):
 
 def add_addresses_to_db():
   res = []
-  for it in models.Item.all():
+  for it in models.Item.query():
     if (not it.address) or (it.address == "") or (it.address == "null"):
       logging.info("add_addresses_to_db %s @ %f,%f" % (it.place_name, it.lat, it.lng))
       new_addr = geo.geoCodeLatLng(it.lat, it.lng)
@@ -131,12 +131,12 @@ def load_one_user(user_number):
 
 def load_one_item(owner):
   item_test_data = items_data_list[0]
-  it = models.Item.all().filter('place_name =', item_test_data[ITEM_NAME]).get()
+  it = models.Item.query(models.Item.place_name == item_test_data[ITEM_NAME]).get()
   if it:
     return it
   else:
     new_it = models.Item()
-    cat = models.Category.get_by_key_name(item_test_data[ITEM_CATEGORY])
+    cat = models.Category.get_by_id(item_test_data[ITEM_CATEGORY])
     if not cat:
       cat = models.Category(key_name=item_test_data[ITEM_CATEGORY]).put()
     new_it.category = cat
@@ -146,7 +146,7 @@ def load_one_item(owner):
     new_it.lat = lat_long['lat']
     new_it.lng = lat_long['lng']
     new_it.address = item_test_data[ITEM_ADDRESS]
-    new_it.owner = owner.key.id()
+    new_it.owner = owner.key.integer_id()
     # new_it.descr = "blah"
     new_it.geo_hash = geohash.encode(new_it.lat, new_it.lng)
     img = models.DBImage()
@@ -218,7 +218,7 @@ def load_data(wipe=False, section=None, Max=None):
         if Max:
           if idx >= Max:
             break
-        if models.Category.get_by_key_name(cat):
+        if models.Category.get_by_id(cat):
           result_strings.append("Category exists: " + cat)
         else:
           new_cat = models.Category(key_name=cat)
@@ -233,14 +233,14 @@ def load_data(wipe=False, section=None, Max=None):
         if Max:
           if idx >= Max:
             break
-        it = models.Item.all().filter('place_name =', item[0]).get()
+        it = models.Item.query(models.Item.place_name == item[0]).get()
         if it:
           result_strings.append("Item exists: " + item[0])
-          it.category = models.Category.get_by_key_name(item[2])
+          it.category = models.Category.get_by_id(item[2])
           it.save()
         else:
           new_it = models.Item()
-          new_it.category = models.Category.get_by_key_name(item[2])
+          new_it.category = models.Category.get_by_id(item[2])
           new_it.place_name = item[0]
           lat_long = fakeGeoCode() if fakeGeoCoder else geo.geoCodeAddress(item[1], home)
           new_it.lat = lat_long['lat']
@@ -270,7 +270,7 @@ def load_data(wipe=False, section=None, Max=None):
 
       print "items"
       # votes
-      items = models.Item.all()
+      items = models.Item.query()
       i = 0
       for idx, vote_item in enumerate(items):
         if Max:
@@ -285,7 +285,7 @@ def load_data(wipe=False, section=None, Max=None):
           vote.vote = vote_score
           vote.untried = False
         vote.comment = "blah v" + str(i)
-        vote.voter = a_sample_user.key.id()
+        vote.voter = a_sample_user.key.integer_id()
         vote.item = vote_item
         vote.cuisine = vote_item.category
         vote.put()

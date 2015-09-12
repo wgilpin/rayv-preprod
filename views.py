@@ -1,12 +1,10 @@
-import os
 import re
 import urllib
 import urllib2
 import datetime
-import google.appengine.ext.ndb
+from google.appengine.ext import ndb
 from google.appengine.api import images, memcache
 from google.appengine.api.images import Image
-from google.appengine.api.mail import EmailMessage
 from google.appengine.ext import db
 import json
 from webob.exc import HTTPUnauthorized
@@ -15,8 +13,6 @@ from auth_model import User
 from dataloader import load_data
 import mail_wrapper
 from models import Item, DBImage, Vote, Category, getProp, \
-  memcache_get_user_dict, memcache_touch_user, \
-  memcache_update_user_votes, memcache_touch_place, get_user_votes, VoteValue, \
   Invite, Friends, InviteInternal
 from places_db import PlacesDB
 from profiler import profile_in, profile_out
@@ -43,7 +39,6 @@ class GetItemsAjax(BaseHandler):
     result = PlacesDB.get_item_list(self.request, False, self.user_id)
     if not result:
       self.abort(500)
-    check_for_dirty_data(self.user_id, result, self.request)
     json.dump(result,
               self.response.out)
     profile_out("GetItemsAjax")
@@ -53,11 +48,11 @@ class GetBook(BaseHandler):
   def get(self):
     voter_id = self.request.get("voter") if \
       "voter" in self.request.params else str(self.user_id)
-    vote_list = Vote.all().filter("voter =", voter_id)
+    vote_list = Vote.query(Vote.voter == voter_id)
     result = []
     for vote in vote_list:
       it = vote.Item
-      result.append(Item.key_to_json(it.key()))
+      result.append(Item.urlsafe_key_to_json(it.key.urlsafe()))
     json.dump({"points": result,
                "length": len(result)},
               self.response.out)
@@ -77,28 +72,29 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
   try:
     logging.info("serialize_user_details 1")
     # get it from the cache
-    user_dict, votes = get_user_votes(user_id)
-
-    if getProp(user_dict['p'], 'last_write'):
-      last_write = user_dict['p'].last_write
+    votes = Vote.query(Vote.voter == user_id)
+    user = User.get_by_id(user_id)
+    user_profile = user.profile()
+    if getProp(user_profile, 'last_write'):
+      last_write = user_profile.last_write
     else:
       last_write = None
     result = {"votes": votes,
               "id": user_id,
               # todo is it first_name?
-              'name': user_dict['u'].screen_name,
+              'name': user_profile.screen_name,
               'last_write': last_write}
     if votes:
       logging.debug("serialize_user_details: %d votes"%len(votes))
       for place_key in votes:
         if not place_key in places:
-          place_json = Item.key_to_json(place_key)
+          place_json = Item.urlsafe_key_to_json(place_key)
           # if user_id == current_user:
           #   place_json['vote'] = votes[place_key]['vote']
           if "category" in place_json:
             places[place_key] = place_json
       for place in places:
-        pl = Item.get(place)
+        pl = ndb.Key(urlsafe=place).get()
         json_data = pl.get_json()
         places[place] = json_data
       logging.debug('serialize_user_details: Added %d places'%len(places))
@@ -117,11 +113,10 @@ class FriendsVotesApi(BaseHandler):
     :return: json
     """
     friend_id = int(id)
-    user_dict, votes = get_user_votes(friend_id)
-    #votes is a dict, we want a array
+    votes = Vote.query(Vote.voter ==friend_id)
     res = {
       'id': friend_id,
-      'votes': votes.values()
+      'votes': [vote.json for vote in votes]
     }
     json.dump(res, self.response.out, default=json_serial)
     return
@@ -137,16 +132,18 @@ class FriendsApiRemove(BaseHandler):
     my_id = int(self.user_id)
     low = min(other_id, my_id)
     high = max(other_id, my_id)
-    record = Friends.all().filter("lower =", low).filter("higher =", high).get()
+    record = Friends.query(Friends.lower == low, Friends.higher == high).get()
     if record:
       db.delete(record)
-      memcache_touch_user(low)
-      memcache_touch_user(high)
       # delete invites
-      inv_from = InviteInternal.all().filter("inviter =",other_id).filter("invitee =", my_id)
+      inv_from = InviteInternal.\
+        query(InviteInternal.inviter == other_id).\
+        query(InviteInternal.invitee == my_id)
       for i in inv_from:
         db.delete(i)
-      inv_to = InviteInternal.all().filter("inviter =",my_id).filter("invitee =", other_id)
+      inv_to = InviteInternal.\
+        query(InviteInternal.inviter == my_id).\
+        query(InviteInternal.invitee == other_id)
       for i in inv_to:
         db.delete(i)
       self.response.out.write("OK")
@@ -166,8 +163,10 @@ class FriendsApiAccept(BaseHandler):
     #find the invite
     # inv = InviteInternal.all().get()
     # inv = InviteInternal.all().filter("invitee =", self.user_id).get()
-    inv = InviteInternal.all().filter("invitee =", self.user_id).filter("inviter =", int(from_id)).get()
-    #5348024557502464
+    inv = InviteInternal.\
+      query(InviteInternal.invitee == self.user_id).\
+      query(InviteInternal.inviter == int(from_id)).\
+      get()
     if not inv:
       self.response.out.write("NO INVITE")
       return
@@ -190,7 +189,10 @@ class FriendsApiReject(BaseHandler):
     #find the invite
     # inv = InviteInternal.all().get()
     # inv = InviteInternal.all().filter("invitee =", self.user_id).get()
-    inv = InviteInternal.all().filter("invitee =", self.user_id).filter("inviter =", int(from_id)).get()
+    inv = InviteInternal.\
+      query(InviteInternal.invitee == self.user_id).\
+      query(InviteInternal.inviter == int(from_id)).\
+      get()
     if inv:
       db.delete(inv)
     self.response.out.write("OK")
@@ -211,7 +213,7 @@ class FriendsApi(BaseHandler):
     else:
       assert False
       #TODO: check friends
-      prof = user['p']
+      prof = user.profile()
       for friend in prof.friends:
         friends_data.append(friend.userId)
     json.dump(friends_data, self.response.out, default=json_serial)
@@ -228,7 +230,7 @@ class itemsAPI(BaseHandler):
       res = []
       key_list = json.loads(self.request.params['key_list'])
       for key in key_list:
-        res.append(Item.key_to_json(key))
+        res.append(Item.urlsafe_key_to_json(key))
       json.dump({'items':res}, self.response.out, default=json_serial)
       return
     self.abort(403)
@@ -273,7 +275,7 @@ class getUserRecordFast(BaseHandler):
       return
 
     if my_id:
-      user = memcache_get_user_dict(my_id)
+      user = User.get_by_id(my_id)
       if user:
         # logged in
         result = {
@@ -297,27 +299,27 @@ class getUserRecordFast(BaseHandler):
             for user in q:
               user_list.append(user)
         places = {}
-        my_user_dict, my_votes = get_user_votes(my_id)
+        my_votes = Vote.query(Vote.voter==my_id)
         for u in user_list:
           user_id = u.get_id()
           if user_id == my_id:
-            user_dict = my_user_dict
             votes = my_votes
           else:
-            user_dict, votes = get_user_votes(u.get_id())
+            votes = Vote.query(Vote.voter==u.get_id())
           for v in votes:
             #add to the list if it's not there, or overwrite if this is my version
             if not v in places or user_id == my_id:
-              places [v] = Item.key_to_json(v)
+              places [v] = Item.urlsafe_key_to_json(v)
 
-          if getProp(user_dict['p'], 'last_write'):
-            last_write = user_dict['p'].last_write
+          user_profile = u.profile()
+          if getProp(user_profile, 'last_write'):
+            last_write = user_profile.last_write
           else:
             last_write = None
           user_str = {"votes": votes,
               "id": u.get_id(),
               # todo is it first_name?
-              'name': user_dict['u'].screen_name,
+              'name': u.screen_name,
               'last_write': last_write}
           user_results.append(user_str)
 
@@ -354,7 +356,7 @@ class getFullUserRecord(BaseHandler):
 
     if my_id:
       #profile_in("getFullUserRecord")
-      user = memcache_get_user_dict(my_id)
+      user = User.get_by_id(my_id)
       if user:
         # logged in
         since = None
@@ -445,7 +447,6 @@ class user_profile(BaseHandler):
     user_obj = User().get_by_id(self.user_id)
     user_obj.screen_name = self.request.get('screen_name')
     user_obj.put()
-    memcache_touch_user(self.user_id)
 
 def json_serial(o):
   """
@@ -457,30 +458,13 @@ def json_serial(o):
     return o.isoformat()
 
 
-def check_for_dirty_data(handler, results):
-  # every server call, we look for dirty data and append it if needed
-  user_dict = memcache_get_user_dict(handler.user_id)
-  prof = user_dict['p']
-  my_last_check = prof.last_read
-  dirty_friends = []
-  dirty_places = {}
-  if 'f' in user_dict:
-    for friend in user_dict['f'].split(','):
-      friend_id = int(friend.split(':')[0])
-      if (not my_last_check) or \
-          (memcache_get_user_dict(friend_id)['p'].last_write > my_last_check):
-        dirty_friends.append(
-          serialize_user_details(friend_id, dirty_places, handler.user_id, handler.request))
-    if len(dirty_friends) > 0:
-      results['dirty_list'] = {"friends": dirty_friends,
-                               "places": dirty_places}
 
 
 class getCuisines_ajax(BaseHandler):
   @api_login_required
   def get(self):
     cuisines_list = []
-    cats =  Category.all()
+    cats =  Category.query()
     for cat in cats:
       cuisines_list.append(cat.title)
     results = {'categories': cuisines_list}
@@ -553,7 +537,7 @@ def handle_error(request, response, exception):
 class MainHandler(BaseHandler):
   def get(self):
     if self.user:
-      con = {"cats": Category.all()}
+      con = {"cats": Category.query()}
       logging.info('MainHandler: Logged in')
       self.render_template("index.html", con)
     else:
@@ -637,9 +621,9 @@ class AddUserAsFriend(BaseHandler):
   def get(self):
     user_email = self.request.get('email')
     logging.info("AddUserAsFriend "+user_email.lower())
-    user = User.query(google.appengine.ext.ndb.GenericProperty('email_address') == user_email.lower()).get()
+    user = User.query(ndb.GenericProperty('email_address') == user_email.lower()).get()
     if not user:
-          user = User.query(google.appengine.ext.ndb.GenericProperty('email_address') == user_email).get()
+          user = User.query(ndb.GenericProperty('email_address') == user_email).get()
 
     if user.get_id() == self.user_id:
       self.response.out.write("EMAIL TO SELF")
@@ -706,7 +690,7 @@ class updateItem(BaseHandler):
     " get a single item
     """
     try:
-      json.dump(Item.key_to_json(key), self.response.out)
+      json.dump(Item.urlsafe_key_to_json(key), self.response.out)
     except:
       logging_ext.error('updateItem GET Exception '+key,exc_info=True)
 
@@ -726,9 +710,9 @@ def update_photo(it, request_handler):
       img.make_thumb()
       img.owner = request_handler.user_id
       img.put()
-      logging.debug('update_photo Ins:',str(img.key()))
+      logging.debug('update_photo Ins:',img.key.urlsafe())
       if it.photo:  # the item has an image already?
-        logging.debug( 'update_photo Del:',str(it.photo.key()))
+        logging.debug( 'update_photo Del:',it.photo.urlsafe())
         db.delete(it.photo)
     else:
       # no new image - rotate an existing image?
@@ -756,16 +740,16 @@ def update_votes(item, request_handler, user_id):
   :param user_id: {int}
   """
   try:
-    old_votes = item.votes.filter("voter =", user_id)
+    old_votes = Vote.query(Vote.voter == user_id, Vote.item == item.key)
     for v in old_votes:
-      v.delete()
+      v.key.delete()
     vote = Vote()
-    vote.item = item
+    vote.item = item.key
     vote.voter = user_id
-    vote.comment =  request_handler.request.get('myComment')
+    vote.comment =  str(request_handler.request.get('myComment'))
     vote.meal_kind =  int(request_handler.request.get('kind'))
     vote.place_style=  int(request_handler.request.get('style'))
-    vote.cuisine = Category.get_by_key_name(request_handler.request.get('cuisine'))
+    vote.cuisine = Category.get_by_id(request_handler.request.get('cuisine')).key
     vote_stars = int(request_handler.request.get("voteScore"))
     vote.stars = vote_stars
     if vote_stars == 0:
@@ -774,7 +758,7 @@ def update_votes(item, request_handler, user_id):
       vote_untried = False
     vote.untried = vote_untried
     vote.put()
-    ndb_models.mark_vote_as_updated(str(vote.key()), user_id)
+    ndb_models.mark_vote_as_updated(vote.key.urlsafe(), user_id)
     logging.info ('update_votes for %s "%s"=%d'%
                   (item.place_name,vote.comment,vote.stars))
 
@@ -840,20 +824,17 @@ def update_item_internal(self, user_id, allow_update=True):
   # category
   posted_cat = self.request.get("cuisine")
   try:
-    cat = Category.get_by_key_name(posted_cat)
+    cat_key = ndb.Key(Category,posted_cat)
   except:
-    cat = None
-  update_field('category', cat)
+    cat_key = None
+  update_field('category', cat_key)
   if "place_name" in self.request.params:
     update_field('place_name', self.request.params['place_name'])
   it.put() # so the key is set
   # refresh cache
-  memcache_touch_place(it)
   update_votes(it, self, user_id)
   # todo: why?
   it.save()  # to save the json
-  # mark user as dirty
-  memcache_update_user_votes(user_id)
   logging.info("update_item_internal for "+it.place_name+": "+str(changed))
   return it
 
@@ -901,20 +882,20 @@ class newOrUpdateItem(BaseHandler):
   def post(self):
     it = update_item_internal(self, self.user_id)
     logging.info('newOrUpdateItem %s by %s'%(it.place_name, self.user_id))
-    ndb_models.mark_place_as_updated(str(it.key()),self.user_id)
+    ndb_models.mark_place_as_updated(it.key.urlsafe(),self.user_id)
+    vote = Vote.query(Vote.voter == self.user_id, Vote.item == it.key).get()
     res = {'place':it.get_json(),
-           'vote': it.votes.filter("voter =", self.user_id).get().to_json()}
+           'vote': vote.to_json()}
     json.dump(res, self.response.out)
 
 class UpdateVote(BaseHandler):
   @user_required
   def post(self):
     key = self.request.get('key')
-    it = Item.get_item(key)
+    it = ndb.Key(urlsafe=key).get()
     if it:
       update_votes(it, self, self.user_id)
       # mark user as dirty
-      memcache_update_user_votes(self.user_id)
       self.response.out.write('OK')
       logging.debug("UpdateVote OK")
       return
@@ -959,10 +940,8 @@ class geoLookup(BaseHandler):
 
   def post(self):
     address = self.request.get('address')
-    posn = geo.LatLng(
-      lat=self.request.params['lat'],
-      lng=self.request.params['lng'])
-    pos = geo.geoCodeAddress(address, posn)
+
+    pos = geo.geoCodeAddress(address)
     if pos:
       params = {
         "lat": pos['lat'],
@@ -979,16 +958,16 @@ class getItem_ajax(BaseHandler):
   @user_required
   def get(self, key):
     try:
-      it = Item.get_item(key)
+      it = Item.get_by_id(key)
       res = {"place_name": it.place_name,
              "address": it.address,
              "cuisineName": it.category.title,
              "lat": str(it.lat),
              "lng": str(it.lng),
-             "key": str(it.key())
+             "key": it.key.urlsafe()
       }
       if it.photo:
-        res["img"] = str(it.key())
+        res["img"] = it.key.urlsafe()
       if it.owner == self.user_id:
         res["mine"] = True
         res["descr"], res["stars"], res["untried"] = it.vote_from(it.owner)
@@ -1003,11 +982,11 @@ class getItem_ajax(BaseHandler):
 
 class getItemVotes_ajax(BaseHandler):
   @user_required
-  def get(self, key):
+  def get(self, id):
     res = {}
-    it = Item.get_item(key)
+    it = Item.get_by_id(id)
     if it:
-      votes = it.votes
+      votes = Vote.query(Vote.item == it.key)
       # TODO: .order("when") but there are missing values for when
       cursor = self.request.get("cursor")
       if cursor:
@@ -1100,7 +1079,7 @@ class login(BaseHandler):
       password = self.request.get('password')
       self.auth.get_user_by_password(username, password, remember=True,
                                      save_session=True)
-      con = {"cats": Category.all()}
+      con = {"cats": Category.query()}
       logging.info('Login: Logged in')
       return self.render_template("index.html", con)
     except (InvalidAuthIdError, InvalidPasswordError) :
@@ -1120,11 +1099,11 @@ class login(BaseHandler):
 class addVote_ajax(BaseHandler):
   @user_required
   def post(self):
-    it_key = self.request.get('item_id')
-    it = Item.get_item(it_key)
+    it_id = self.request.get('item_id')
+    it = Item.get_by_id(it_id)
     voteScore = int(self.request.get("vote"))
     voteUntried = bool(self.request.get("untried"))
-    my_votes = it.votes.filter('voter =', self.user_id)
+    my_votes = Vote.query(Vote.voter == self.user_id, Vote.item == it.key)
     if my_votes.count() == 0:
       # a new vote
       new_vote = Vote()
@@ -1141,8 +1120,6 @@ class addVote_ajax(BaseHandler):
     new_vote.put()
     it.save()
     # refresh cache
-    memcache.set(it_key, it)
-    memcache.delete("JSON:" + it_key)
     self.response.out.write('OK')
 
 class getMapList_Ajax(BaseHandler):
@@ -1162,7 +1139,7 @@ class getMapList_Ajax(BaseHandler):
 class imageEdit_Ajax(BaseHandler):
   @user_required
   def post(self):
-    it = Item.get_item(self.request.get('image-id'))
+    it = Item.get_by_id(self.request.get('image-id'))
     rotate_direction = int(self.request.get("image-rotate"))
     if it.photo:
       db_image = it.photo
@@ -1176,7 +1153,6 @@ class imageEdit_Ajax(BaseHandler):
       raw_file.rotate(-90)
     db_image.picture = db.Blob(raw_file)
     db_image.put()
-    memcache_touch_place(it)
     self.response.out.write('OK')
 
 
@@ -1200,13 +1176,12 @@ class deleteItem(BaseHandler):
   @staticmethod
   def delete_item(handler, key):
     try:
-      item = Item.get_item(key)
+      item = Item.get_by_id(key)
       if item:
-        my_votes = item.votes.filter('voter =', handler.user_id)
+        my_votes = Vote.query(Vote.voter == handler.user_id, Vote.item == item)
         for vote in my_votes:
-          logging.info("deleteItem: " + str(vote.key()))
-          vote.delete()
-      memcache_touch_user(handler.user_id)
+          logging.info("deleteItem: " + str(vote.key))
+          vote.key.delete()
       handler.response.write('OK')
     except Exception:
       logging_ext.error("delete_item", exc_info=True)

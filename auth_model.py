@@ -1,33 +1,35 @@
 import datetime
 import logging
 from google.appengine.ext.ndb import model
-import settings
 
 __author__ = 'Will'
 
 import time
 import webapp2_extras.appengine.auth.models
 
-from google.appengine.ext import ndb, db
+from google.appengine.ext import ndb
 
 from webapp2_extras import security
+import models
 
 
-class UserProfile(db.Model):
-  userId = db.IntegerProperty()
-  count_posted = db.IntegerProperty()
-  count_read = db.IntegerProperty()
-  last_write = db.DateTimeProperty()
-  last_read = db.DateTimeProperty()
-  # list of key ids
-  is_admin = db.BooleanProperty(default=False)
-  sex = db.StringProperty(default="")
+
 
 
 class User(webapp2_extras.appengine.auth.models.User):
   screen_name = model.StringProperty()
   blocked = model.BooleanProperty(default=False)
-  votes_json = db.StringProperty(default="")
+  friends = model.KeyProperty(kind='User',repeated=True)
+
+  def set_friends(self):
+    f_list = models.Friends.getFriendIds(self.key.integer_id())
+    self.friends = [ndb.Key(User,f) for f in f_list]
+    self.put()
+
+  def get_friends(self):
+    # if len(self.friends)==0:
+    self.set_friends()
+    return self.friends
 
   def set_password(self, raw_password):
     """Sets the password for the current userId
@@ -87,16 +89,15 @@ class User(webapp2_extras.appengine.auth.models.User):
 
   def profile(self):
     try:
-      res = db.GqlQuery(
-        "SELECT * FROM UserProfile WHERE userId = :1", self.key.id()).get()
+      res = UserProfile.query(UserProfile.user == self.key).get()
       if res:
         return res
       raise LookupError
     except:
-      logging.info("Create user profile for "+str(self.key.id()))
+      logging.info("Create user profile for "+self.key.urlsafe())
       new_profile = UserProfile()
       # put this User's UserId in the profile to link them
-      new_profile.userId = self.key.id()
+      new_profile.userId = self.key.urlsafe()
       new_profile.friends = []
       # last_write set when a change is made to your book
       new_profile.last_write = datetime.datetime.now()
@@ -105,3 +106,12 @@ class User(webapp2_extras.appengine.auth.models.User):
       new_profile.put()
       return new_profile
 
+class UserProfile(ndb.Model):
+  user = ndb.KeyProperty(kind=User)
+  count_posted = ndb.IntegerProperty()
+  count_read = ndb.IntegerProperty()
+  last_write = ndb.DateTimeProperty()
+  last_read = ndb.DateTimeProperty()
+  # list of key ids
+  is_admin = ndb.BooleanProperty(default=False)
+  sex = ndb.StringProperty(default="")

@@ -79,18 +79,18 @@ class PlacesDB():
       cls.log_to_console("Exit Google search")
 
 
-    # todo: step through both in sequence
-    try:
-      # deDup the list - if it's come back from google check if we had it already:
-      # same name AND nearby
+      # todo: step through both in sequence
+      try:
+        # deDup the list - if it's come back from google check if we had it already:
+        # same name AND nearby
 
-      for pt in points_2:
-        add_if_unique(pt)
-      cls.log_to_console("Deduped")
+        for pt in points_2:
+          add_if_unique(pt)
+        cls.log_to_console("Deduped")
 
 
-    except Exception, e:
-      pass
+      except Exception, e:
+        pass
 
     result = {"local": {
       "points": points,

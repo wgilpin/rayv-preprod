@@ -72,12 +72,12 @@ class TestItem(TestCase):
   def test_closest_vote_from(self):
     self.load_user_and_item()
     self.load_votes(self.user,1,"Good Place")
-    ud = models.memcache_get_user_dict(self.user.key.id())
-    cvf = self.item.closest_vote_from(ud)
+    self.user.key.id()
+    cvf = self.item.closest_vote_from(self.user.key.id())
     assert cvf.comment == "Good Place"
     assert cvf.vote == 1
 
   def test_get_item(self):
     self.load_user_and_item()
-    got = Item.get_item(str(self.item.key()))
+    got = Item.get_by_id(str(self.item.key()))
     assert got.place_name == self.item.place_name
