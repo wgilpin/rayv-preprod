@@ -539,9 +539,8 @@ class migrate(BaseHandler):
     elif migration_name == "reset-votes-json":
       self.wipe_votes_json()
       self.response.out.write("Json Wiped")
-
     else:
-      self.response.out.write("No Migration")
+      self.response.out.write("No Migration - %s"%migration_name)
 
 
   @user_required
