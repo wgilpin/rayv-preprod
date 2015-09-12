@@ -122,18 +122,6 @@ class Category(ndb.Model):
   title = ndb.TextProperty()
 
 
-def get_category(key):
-  try:
-    cat = memcache.get(key)
-    if cat:
-      return cat
-    key = ndb.Key(urlsafe=key)
-    cat = key.get()
-    return cat
-  except:
-    logging.info("get_category failed for key " + key, exc_info=True)
-    return None
-
 
 class DBImage(ndb.Model):
   title = ndb.TextProperty(required=False)
@@ -259,13 +247,13 @@ class Item(ndb.Model):
     return json_data
 
   @classmethod
-  def urlsafe_key_to_json(cls, key):
+  def id_to_json(cls, id):
     try:
-      # memcache has item entries under Key, and JSON entries under JSON:key
-      item = ndb.Key(urlsafe=key).get()
+      # memcache has item entries under Key, and JSON entries under JSON:id
+      item = Item.get_by_id(id)
       return item.get_json()
     except Exception:
-      logging.exception('urlsafe_key_to_json', exc_info=True)
+      logging.exception('id_to_json', exc_info=True)
       return None
 
 
@@ -311,7 +299,7 @@ class Item(ndb.Model):
         'lng': self.lng,
         'website': self.website,
         'address': self.address,
-        'key': str(self.key.urlsafe()) ,
+        'key': str(self.key.id()) ,
         'place_name': self.place_name,
         'place_id': '',
         'cuisineName': self.category.get().title,
@@ -333,7 +321,7 @@ class Item(ndb.Model):
           data["descr"] = vote.comment
       return data
     except Exception, E:
-      logging.exception('to_json %s'%self.key.urlsafe(), exc_info=True)
+      logging.exception('to_json %s'%self.key.id(), exc_info=True)
 
 
 
@@ -512,7 +500,7 @@ class Vote(ndb.Model):
    when =  self.when
    if not when:
      when = datetime.datetime.now()
-   return {"key": str(self.item.urlsafe()),
+   return {"key": str(self.item.id()),
                      "vote": self.stars,
                      "untried": self.untried,
                      "style": self.place_style,
@@ -781,8 +769,12 @@ class InviteInternal(ndb.Model):
     inv.put()
 
   def to_json(self):
-    timestr = datetime(self.when).strftime(
-            settings.config['DATETIME_FORMAT'])
+    if self.when:
+      timestr = self.when.strftime(
+              settings.config['DATETIME_FORMAT'])
+    else:
+      timestr = datetime.datetime.now().strftime(
+              settings.config['DATETIME_FORMAT'])
     dict = {
       'inviter':self.inviter,
     'invitee':self.invitee,

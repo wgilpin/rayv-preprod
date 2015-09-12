@@ -51,7 +51,6 @@ urls = [
   webapp2.Route('/getAddresses_ajax', views.getAddresses_ajax),
   webapp2.Route('/getCuisines_ajax', views.getCuisines_ajax),
   webapp2.Route('/getFullUserRecord', ndb_models.getUserRecordFastViaWorkers),
-  webapp2.Route('/GetBook', views.GetBook),
   webapp2.Route('/addVote_Ajax', views.addVote_ajax),
   webapp2.Route('/getItem/<key:\S+>', views.getItem_ajax),
   webapp2.Route('/getVotes/<key:\S+>', views.getItemVotes_ajax),

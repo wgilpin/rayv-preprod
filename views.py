@@ -43,21 +43,6 @@ class GetItemsAjax(BaseHandler):
               self.response.out)
     profile_out("GetItemsAjax")
 
-class GetBook(BaseHandler):
-  @user_required
-  def get(self):
-    voter_id = self.request.get("voter") if \
-      "voter" in self.request.params else str(self.user_id)
-    vote_list = Vote.query(Vote.voter == voter_id)
-    result = []
-    for vote in vote_list:
-      it = vote.Item
-      result.append(Item.urlsafe_key_to_json(it.key.urlsafe()))
-    json.dump({"points": result,
-               "length": len(result)},
-              self.response.out)
-
-
 
 
 
@@ -88,13 +73,13 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
       logging.debug("serialize_user_details: %d votes"%len(votes))
       for place_key in votes:
         if not place_key in places:
-          place_json = Item.urlsafe_key_to_json(place_key)
+          place_json = Item.id_to_json(place_key)
           # if user_id == current_user:
           #   place_json['vote'] = votes[place_key]['vote']
           if "category" in place_json:
             places[place_key] = place_json
       for place in places:
-        pl = ndb.Key(urlsafe=place).get()
+        pl = ndb.Key(place).get()
         json_data = pl.get_json()
         places[place] = json_data
       logging.debug('serialize_user_details: Added %d places'%len(places))
@@ -230,7 +215,7 @@ class itemsAPI(BaseHandler):
       res = []
       key_list = json.loads(self.request.params['key_list'])
       for key in key_list:
-        res.append(Item.urlsafe_key_to_json(key))
+        res.append(Item.id_to_json(key))
       json.dump({'items':res}, self.response.out, default=json_serial)
       return
     self.abort(403)
@@ -309,7 +294,7 @@ class getUserRecordFast(BaseHandler):
           for v in votes:
             #add to the list if it's not there, or overwrite if this is my version
             if not v in places or user_id == my_id:
-              places [v] = Item.urlsafe_key_to_json(v)
+              places [v] = Item.id_to_json(v)
 
           user_profile = u.profile()
           if getProp(user_profile, 'last_write'):
@@ -690,7 +675,7 @@ class updateItem(BaseHandler):
     " get a single item
     """
     try:
-      json.dump(Item.urlsafe_key_to_json(key), self.response.out)
+      json.dump(Item.id_to_json(key), self.response.out)
     except:
       logging_ext.error('updateItem GET Exception '+key,exc_info=True)
 
@@ -710,9 +695,9 @@ def update_photo(it, request_handler):
       img.make_thumb()
       img.owner = request_handler.user_id
       img.put()
-      logging.debug('update_photo Ins:',img.key.urlsafe())
+      logging.debug('update_photo Ins:',img.key.id())
       if it.photo:  # the item has an image already?
-        logging.debug( 'update_photo Del:',it.photo.urlsafe())
+        logging.debug( 'update_photo Del:',it.photo.id())
         db.delete(it.photo)
     else:
       # no new image - rotate an existing image?
@@ -758,7 +743,7 @@ def update_votes(item, request_handler, user_id):
       vote_untried = False
     vote.untried = vote_untried
     vote.put()
-    ndb_models.mark_vote_as_updated(vote.key.urlsafe(), user_id)
+    ndb_models.mark_vote_as_updated(vote.key.id(), user_id)
     logging.info ('update_votes for %s "%s"=%d'%
                   (item.place_name,vote.comment,vote.stars))
 
@@ -882,7 +867,7 @@ class newOrUpdateItem(BaseHandler):
   def post(self):
     it = update_item_internal(self, self.user_id)
     logging.info('newOrUpdateItem %s by %s'%(it.place_name, self.user_id))
-    ndb_models.mark_place_as_updated(it.key.urlsafe(),self.user_id)
+    ndb_models.mark_place_as_updated(it.key.id(),self.user_id)
     vote = Vote.query(Vote.voter == self.user_id, Vote.item == it.key).get()
     res = {'place':it.get_json(),
            'vote': vote.to_json()}
@@ -891,15 +876,15 @@ class newOrUpdateItem(BaseHandler):
 class UpdateVote(BaseHandler):
   @user_required
   def post(self):
-    key = self.request.get('key')
-    it = ndb.Key(urlsafe=key).get()
+    id = self.request.get('key')
+    it = ndb.Key(id).get()
     if it:
       update_votes(it, self, self.user_id)
       # mark user as dirty
       self.response.out.write('OK')
       logging.debug("UpdateVote OK")
       return
-    logging_ext.error("UpdateVote 404 for %s"%key)
+    logging_ext.error("UpdateVote 404 for %s"%id)
     self.abort(404)
 
 
@@ -964,10 +949,10 @@ class getItem_ajax(BaseHandler):
              "cuisineName": it.category.title,
              "lat": str(it.lat),
              "lng": str(it.lng),
-             "key": it.key.urlsafe()
+             "key": it.key.id()
       }
       if it.photo:
-        res["img"] = it.key.urlsafe()
+        res["img"] = it.key.id()
       if it.owner == self.user_id:
         res["mine"] = True
         res["descr"], res["stars"], res["untried"] = it.vote_from(it.owner)
@@ -1008,7 +993,7 @@ class getItemVotes_ajax(BaseHandler):
 class ImageHandler(BaseHandler):
   def get(self, key):
     try:
-      photo = db.get(key)
+      photo = db.get(urlsafe=key)
       if photo:
         self.response.headers['Content-Type'] = 'image/png'
         self.response.out.write(photo.picture)

@@ -94,10 +94,10 @@ class User(webapp2_extras.appengine.auth.models.User):
         return res
       raise LookupError
     except:
-      logging.info("Create user profile for "+self.key.urlsafe())
+      logging.info("Create user profile for %s"%self.key.id())
       new_profile = UserProfile()
       # put this User's UserId in the profile to link them
-      new_profile.userId = self.key.urlsafe()
+      new_profile.user = self.key
       new_profile.friends = []
       # last_write set when a change is made to your book
       new_profile.last_write = datetime.datetime.now()

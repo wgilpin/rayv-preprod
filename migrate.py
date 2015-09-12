@@ -536,7 +536,7 @@ class migrate(BaseHandler):
     elif migration_name == "five_star":
       self.votes_to_5_star()
       self.response.out.write("Stars set")
-    elif migration_name == "wipe_vote_json":
+    elif migration_name == "reset-votes-json":
       self.wipe_votes_json()
       self.response.out.write("Json Wiped")
 

@@ -55,7 +55,7 @@ class SyncToProd(BaseHandler):
           for place in place_list:
             it = Item.get_by_id(place)
             logging.info("SyncToProd sending " + it.place_name)
-            form_fields = place.urlsafe_key_to_json()
+            form_fields = place.id_to_json()
             vote = Vote.query(Vote.voter == seed_user, Vote.item == it.key).get()
             if vote:
               form_fields['myComment'] = vote.comment
@@ -102,15 +102,15 @@ class updatePhotoFromGoogle(BaseHandler):
 
 class UpdateAdminVote(BaseHandler):
   def post(self):
-    vote_key = ndb.Key(urlsafe=self.request.get('vote_key'))
-    item_key = ndb.Key(urlsafe=self.request.get('item_key'))
+    vote_key = ndb.Key(self.request.get('vote_key'))
+    item_key = ndb.Key(self.request.get('item_key'))
     vote = Vote.get_by_id(vote_key)
     it = Item.get_by_id(item_key)
     if it:
       try:
         old_votes = Vote.query(Vote.voter == vote.voter, Vote.item == item_key)
         for v in old_votes:
-          if v.key.urlsafe() != vote_key:
+          if v.key.id() != vote_key:
             v.key.delete()
         vote = Vote.get_by_id(vote_key)
         vote.meal_kind =  int(self.request.get('kind'))
@@ -122,7 +122,7 @@ class UpdateAdminVote(BaseHandler):
           vote.cuisine = vote.item.category
         vote.put()
         it.set_json()
-        ndb_models.mark_vote_as_updated(vote.key.urlsafe(), vote.voter)
+        ndb_models.mark_vote_as_updated(vote.key.id(), vote.voter)
         logging.info ('UpdateAdminVote for %s, %s'%(it.place_name,vote_key))
       except Exception, ex:
         logging.error("UpdateAdminVote votes exception", exc_info=True)

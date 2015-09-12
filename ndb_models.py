@@ -54,7 +54,7 @@ class AddVoteChangesWorker(webapp2.RequestHandler):
       for u in friends_list:
         change = VoteChange()
         change.voteId = vote_key
-        change.subscriberId = u.urlsafe()
+        change.subscriberId = u.id()
         change.when = datetime.strptime(
           time,
           views.config['DATETIME_FORMAT'])
@@ -164,7 +164,7 @@ class getUserRecordFastViaWorkers(BaseHandler):
       if v:
         try:
           votes.append(v.json)
-          place_key = v.item.key.urlsafe()
+          place_key = v.item.key.id()
           if not place_key in places:
             places[place_key] = v.item.get_json()
         except:
@@ -188,10 +188,10 @@ class getUserRecordFastViaWorkers(BaseHandler):
       user_votes = models.Vote.query(models.Vote.voter == u.key.integer_id()).fetch()
       for vote in user_votes:
         try:
-          place_key = vote.item.urlsafe()
+          place_key = vote.item.id()
           votes.append(vote.to_json())
           if not place_key in places:
-            place_json = models.Item.urlsafe_key_to_json(place_key)
+            place_json = models.Item.id_to_json(place_key)
             if "cuisineName" in place_json:
               places[place_key] = place_json
         except Exception, e:
@@ -255,7 +255,7 @@ class getUserRecordFastViaWorkers(BaseHandler):
             for f in friends:
               friend = f.get()
               user_str = {
-                  "id": f.urlsafe(),
+                  "id": f.id(),
                   # todo is it first_name?
                   'name': friend.screen_name}
               friends_list.append(user_str)

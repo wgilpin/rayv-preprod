@@ -308,7 +308,7 @@ def geoSearch(search_centre,
     if filter["kind"] == "mine":
       my_id = filter["userId"]
   for point_key in initial_results:
-    jit = models.Item.urlsafe_key_to_json(point_key)
+    jit = models.Item.id_to_json(point_key)
     if search_text:
       #we only want ones that match the search text
       if not search_text in jit['place_name'].lower():
