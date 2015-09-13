@@ -57,6 +57,7 @@ def serialize_user_details(user_id, places_ids, current_user, request, since=Non
   try:
     logging.info("serialize_user_details 1")
     # get it from the cache
+    user_id = int(user_id)
     votes = Vote.query(Vote.voter == user_id)
     user = User.get_by_id(user_id)
     user_profile = user.profile()
@@ -119,18 +120,18 @@ class FriendsApiRemove(BaseHandler):
     high = max(other_id, my_id)
     record = Friends.query(Friends.lower == low, Friends.higher == high).get()
     if record:
-      db.delete(record)
+      record.key.delete()
       # delete invites
       inv_from = InviteInternal.\
         query(InviteInternal.inviter == other_id).\
         query(InviteInternal.invitee == my_id)
       for i in inv_from:
-        db.delete(i)
+        i.key.delete()
       inv_to = InviteInternal.\
         query(InviteInternal.inviter == my_id).\
         query(InviteInternal.invitee == other_id)
       for i in inv_to:
-        db.delete(i)
+        i.key.delete()
       self.response.out.write("OK")
       return
     self.response.out.write("FAIL")
@@ -179,7 +180,7 @@ class FriendsApiReject(BaseHandler):
       query(InviteInternal.inviter == int(from_id)).\
       get()
     if inv:
-      db.delete(inv)
+      inv.key.delete()
     self.response.out.write("OK")
 
 class FriendsApi(BaseHandler):
@@ -698,7 +699,7 @@ def update_photo(it, request_handler):
       logging.debug('update_photo Ins:',img.key.id())
       if it.photo:  # the item has an image already?
         logging.debug( 'update_photo Del:',it.photo.id())
-        db.delete(it.photo)
+        it.photo.delete()
     else:
       # no new image - rotate an existing image?
       img = None  # no image supplied
@@ -789,7 +790,7 @@ def update_item_internal(self, user_id, allow_update=True):
             thumb_data = urllib2.urlopen(thumb_url)
             img.thumb = db.Blob(thumb_data.read())
             img.put()
-            it.photo = img
+            it.photo = img.key
           except:
             if thumb_url:
               logging_ext.error("update_item_internal: remote url ["+str(thumb_url)+"] Exception", exc_info=True)
@@ -819,7 +820,6 @@ def update_item_internal(self, user_id, allow_update=True):
   # refresh cache
   update_votes(it, self, user_id)
   # todo: why?
-  it.save()  # to save the json
   logging.info("update_item_internal for "+it.place_name+": "+str(changed))
   return it
 
@@ -941,15 +941,20 @@ class geoLookup(BaseHandler):
 
 class getItem_ajax(BaseHandler):
   @user_required
-  def get(self, key):
+  def get(self, id):
+    """
+    get an Item
+    :param id: int
+    :return: string json
+    """
     try:
-      it = Item.get_by_id(key)
+      it = Item.get_by_id(int(id))
       res = {"place_name": it.place_name,
              "address": it.address,
              "cuisineName": it.category.title,
              "lat": str(it.lat),
              "lng": str(it.lng),
-             "key": it.key.id()
+             "id": it.key.id()
       }
       if it.photo:
         res["img"] = it.key.id()
@@ -968,8 +973,13 @@ class getItem_ajax(BaseHandler):
 class getItemVotes_ajax(BaseHandler):
   @user_required
   def get(self, id):
+    """
+    votes for an item
+    :param id: int
+    :return: json dict
+    """
     res = {}
-    it = Item.get_by_id(id)
+    it = Item.get_by_id(int(id))
     if it:
       votes = Vote.query(Vote.item == it.key)
       # TODO: .order("when") but there are missing values for when
@@ -1084,7 +1094,7 @@ class login(BaseHandler):
 class addVote_ajax(BaseHandler):
   @user_required
   def post(self):
-    it_id = self.request.get('item_id')
+    it_id = int(self.request.get('item_id'))
     it = Item.get_by_id(it_id)
     voteScore = int(self.request.get("vote"))
     voteUntried = bool(self.request.get("untried"))
@@ -1124,7 +1134,7 @@ class getMapList_Ajax(BaseHandler):
 class imageEdit_Ajax(BaseHandler):
   @user_required
   def post(self):
-    it = Item.get_by_id(self.request.get('image-id'))
+    it = Item.get_by_id(int(self.request.get('image-id')))
     rotate_direction = int(self.request.get("image-rotate"))
     if it.photo:
       db_image = it.photo
@@ -1159,9 +1169,15 @@ class deleteItem(BaseHandler):
     self.delete_item(self, key)
 
   @staticmethod
-  def delete_item(handler, key):
+  def delete_item(handler, id):
+    """
+    deletes the votes for an item
+    :param handler: RequestHandler
+    :param id: int
+    :return:
+    """
     try:
-      item = Item.get_by_id(key)
+      item = Item.get_by_id(int(id))
       if item:
         my_votes = Vote.query(Vote.voter == handler.user_id, Vote.item == item)
         for vote in my_votes:

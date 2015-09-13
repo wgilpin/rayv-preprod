@@ -104,15 +104,14 @@ class UpdateAdminVote(BaseHandler):
   def post(self):
     vote_key = ndb.Key(Vote,int(self.request.get('vote_key')))
     item_key = ndb.Key(Item,int(self.request.get('item_key')))
-    vote = Vote.get_by_id(vote_key)
-    it = Item.get_by_id(item_key)
+    vote = vote_key.get()
+    it = item_key.get()
     if it:
       try:
         old_votes = Vote.query(Vote.voter == vote.voter, Vote.item == item_key)
         for v in old_votes:
           if v.key.id() != vote_key:
             v.key.delete()
-        vote = Vote.get_by_id(vote_key)
         vote.meal_kind =  int(self.request.get('kind'))
         vote.place_style=  int(self.request.get('style'))
         cuisine = self.request.get('cuisine')

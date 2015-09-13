@@ -54,7 +54,7 @@ class migrate(BaseHandler):
       try:
         it = v.item.place_name
       except ReferencePropertyResolveError:
-        db.delete(v)
+        v.key.delete()
         self.response.out.write('Delete 1')
       except Exception:
         self.response.out.write("FAIL ")
@@ -252,7 +252,7 @@ class migrate(BaseHandler):
       votes_per_voter = {}
       for v in it.votes:
         if v.voter in votes_per_voter:
-          db.delete(v)
+          v.key.delete()
         else:
           votes_per_voter[v.voter] = True
 

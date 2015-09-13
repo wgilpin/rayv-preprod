@@ -89,6 +89,7 @@ def wipe_table(model):
   while True:
     q = db.GqlQuery("SELECT __key__ FROM " + model)
     if q.count() > 0:
+      #TODO: ndb!
       db.delete(q.fetch(200))
       time.sleep(0.5)
     else:
@@ -155,7 +156,7 @@ def load_one_item(owner):
     img.put()
     new_it.photo = img
     new_it.telephone = detail['telephone']
-    new_it.save()
+    new_it.put()
     return new_it
 
 
@@ -265,7 +266,7 @@ def load_data(wipe=False, section=None, Max=None):
           img.put()
           new_it.photo = img
           new_it.telephone = detail['telephone']
-          new_it.save()
+          new_it.put()
           result_strings.append('Item: ' + item[0])
 
       print "items"

@@ -5,6 +5,7 @@ from google.appengine.ext.ndb import model
 import webapp2
 from auth_model import User
 import settings
+from logging_ext import logging_ext
 
 __author__ = 'Will'
 import json
@@ -39,10 +40,11 @@ class AddVoteChangesWorker(webapp2.RequestHandler):
     if not vote_key:
       logging.error("AddVoteChangesWorker: 0 length voteKey")
       return
-    user_id = self.request.get('userId')
-    if len(user_id) == 0:
+    user_id_str = self.request.get('userId')
+    if not user_id_str:
       logging.error("AddVoteChangesWorker: 0 length user_id")
       return
+    user_id = int(user_id_str)
     time = self.request.get('time')
     # @ndb.transactional
     def update_votes():
@@ -54,7 +56,7 @@ class AddVoteChangesWorker(webapp2.RequestHandler):
       for u in friends_list:
         change = VoteChange()
         change.voteId = vote_key
-        change.subscriberId = u.id()
+        change.subscriberId = str(u.id())
         change.when = datetime.strptime(
           time,
           views.config['DATETIME_FORMAT'])
@@ -73,8 +75,9 @@ class AddPlaceChangesWorker(webapp2.RequestHandler):
       placeKey: string
       userId: string
     """
+    logging_ext.log_to_console("AddPlaceChangesWorker")
     place_key_str = self.request.get('placeKey')
-    user_id = self.request.get('userId')
+    user_id = int(self.request.get('userId'))
     # @ndb.transactional
     def update_place():
       place_entries = PlaceChange.\
@@ -89,11 +92,11 @@ class AddPlaceChangesWorker(webapp2.RequestHandler):
       for u in friends_list:
         p = PlaceChange.\
           query(
-            PlaceChange.subscriberId == user_id,
+            PlaceChange.subscriberId == str(u.id()),
             PlaceChange.placeId == place_key_str).get()
         if not p:
           p = PlaceChange()
-          p.subscriberId = user_id
+          p.subscriberId = str(u.id())
           p.placeId = place_key_str
         p.when = now
         p.put()
@@ -143,8 +146,14 @@ def mark_vote_as_updated(vote_key, user_id):
                         'time': now_str})
 
 def get_updated_places_for_user(user_id, since):
+  """
+  get the list of change records for a given user
+  :param user_id: int
+  :param since: datetime
+  :return: query object on PlaceChange
+  """
   result = PlaceChange.\
-    query(PlaceChange.subscriberId==user_id, PlaceChange.when < since)
+    query(PlaceChange.subscriberId==str(user_id), PlaceChange.when < since)
   return result
 
 
@@ -155,12 +164,12 @@ class getUserRecordFastViaWorkers(BaseHandler):
     places = {}
     updated_places = get_updated_places_for_user(str(my_id), now)
     for up in updated_places:
-      p = models.Item.get_by_id(up.placeId)
+      p = models.Item.get_by_id(int(up.placeId))
       places[up.placeId] =p.get_json()
     updated_votes = VoteChange.query(VoteChange.subscriberId==str(my_id))
     votes=[]
     for uv in updated_votes:
-      v = models.Vote.get_by_id(uv.voteId)
+      v = models.Vote.get_by_id(int(uv.voteId))
       if v:
         try:
           votes.append(v.json)

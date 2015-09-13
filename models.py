@@ -248,6 +248,10 @@ class Item(ndb.Model):
 
   @classmethod
   def id_to_json(cls, id):
+    """
+    :param id: int ndb id
+    :return: dict the json representation
+    """
     try:
       # memcache has item entries under Key, and JSON entries under JSON:id
       item = Item.get_by_id(id)
@@ -257,6 +261,11 @@ class Item(ndb.Model):
       return None
 
   def put(self):
+    """
+    Saves the object, and updates it's json value
+    :return: void
+    """
+    ndb.Model.put(self)
     self.set_json()
     ndb.Model.put(self)
 

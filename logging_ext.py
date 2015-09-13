@@ -11,3 +11,8 @@ class logging_ext:
       print message, sys.exc_info()
     else:
       logging.error(message, exc_info=exc_info)
+
+  @classmethod
+  def log_to_console(cls, message):
+    if settings.running_on_test_server():
+      print message
