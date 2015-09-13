@@ -46,10 +46,10 @@ class GetItemsAjax(BaseHandler):
 
 
 
-def serialize_user_details(user_id, places, current_user, request, since=None):
-  """ give the list of votes & places for a user
+def serialize_user_details(user_id, places_ids, current_user, request, since=None):
+  """ give the list of votes & places_ids for a user
   @param user_id: int: which user
-  @param places: dict: list of places indexed by key (BY VALUE)
+  @param places_ids: dict: list of places_ids indexed by key (BY VALUE)
   @param current_user: int: current user - if same as user_id then
     we exclude untried
   @return:
@@ -72,17 +72,17 @@ def serialize_user_details(user_id, places, current_user, request, since=None):
     if votes:
       logging.debug("serialize_user_details: %d votes"%len(votes))
       for place_key in votes:
-        if not place_key in places:
+        if not place_key in places_ids:
           place_json = Item.id_to_json(place_key)
           # if user_id == current_user:
           #   place_json['vote'] = votes[place_key]['vote']
           if "category" in place_json:
-            places[place_key] = place_json
-      for place in places:
-        pl = ndb.Key(place).get()
+            places_ids[place_key] = place_json
+      for place_id in places_ids:
+        pl = ndb.Key(Item,place_id).get()
         json_data = pl.get_json()
-        places[place] = json_data
-      logging.debug('serialize_user_details: Added %d places'%len(places))
+        places_ids[place_id] = json_data
+      logging.debug('serialize_user_details: Added %d places_ids'%len(places_ids))
     else:
       logging.debug("serialize_user_details: No Votes")
     return result
@@ -369,12 +369,12 @@ class getFullUserRecord(BaseHandler):
         else:
           logging.info("getFullUserRecord: 1+ user")
           first_user = my_id
-        places = {}
+        dict_id_place = {}
         # load the data for the 1 user  - me or specified
         friends_data = [
           serialize_user_details(
             first_user,
-            places,
+            dict_id_place,
             my_id,
             self.request,
             since)]
@@ -390,16 +390,16 @@ class getFullUserRecord(BaseHandler):
               if user.get_id() == my_id:
                 continue  # don't add myself again
               data = serialize_user_details(
-                user.get_id(), places, my_id, self.request, since)
+                user.get_id(), dict_id_place, my_id, self.request, since)
               logging.info("getFullUserRecord: record %s"%data)
               friends_data.append(data)
           else:
             for friend in prof.friends:
               friends_data.append(serialize_user_details(
-                friend, places, my_id, self.request, since))
+                friend, dict_id_place, my_id, self.request, since))
           result["friendsData"] = friends_data
-          logging.debug('getFullUserRecord: return %d places'%len(places))
-        result["places"] = places
+          logging.debug('getFullUserRecord: return %d places'%len(dict_id_place))
+        result["places"] = dict_id_place
         # encode using a custom encoder for datetime
 
         json_str = json.dumps(
@@ -877,7 +877,7 @@ class UpdateVote(BaseHandler):
   @user_required
   def post(self):
     id = self.request.get('key')
-    it = ndb.Key(id).get()
+    it = ndb.Key(Item, int(id)).get()
     if it:
       update_votes(it, self, self.user_id)
       # mark user as dirty

@@ -189,7 +189,7 @@ class getUserRecordFastViaWorkers(BaseHandler):
       for vote in user_votes:
         try:
           place_key = vote.item.id()
-          votes.append(vote.to_json())
+          votes.append(vote.get_json())
           if not place_key in places:
             place_json = models.Item.id_to_json(place_key)
             if "cuisineName" in place_json:
@@ -289,7 +289,7 @@ class getUserRecordFastViaWorkers(BaseHandler):
           pass
         try:
           #logging
-          logging.debug("getUserRecordFastViaWorkers result "+json_str)
+          logging.debug("getUserRecordFastViaWorkers done ")
         except:
           pass
         self.response.out.write(json_str)

@@ -181,7 +181,7 @@ def findDbPlacesNearLoc(my_location,
           if point_key in reject_list:
             continue
           if point_key.id() in map_id_to_item:
-            it = map_id_to_item[point_key]
+            it = map_id_to_item[point_key.id()]
           else:
             it = point_key.get()
             map_id_to_item[point_key.id()] = it
@@ -195,7 +195,7 @@ def findDbPlacesNearLoc(my_location,
       else:
         for point_key in query_result:
           if not point_key in result_key_list:
-            it = models.Item.get_by_id(str(point_key))
+            it = models.Item.get_by_id(point_key.id())
             map_id_to_item[point_key.id()] = it
             result_key_list.append(point_key)
       if query_result.count() > 10:
@@ -230,8 +230,8 @@ def findDbPlacesNearLoc(my_location,
     }
 
     for point_key in result_key_list:
-      if point_key in map_id_to_item:
-        it = map_id_to_item[point_key]
+      if point_key.id() in map_id_to_item:
+        it = map_id_to_item[point_key.id()]
       else:
         it = point_key.get()
       json_data = it.get_json()

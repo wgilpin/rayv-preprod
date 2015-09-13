@@ -102,8 +102,8 @@ class updatePhotoFromGoogle(BaseHandler):
 
 class UpdateAdminVote(BaseHandler):
   def post(self):
-    vote_key = ndb.Key(self.request.get('vote_key'))
-    item_key = ndb.Key(self.request.get('item_key'))
+    vote_key = ndb.Key(Vote,int(self.request.get('vote_key')))
+    item_key = ndb.Key(Item,int(self.request.get('item_key')))
     vote = Vote.get_by_id(vote_key)
     it = Item.get_by_id(item_key)
     if it:

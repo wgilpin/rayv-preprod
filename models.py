@@ -256,7 +256,9 @@ class Item(ndb.Model):
       logging.exception('id_to_json', exc_info=True)
       return None
 
-
+  def put(self):
+    self.set_json()
+    ndb.Model.put(self)
 
   def to_json(self, request, uid_for_votes=None):
     """
@@ -266,7 +268,6 @@ class Item(ndb.Model):
     :return: dict - json repr of the place
     """
     try:
-      self.put()
       if request:
         base_url = request.url[:request.url.find(request.path)]
       else:
@@ -328,7 +329,7 @@ class Item(ndb.Model):
   @classmethod
   def get_unique_place(cls, request, return_existing=True):
     try:
-      it = ndb.Key(Item,request.get('key')).get()
+      it = ndb.Key(Item,int(request.get('key'))).get()
     except:
       it = None
     if it:
@@ -392,7 +393,7 @@ class Item(ndb.Model):
 
     # first one
     user_profile = auth_model.UserProfile.query(
-      auth_model.UserProfile.user == ndb.Key(user_id))
+      auth_model.UserProfile.user == ndb.Key(auth_model.User, int(user_id)))
     for friend in user_profile.friends:
       users_vote = Vote.query(Vote.voter == friend.key.integer_id()).get()
       logging.debug("friend " + str(friend.key.integer_id()))
