@@ -392,9 +392,9 @@ class Item(ndb.Model):
     @param user_id:
     @return user's comment, user's vote score:
     """
-    users_vote = Vote.\
-      query(Vote.voter == user_id).\
-      query(Vote.item == self.key).\
+    users_vote = Vote.query().\
+      filter(Vote.voter == user_id).\
+      filter(Vote.item == self.key).\
       get()
     if users_vote:
       return users_vote
@@ -766,9 +766,9 @@ class InviteInternal(ndb.Model):
 
   @classmethod
   def add_invite(cls,from_id, to_id):
-    inv = InviteInternal.\
-      query(InviteInternal.inviter == from_id).\
-      query(InviteInternal.invitee ==  to_id).\
+    inv = InviteInternal.query().\
+      filter(InviteInternal.inviter == from_id).\
+      filter(InviteInternal.invitee ==  to_id).\
       get()
     if not inv:
       inv = InviteInternal()

@@ -122,14 +122,14 @@ class FriendsApiRemove(BaseHandler):
     if record:
       record.key.delete()
       # delete invites
-      inv_from = InviteInternal.\
-        query(InviteInternal.inviter == other_id).\
-        query(InviteInternal.invitee == my_id)
+      inv_from = InviteInternal.query().\
+        filter(InviteInternal.inviter == other_id).\
+        filter(InviteInternal.invitee == my_id)
       for i in inv_from:
         i.key.delete()
-      inv_to = InviteInternal.\
-        query(InviteInternal.inviter == my_id).\
-        query(InviteInternal.invitee == other_id)
+      inv_to = InviteInternal.query().\
+        filter(InviteInternal.inviter == my_id).\
+        filter(InviteInternal.invitee == other_id)
       for i in inv_to:
         i.key.delete()
       self.response.out.write("OK")
