@@ -1003,7 +1003,7 @@ class getItemVotes_ajax(BaseHandler):
 class ImageHandler(BaseHandler):
   def get(self, key):
     try:
-      photo = db.get(urlsafe=key)
+      photo = ndb.Key(urlsafe=key).get()
       if photo:
         self.response.headers['Content-Type'] = 'image/png'
         self.response.out.write(photo.picture)
@@ -1014,7 +1014,7 @@ class ImageHandler(BaseHandler):
 class ThumbHandler(BaseHandler):
   def get(self, key):
     try:
-      photo = db.get(key)
+      photo = ndb.Key(urlsafe=key).get()
       if photo:
         self.response.headers['Content-Type'] = 'image/png'
         self.response.out.write(photo.get_thumb())
