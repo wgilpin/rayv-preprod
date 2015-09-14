@@ -149,9 +149,9 @@ class FriendsApiAccept(BaseHandler):
     #find the invite
     # inv = InviteInternal.all().get()
     # inv = InviteInternal.all().filter("invitee =", self.user_id).get()
-    inv = InviteInternal.\
-      query(InviteInternal.invitee == self.user_id).\
-      query(InviteInternal.inviter == int(from_id)).\
+    inv = InviteInternal.quer().\
+      filter(InviteInternal.invitee == self.user_id).\
+      filter(InviteInternal.inviter == int(from_id)).\
       get()
     if not inv:
       self.response.out.write("NO INVITE")
@@ -175,9 +175,9 @@ class FriendsApiReject(BaseHandler):
     #find the invite
     # inv = InviteInternal.all().get()
     # inv = InviteInternal.all().filter("invitee =", self.user_id).get()
-    inv = InviteInternal.\
-      query(InviteInternal.invitee == self.user_id).\
-      query(InviteInternal.inviter == int(from_id)).\
+    inv = InviteInternal.query()\
+      filter(InviteInternal.invitee == self.user_id).\
+      filter(InviteInternal.inviter == int(from_id)).\
       get()
     if inv:
       inv.key.delete()
