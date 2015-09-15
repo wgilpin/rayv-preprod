@@ -175,7 +175,7 @@ class FriendsApiReject(BaseHandler):
     #find the invite
     # inv = InviteInternal.all().get()
     # inv = InviteInternal.all().filter("invitee =", self.user_id).get()
-    inv = InviteInternal.query()\
+    inv = InviteInternal.query().\
       filter(InviteInternal.invitee == self.user_id).\
       filter(InviteInternal.inviter == int(from_id)).\
       get()
