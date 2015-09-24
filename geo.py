@@ -153,14 +153,8 @@ def geoCodeAddress(address):
 
 
 def findDbPlacesNearLoc(my_location,
-                        request,
                         search_text=None,
-                        filter=None,
-                        uid=None,
-                        position=None,
-                        exclude_user_id=None,
-                        place_names=None,
-                        ignore_votes=False):
+                        place_names=None):
   try:
     map_id_to_item = {}
     logging.debug("findDbPlacesNearLoc Start")
@@ -169,13 +163,13 @@ def findDbPlacesNearLoc(my_location,
     for geo_precision in range(5, 2, -1):
       geo_code = geohash.encode(
         my_location.lat, my_location.lng, precision=geo_precision)
-      query_result = models.Item.query(
+      items_geo_query_result = models.Item.query(
         default_options=QueryOptions(keys_only=True)).\
         filter(models.Item.geo_hash > geo_code).\
         filter(models.Item.geo_hash < geo_code + "{")
       if search_text:
         #if we're looking for a name, filter the results to find it
-        for point_key in query_result:
+        for point_key in items_geo_query_result:
           if point_key in result_key_list:
             continue
           if point_key in reject_list:
@@ -193,12 +187,12 @@ def findDbPlacesNearLoc(my_location,
           break
         continue
       else:
-        for point_key in query_result:
+        for point_key in items_geo_query_result:
           if not point_key in result_key_list:
             it = models.Item.get_by_id(point_key.id())
             map_id_to_item[point_key.id()] = it
             result_key_list.append(point_key)
-      if query_result.count() > 10:
+      if items_geo_query_result.count() > 10:
         break
 
     if len(result_key_list) == 0 and search_text:
@@ -209,7 +203,7 @@ def findDbPlacesNearLoc(my_location,
       for w in words_candidates:
         if not w in exclude:
           words.append(w)
-      for point_key in query_result:
+      for point_key in items_geo_query_result:
         if point_key in result_key_list:
             continue
         if point_key in reject_list:

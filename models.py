@@ -118,7 +118,7 @@ class Address(ndb.Model):
 
 
 class Category(ndb.Model):
-  # key_name is the slug
+  # id is the slug
   title = ndb.TextProperty()
 
 

@@ -744,7 +744,7 @@ def update_votes(item, request_handler, user_id):
       vote_untried = False
     vote.untried = vote_untried
     vote.put()
-    ndb_models.mark_vote_as_updated(vote.key.id(), user_id)
+    ndb_models.mark_vote_as_updated(str(vote.key.id()), user_id)
     logging.info ('update_votes for %s "%s"=%d'%
                   (item.place_name,vote.comment,vote.stars))
 
@@ -760,6 +760,7 @@ def update_item_internal(self, user_id, allow_update=True):
     if old_val != value:
       setattr(it,field_name,value)
       changed[field_name]="%s->%s"%(old_val,value)
+
   # is it an edit or a new?
   it = Item.get_unique_place(self.request, allow_update)
   if not it:
@@ -774,9 +775,9 @@ def update_item_internal(self, user_id, allow_update=True):
     it.photo = img
   else:
     if not it.photo or not it.website:
+        #TODO: make this async: load one from google
       detail = geo.getPlaceDetailFromGoogle(it)
       if not it.photo:
-        # load one from google
         img = DBImage()
         remoteURL = detail['photo']
         if remoteURL:
@@ -865,13 +866,16 @@ class UpdateItemFromAnotherAppAPI(BaseHandler):
 class newOrUpdateItem(BaseHandler):
   @user_required
   def post(self):
-    it = update_item_internal(self, self.user_id)
-    logging.info('newOrUpdateItem %s by %s'%(it.place_name, self.user_id))
-    ndb_models.mark_place_as_updated(it.key.id(),self.user_id)
-    vote = Vote.query(Vote.voter == self.user_id, Vote.item == it.key).get()
-    res = {'place':it.get_json(),
-           'vote': vote.to_json()}
-    json.dump(res, self.response.out)
+    try:
+      it = update_item_internal(self, self.user_id)
+      logging.info('newOrUpdateItem %s by %s'%(it.place_name, self.user_id))
+      ndb_models.mark_place_as_updated(str(it.key.id()),str(self.user_id))
+      vote = Vote.query(Vote.voter == self.user_id, Vote.item == it.key).get()
+      res = {'place':it.get_json(),
+             'vote': vote.to_json()}
+      json.dump(res, self.response.out)
+    except:
+      logging_ext.error('newOrUpdateItem', exc_info=True)
 
 class UpdateVote(BaseHandler):
   @user_required

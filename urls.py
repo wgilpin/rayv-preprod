@@ -27,6 +27,7 @@ urls = [
   webapp2.Route('/api/invite', views.InviteUserAPI),
   webapp2.Route('/api/register', auth_logic.RegisterInOne),
   webapp2.Route('/api/profile', views.profileAPI),
+  webapp2.Route('/api/items/all', ndb_models.getStrangerPlaces),
   webapp2.Route('/api/items', views.itemsAPI),
   webapp2.Route('/api/friends', views.FriendsApi),
   webapp2.Route('/api/friends/accept', views.FriendsApiAccept),

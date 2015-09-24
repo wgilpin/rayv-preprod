@@ -26,7 +26,7 @@ class User(webapp2_extras.appengine.auth.models.User):
     self.friends = [ndb.Key(User,f) for f in f_list]
     self.put()
 
-  def get_friends(self):
+  def get_friends_key_list(self):
     # if len(self.friends)==0:
     self.set_friends()
     return self.friends

@@ -139,7 +139,7 @@ def load_one_item(owner):
     new_it = models.Item()
     cat = models.Category.get_by_id(item_test_data[ITEM_CATEGORY])
     if not cat:
-      cat = models.Category(key_name=item_test_data[ITEM_CATEGORY]).put()
+      cat = models.Category(id=item_test_data[ITEM_CATEGORY]).put()
     new_it.category = cat
     new_it.place_name = item_test_data[ITEM_NAME]
     home = geo.LatLng(lat=51.57, lng=-0.13)
@@ -222,7 +222,7 @@ def load_data(wipe=False, section=None, Max=None):
         if models.Category.get_by_id(cat):
           result_strings.append("Category exists: " + cat)
         else:
-          new_cat = models.Category(key_name=cat)
+          new_cat = models.Category(id=cat)
           new_cat.title = cat
           new_cat.put()
           result_strings.append("Created: " + cat)
@@ -237,13 +237,13 @@ def load_data(wipe=False, section=None, Max=None):
         it = models.Item.query(models.Item.place_name == item[0]).get()
         if it:
           result_strings.append("Item exists: " + item[0])
-          it.category = models.Category.get_by_id(item[2])
+          it.category = models.Category.get_by_id(item[2]).key
           it.save()
         else:
           new_it = models.Item()
-          new_it.category = models.Category.get_by_id(item[2])
+          new_it.category = models.Category.get_by_id(item[2]).key
           new_it.place_name = item[0]
-          lat_long = fakeGeoCode() if fakeGeoCoder else geo.geoCodeAddress(item[1], home)
+          lat_long = fakeGeoCode() if fakeGeoCoder else geo.geoCodeAddress(item[1])
           new_it.lat = lat_long['lat']
           new_it.lng = lat_long['lng']
           new_it.address = item[1]
@@ -261,10 +261,8 @@ def load_data(wipe=False, section=None, Max=None):
             thumb_url = remoteURL % 65
             thumb_data = urllib2.urlopen(thumb_url)
             img.thumb = db.Blob(thumb_data.read())
-            img.put()
-            new_it.photo = img
           img.put()
-          new_it.photo = img
+          new_it.photo = img.key
           new_it.telephone = detail['telephone']
           new_it.put()
           result_strings.append('Item: ' + item[0])
@@ -287,7 +285,7 @@ def load_data(wipe=False, section=None, Max=None):
           vote.untried = False
         vote.comment = "blah v" + str(i)
         vote.voter = a_sample_user.key.integer_id()
-        vote.item = vote_item
+        vote.item = vote_item.key
         vote.cuisine = vote_item.category
         vote.put()
         i += 1

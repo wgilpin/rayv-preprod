@@ -64,7 +64,7 @@ class migrate(BaseHandler):
   def add_cuisines(self):
     try:
       new_cat = self.request.params['cuisine']
-      new_cat = Category(key_name=new_cat)
+      new_cat = Category(id=new_cat)
       new_cat.title = new_cat
       new_cat.put()
       self.response.out.write('Added Category %s<br>'%new_cat)
@@ -76,7 +76,7 @@ class migrate(BaseHandler):
     try:
       new_cat_name = self.request.params['cuisine']
       if new_cat_name:
-        new_cat = Category(key_name=new_cat_name)
+        new_cat = Category(id=new_cat_name)
         new_cat.title = new_cat_name
         new_cat.put()
         self.response.out.write('Added Cuisine %s<br>'%new_cat_name)

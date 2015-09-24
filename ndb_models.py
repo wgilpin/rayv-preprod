@@ -14,7 +14,8 @@ import models
 from base_handler import BaseHandler
 from auth_logic import api_login_required
 import views
-
+import places_db
+import geo
 
 class VoteChange (ndb.Model):
   voteId = model.StringProperty()
@@ -30,39 +31,39 @@ class AddVoteChangesWorker(webapp2.RequestHandler):
   def post(self): # should run at most 1/s due to entity group limit
     """
     Task Worker to mark votes as updated
-      - deletes all entryies for the vote
+      - deletes all entries for the vote
       - adds a new one for all friends of voter
     Params:
-      voteKey: strin
+      voteId: string
       userId: string
     """
-    vote_key = self.request.get('voteKey')
-    if not vote_key:
-      logging.error("AddVoteChangesWorker: 0 length voteKey")
-      return
-    user_id_str = self.request.get('userId')
-    if not user_id_str:
-      logging.error("AddVoteChangesWorker: 0 length user_id")
-      return
-    user_id = int(user_id_str)
-    time = self.request.get('time')
-    # @ndb.transactional
-    def update_votes():
+    try:
+      logging_ext.log_to_console('AddVoteChangesWorker IN')
+      vote_id_str = self.request.get('voteId')
+      if not vote_id_str:
+        logging_ext.error("** AddVoteChangesWorker: no vote id")
+        return
+      user_id_str = self.request.get('userId')
+      if not user_id_str:
+        logging_ext.error("** AddVoteChangesWorker: no user_id")
+        return
+      user_id = int(user_id_str)
+      time = self.request.get('time')
       old_votes = VoteChange.\
-        query(VoteChange.voteId==vote_key).\
+        query(VoteChange.voteId==vote_id_str).\
         fetch(keys_only=True)
       ndb.delete_multi(old_votes)
-      friends_list = User.get_by_id(user_id).get_friends()
+      friends_list = User.get_by_id(user_id).get_friends_key_list()
       for u in friends_list:
         change = VoteChange()
-        change.voteId = vote_key
+        change.voteId = vote_id_str
         change.subscriberId = str(u.id())
         change.when = datetime.strptime(
           time,
           views.config['DATETIME_FORMAT'])
         change.put()
-    update_votes()
-
+    except Exception:
+      logging_ext.error("** AddVoteChangesWorker", exc_info=True)
 
 class AddPlaceChangesWorker(webapp2.RequestHandler):
   """
@@ -72,143 +73,196 @@ class AddPlaceChangesWorker(webapp2.RequestHandler):
     """
     Task Worker to mark place as updated
     Params:
-      placeKey: string
+      placeId: string place Id
       userId: string
     """
-    logging_ext.log_to_console("AddPlaceChangesWorker")
-    place_key_str = self.request.get('placeKey')
-    user_id = int(self.request.get('userId'))
-    # @ndb.transactional
-    def update_place():
+    try:
+      logging_ext.log_to_console("AddPlaceChangesWorker")
+      place_id_str = self.request.get('placeId')
+      user_id_str = self.request.get('userId')
       place_entries = PlaceChange.\
-        query(PlaceChange.placeId == place_key_str)
+        query(PlaceChange.placeId == place_id_str)
       now = datetime.now()
       for p in place_entries:
         if p.when < now:
           p.when = now
           p.put()
-      user = User.get_by_id(user_id)
-      friends_list = user.get_friends()
-      for u in friends_list:
+      user = User.get_by_id(int(user_id_str))
+      friends_key_list = user.get_friends_key_list()
+      for user_key in friends_key_list:
         p = PlaceChange.\
           query(
-            PlaceChange.subscriberId == str(u.id()),
-            PlaceChange.placeId == place_key_str).get()
+            PlaceChange.subscriberId == str(user_key.id()),
+            PlaceChange.placeId == place_id_str).get()
         if not p:
           p = PlaceChange()
-          p.subscriberId = str(u.id())
-          p.placeId = place_key_str
+          p.subscriberId = str(user_key.id())
+          p.placeId = place_id_str
         p.when = now
         p.put()
-    update_place()
+    except:
+      logging_ext.error('** AddPlaceChangesWorker', exc_info=True)
 
 class ClearUserChangesWorker(webapp2.RequestHandler):
   def post(self): # should run at most 1/s due to entity group limit
     """
     Deletes all records of updated votes & places for the given user
      Params:
-        userID: string
+        userID: string urlsafe
     """
-    user_id = self.request.get('userId')
-    since = datetime.strptime(
-            self.request.params['before'],
-            views.config['DATETIME_FORMAT'])
-    # @ndb.transactional
-    old_votes = VoteChange.\
-      query(VoteChange.subscriberId==user_id, VoteChange.when < since).\
-      fetch(keys_only=True)
-    ndb.delete_multi(old_votes)
-    old_places = PlaceChange.\
-      query(PlaceChange.subscriberId==user_id, PlaceChange.when < since).\
-      fetch(keys_only=True)
-    ndb.delete_multi(old_places)
+    try:
+      user_id_str = self.request.get('userId')
+      since = datetime.strptime(
+              self.request.params['before'],
+              views.config['DATETIME_FORMAT'])
+      # @ndb.transactional
+      old_votes = VoteChange.\
+        query(VoteChange.subscriberId==user_id_str, VoteChange.when < since).\
+        fetch(keys_only=True)
+      ndb.delete_multi(old_votes)
+      old_places = PlaceChange.\
+        query(PlaceChange.subscriberId==user_id_str, PlaceChange.when < since).\
+        fetch(keys_only=True)
+      ndb.delete_multi(old_places)
+    except:
+      logging_ext.error('** ClearUserChangesWorker', exc_info=True)
 
 class ClearUserUpdates(BaseHandler):
   def post(self):
-    user_id = self.request.get('userId')
-    before = datetime.now().strftime(
-            views.config['DATETIME_FORMAT'])
-    taskqueue.add(url='/api/ClearUserChanges',
-                  params={
-                    'userId': user_id,
-                    'before': before})
+    try:
+      user_id_str = self.request.get('userId')
+      before = datetime.now().strftime(
+              views.config['DATETIME_FORMAT'])
+      taskqueue.add(url='/api/ClearUserChanges',
+                    params={
+                      'userId': user_id_str,
+                      'before': before})
+    except:
+      logging_ext.error('** ClearUserUpdates', exc_info=True)
 
-def mark_place_as_updated(place_key, user_id):
-  taskqueue.add(url='/api/UpdatePlace',
-                params={'placeKey': place_key, 'userId': user_id})
+def mark_place_as_updated(place_id_str, user_id_str):
+  """
+  :param place_id_str: string urlsafe
+  :param user_id_str: string urlsafe
+  :return:
+  """
+  try:
+    taskqueue.add(url='/api/UpdatePlace',
+                  params={'placeId': place_id_str, 'userId': user_id_str})
+  except:
+      logging_ext.error('** mark_place_as_updated', exc_info=True)
 
-def mark_vote_as_updated(vote_key, user_id):
-  now_str= datetime.now().strftime(
-            views.config['DATETIME_FORMAT'])
-  taskqueue.add(url='/api/UpdateVote',
-                params={'voteKey': vote_key,
-                        'userId': user_id,
-                        'time': now_str})
+def mark_vote_as_updated(vote_id_str, user_id_str):
+  """
+  :param vote_id_str: string urlsafe
+  :param user_id_str: string urlsafe
+  :return:
+  """
+  try:
+    now_str= datetime.now().strftime(
+              views.config['DATETIME_FORMAT'])
+    taskqueue.add(url='/api/UpdateVote',
+                  params={'voteId': vote_id_str,
+                          'userId': user_id_str,
+                          'time': now_str})
+  except:
+      logging_ext.error('** mark_vote_as_updated', exc_info=True)
 
-def get_updated_places_for_user(user_id, since):
+class getStrangerPlaces(BaseHandler):
+  @api_login_required
+  def get(self):
+    try:
+      logging.debug('getStrangerPlaces')
+      lat = float(self.request.get("lat"))
+      lng = float(self.request.get("lng"))
+      place_names = []
+      results = geo.findDbPlacesNearLoc(geo.LatLng(lat=lat, lng=lng), place_names=place_names)
+      if results:
+        results['search'] = {'lat': lat,'lng':lng}
+        # check_for_dirty_data(self, results)
+        json.dump(results,
+                  self.response.out,
+                  default=views.json_serial)
+      else:
+        # logging.info("get_google_db_places near [%f,%f]: %s" %
+        # (lat, lng, "none found"))
+        logging.debug("getStrangerPlaces - none found ")
+        self.error(401)
+    except Exception:
+      logging_ext.error("getStrangerPlaces",True)
+
+
+def get_updated_places_for_user(user_id_str, since):
   """
   get the list of change records for a given user
-  :param user_id: int
+  :param user_id_str: string urlsafe
   :param since: datetime
   :return: query object on PlaceChange
   """
-  result = PlaceChange.\
-    query(PlaceChange.subscriberId==str(user_id), PlaceChange.when < since)
-  return result
-
-
-
+  try:
+    result = PlaceChange.\
+      query(PlaceChange.subscriberId==user_id_str, PlaceChange.when < since)
+    return result
+  except:
+      logging_ext.error('** get_updated_places_for_user', exc_info=True)
 
 class getUserRecordFastViaWorkers(BaseHandler):
   def getIncrement(self, my_id, now):
-    places = {}
-    updated_places = get_updated_places_for_user(str(my_id), now)
-    for up in updated_places:
-      p = models.Item.get_by_id(int(up.placeId))
-      places[up.placeId] =p.get_json()
-    updated_votes = VoteChange.query(VoteChange.subscriberId==str(my_id))
-    votes=[]
-    for uv in updated_votes:
-      v = models.Vote.get_by_id(int(uv.voteId))
-      if v:
-        try:
-          votes.append(v.json)
-          place_key = v.item.key.id()
-          if not place_key in places:
-            places[place_key] = v.item.get_json()
-        except:
-          pass
-    return votes, places
+    try:
+      places_id2json = {}
+      vote_list=[]
+      updated_places = get_updated_places_for_user(str(my_id), now)
+      for up in updated_places:
+        p = models.Item.get_by_id(int(up.placeId))
+        places_id2json[up.placeId] =p.get_json()
+      updated_votes = VoteChange.query(VoteChange.subscriberId==str(my_id))
+      for uv in updated_votes:
+        v = models.Vote.get_by_id(int(uv.voteId))
+        if v:
+          try:
+            vote_list.append(v.json)
+            place_id = v.item.key.id()
+            if not place_id in places_id2json:
+              places_id2json[place_id] = v.item.get_json()
+          except:
+            pass
+      return vote_list, places_id2json
+    except:
+      logging_ext.error('** getIncrement', exc_info=True)
 
   def getFullUserRecord(self, user, now=None):
-    places = {}
-    votes = []
-    if settings.config['all_are_friends']:
-      q = User.gql('')
-    else:
-      # start with me
-      q = [user]
-      # then get my friends
-      for f in user.get_friends():
-        q.append(f.get())
-    place_json = None
-    place_key = None
-    for u in q:
-      user_votes = models.Vote.query(models.Vote.voter == u.key.integer_id()).fetch()
-      for vote in user_votes:
-        try:
-          place_key = vote.item.id()
-          votes.append(vote.get_json())
-          if not place_key in places:
-            place_json = models.Item.id_to_json(place_key)
-            if "cuisineName" in place_json:
-              places[place_key] = place_json
-        except Exception, e:
-          if place_json:
-            logging.error("getFullUserRecord Exception 1 %s"%place_json['place_name'], exc_info=True)
-          else:
-            logging.error("getFullUserRecord Exception %s"%place_key, exc_info=True)
-    return votes, places
+    try:
+      places_id2json = {}
+      vote_list = []
+      if settings.config['all_are_friends']:
+        q = User.gql('')
+      else:
+        # start with me
+        q = [user]
+        # then get my friends
+        for f in user.get_friends_key_list():
+          q.append(f.get())
+      place_json = None
+      place_id = None
+      for u in q:
+        user_votes = models.Vote.query(models.Vote.voter == u.key.integer_id()).fetch()
+        for vote in user_votes:
+          try:
+            place_id = vote.item.id()
+            vote_list.append(vote.get_json())
+            if not place_id in places_id2json:
+              place_json = models.Item.id_to_json(place_id)
+              if "cuisineName" in place_json:
+                places_id2json[place_id] = place_json
+          except Exception, e:
+            if place_json:
+              logging_ext.error("** getFullUserRecord Exception 1 %s"%place_json['place_name'], exc_info=True)
+            else:
+              logging_ext.error("** getFullUserRecord Exception %s"%place_id, exc_info=True)
+      return vote_list, places_id2json
+    except:
+      logging_ext.error('** getFullUserRecord', exc_info=True)
+
 
   @api_login_required
   def get(self):
@@ -219,13 +273,14 @@ class getUserRecordFastViaWorkers(BaseHandler):
       my_id = self.user_id
 
     except:
-      logging.error('getFullUserRecord: User Exception')
+      logging_ext.error('** getFullUserRecord: User Exception')
       json.dump({'result':'FAIL'},
                   self.response.out,
                   default=views.json_serial)
       return
 
     if my_id:
+      try:
         # logged in
         result = {
           "id": my_id,
@@ -240,15 +295,15 @@ class getUserRecordFastViaWorkers(BaseHandler):
               self.request.params['since'],
               views.config['DATETIME_FORMAT']) - \
                     views.config['TIMING_DELTA']
-            votes, places = self.getIncrement(my_id, now)
+            vote_list, place_id2json = self.getIncrement(my_id, now)
           except OverflowError, ex:
-            logging.error("getFullUserRecord Time error with %s"%since,
+            logging_ext.error("** getFullUserRecord Time error with %s"%since,
                           exc_info=True)
             #full update
-            votes, places = self.getFullUserRecord(self.user)
+            vote_list, place_id2json = self.getFullUserRecord(self.user)
         else:
           #full update
-          votes, places = self.getFullUserRecord(self.user)
+          vote_list, place_id2json = self.getFullUserRecord(self.user)
 
         friends_list = []
         if views.config['all_are_friends']:
@@ -260,7 +315,7 @@ class getUserRecordFastViaWorkers(BaseHandler):
                 'name': u.screen_name}
             friends_list.append(user_str)
         else:
-            friends = self.user.get_friends()
+            friends = self.user.get_friends_key_list()
             for f in friends:
               friend = f.get()
               user_str = {
@@ -279,8 +334,8 @@ class getUserRecordFastViaWorkers(BaseHandler):
           recd.append(i.to_json())
         result["sentInvites"] = sent
         result["receivedInvites"] = recd
-        result['votes'] = votes
-        result["places"] = places
+        result['votes'] = vote_list
+        result["places"] = place_id2json
         result["friendsData"] = friends_list
         json_str = json.dumps(
           result,
@@ -290,8 +345,8 @@ class getUserRecordFastViaWorkers(BaseHandler):
           logging.debug("GetFullUserRecord for %s %s P:%d, V:%d, F:%d"%(
             self.user.screen_name,
             since_str,
-            len(places),
-            len(votes),
+            len(place_id2json),
+            len(vote_list),
             len(friends_list)
           ))
         except:
@@ -304,4 +359,8 @@ class getUserRecordFastViaWorkers(BaseHandler):
         self.response.out.write(json_str)
         #profile_out("getFullUserRecord")
         return
+      except:
+        logging_ext.error('** getFullUserRecord: Main',exc_info=True)
+    else:
+        logging_ext.error('** getFullUserRecord: No ID')
     self.error(401)
