@@ -1183,7 +1183,7 @@ class deleteItem(BaseHandler):
     try:
       item = Item.get_by_id(int(id))
       if item:
-        my_votes = Vote.query(Vote.voter == handler.user_id, Vote.item == item)
+        my_votes = Vote.query(Vote.voter == handler.user_id, Vote.item == item.key)
         for vote in my_votes:
           logging.info("deleteItem: " + str(vote.key))
           vote.key.delete()

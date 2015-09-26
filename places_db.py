@@ -64,13 +64,7 @@ class PlacesDB():
     cls.log_to_console("Enter DB search")
     points = geo.findDbPlacesNearLoc(
       my_locn,
-      request,
-      search_text=text_to_search,
-      filter=search_filter,
-      uid=user_id,
-      position=geo.LatLng(lat, lng),
-      place_names=list_of_place_names,
-      ignore_votes=True)["points"]
+      place_names=list_of_place_names)["points"]
     cls.log_to_console("Exit DB search")
 
     if include_maps_data:
