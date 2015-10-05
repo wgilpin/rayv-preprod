@@ -605,9 +605,9 @@ class register(BaseHandler):
 class AddUserAsFriend(BaseHandler):
   @api_login_required
   def get(self):
-    user_email = self.request.get('email')
-    logging.info("AddUserAsFriend "+user_email.lower())
-    user = User.query(ndb.GenericProperty('email_address') == user_email.lower()).get()
+    user_email = self.request.get('email').lower()
+    logging.info("AddUserAsFriend "+user_email)
+    user = User.query(ndb.GenericProperty('email_address') == user_email).get()
     if not user:
           user = User.query(ndb.GenericProperty('email_address') == user_email).get()
 
@@ -623,7 +623,7 @@ class AddUserAsFriend(BaseHandler):
 class emailInviteFriend(BaseHandler):
   @api_login_required
   def post(self):
-    user_email = self.request.get('email')
+    user_email = self.request.get('email').lower()
     if not re.match('[^@]+@[^@]+\.[^@]+',user_email):
       self.response.out.write("BAD EMAIL")
       return

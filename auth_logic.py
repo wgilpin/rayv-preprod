@@ -83,36 +83,40 @@ def api_login_required(handler):
 
 class RegisterInOne(BaseHandler):
   def post(self):
-    username = self.request.get('username')
-    user = self.user_model.get_by_auth_id(username)
-    if user and user.blocked:
-      logging.info('SignupHandler: Blocked user ' + username)
-      self.response.out.write("BLOCKED")
-    email = self.request.get('email').lower()
-    name = self.request.get('name')
-    password = self.request.get('password')
-    last_name = self.request.get('lastname')
+    try:
+      username = self.request.get('username')
+      user = self.user_model.get_by_auth_id(username)
+      if user and user.blocked:
+        logging.info('SignupHandler: Blocked user ' + username)
+        self.response.out.write("BLOCKED")
+      email = self.request.get('email').lower()
+      name = self.request.get('name')
+      password = self.request.get('password')
+      last_name = self.request.get('lastname')
 
-    unique_properties = ['email_address']
-    user_data = self.user_model.create_user(username,
-                                            unique_properties,
-                                            email_address=email, name=name,
-                                            password_raw=password,
-                                            last_name=last_name, verified=False)
-    if not user_data[0]:  #user_data is a tuple
-      self.response.out.write("BAD_USERNAME")
+      unique_properties = ['email_address']
+      user_data = self.user_model.create_user(username,
+                                              unique_properties,
+                                              email_address=email, name=name,
+                                              password_raw=password,
+                                              last_name=last_name, verified=False)
+      if not user_data[0]:  #user_data is a tuple
+        self.response.out.write("BAD_USERNAME")
 
-    user = user_data[1]
-    user.screen_name = self.request.get('screenname')
-    user.put()
-
-    # store userId data in the session
-    self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)
-
-    if not user.verified:
-      user.verified = True
+      user = user_data[1]
+      user.screen_name = self.request.get('screenname')
       user.put()
-    self.response.out.write("OK")
+
+      # store userId data in the session
+      self.auth.set_session(self.auth.store.user_to_dict(user), remember=True)
+
+      if not user.verified:
+        user.verified = True
+        user.put()
+      self.response.out.write("OK")
+    except Exception, ex:
+      logging.error('RegisterInOne', exc_info = True)
+      self.response.out.write(ex.message)
 
 
 class SignupHandler(BaseHandler):
@@ -188,7 +192,7 @@ class ForgotPasswordHandler(BaseHandler):
     self._serve_page()
 
   def post(self):
-    username = self.request.get('username')
+    username = self.request.get('username').lower()
     user = User.query(google.appengine.ext.ndb.GenericProperty('email_address') == username).get()
     # #user = self.user_model.get_by_auth_id(username)
     if not user:
