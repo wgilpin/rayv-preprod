@@ -64,6 +64,7 @@ class PlacesDB():
     cls.log_to_console("Enter DB search")
     points = geo.findDbPlacesNearLoc(
       my_locn,
+      search_text=text_to_search,
       place_names=list_of_place_names)["points"]
     cls.log_to_console("Exit DB search")
 
@@ -126,7 +127,15 @@ class PlacesDB():
       text_to_search,
       user_id)
 
-
+  @classmethod
+  def get_word_list(cls, text):
+    words = text.split(' ')
+    search_words = []
+    for w in words:
+      if w=='and' or w=='&':
+        continue
+      search_words.append(w)
+    return  search_words
 
   @classmethod
   def get_google_db_places(cls, lat, lng, name, radius):
@@ -142,13 +151,8 @@ class PlacesDB():
                  "items": []}
     try:
       # remove AND or & from name
-      words = name.split(' ')
-      search_words = []
-      for w in words:
-        if w=='and' or w=='&':
-          continue
-        search_words.append(w)
-      search_text = " ".join(search_words)
+      search_words = cls.get_word_list(name)
+      search_text = "|".join(search_words)
       escaped_name = urllib2.quote(search_text)
       url = ("https://maps.googleapis.com/maps/api/place/nearbysearch/"
             "json?rankby=distance&types=%s&location=%f,%f&name=%s&sensor=false&key=%s")\

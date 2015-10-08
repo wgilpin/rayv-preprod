@@ -84,20 +84,19 @@ def api_login_required(handler):
 class RegisterInOne(BaseHandler):
   def post(self):
     try:
-      username = self.request.get('username')
+      email = self.request.get('email').lower()
+      username = email
       user = self.user_model.get_by_auth_id(username)
       if user and user.blocked:
         logging.info('SignupHandler: Blocked user ' + username)
         self.response.out.write("BLOCKED")
-      email = self.request.get('email').lower()
-      name = self.request.get('name')
       password = self.request.get('password')
       last_name = self.request.get('lastname')
 
       unique_properties = ['email_address']
       user_data = self.user_model.create_user(username,
                                               unique_properties,
-                                              email_address=email, name=name,
+                                              email_address=email,
                                               password_raw=password,
                                               last_name=last_name, verified=False)
       if not user_data[0]:  #user_data is a tuple

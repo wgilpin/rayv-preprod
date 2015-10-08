@@ -217,7 +217,8 @@ class getUserRecordFastViaWorkers(BaseHandler):
         places_id2json[up.placeId] =p.get_json()
       updated_votes = VoteChange.query(VoteChange.subscriberId==str(my_id))
       for uv in updated_votes:
-        v = models.Vote.get_by_id(int(uv.voteId))
+        key = ndb.Key(urlsafe=uv.voteId)
+        v = key.get()
         if v:
           try:
             vote_list.append(v.json)

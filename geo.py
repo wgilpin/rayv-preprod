@@ -6,6 +6,7 @@ from google.appengine.api import memcache
 import math
 from google.appengine.ext.ndb import QueryOptions
 import auth_logic
+import places_db
 from settings_per_server import server_settings
 import settings
 import json
@@ -169,6 +170,7 @@ def findDbPlacesNearLoc(my_location,
         filter(models.Item.geo_hash < geo_code + "{")
       if search_text:
         #if we're looking for a name, filter the results to find it
+        search_words = places_db.PlacesDB.get_word_list(search_text)
         for point_key in items_geo_query_result:
           if point_key in result_key_list:
             continue
@@ -179,9 +181,10 @@ def findDbPlacesNearLoc(my_location,
           else:
             it = point_key.get()
             map_id_to_item[point_key.id()] = it
-          if search_text in it.place_name.lower():
-            result_key_list.append(point_key)
-            continue
+          for w in search_words:
+            if w in it.place_name.lower():
+              result_key_list.append(point_key)
+              continue
           #reject_list.append(point_key)
         if len(result_key_list)>5:
           break
