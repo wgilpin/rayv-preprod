@@ -1,5 +1,6 @@
 import base64
 import google.appengine.ext.ndb
+from webapp2_extras import security
 
 from auth_model import User
 import mail_wrapper
@@ -304,6 +305,21 @@ class SetPasswordHandler(BaseHandler):
 
     self.display_message('Password updated')
 
+
+class ChangePasswordAPIHandler(BaseHandler):
+  @api_login_required
+  def post(self):
+    old_password = self.request.get('oldpwd')
+    new_password = self.request.get('newpwd')
+
+    user = self.user
+    if not security.check_password_hash(old_password, user.password):
+      self.abort(501)
+
+    user.set_password(new_password)
+    user.put()
+
+    self.response.out.write("OK")
 
 class LoginHandler(BaseHandler):
   def get(self):

@@ -217,7 +217,7 @@ class getUserRecordFastViaWorkers(BaseHandler):
         places_id2json[up.placeId] =p.get_json()
       updated_votes = VoteChange.query(VoteChange.subscriberId==str(my_id))
       for uv in updated_votes:
-        key = ndb.Key(urlsafe=uv.voteId)
+        key = ndb.Key('Vote', uv.voteId)
         v = key.get()
         if v:
           try:
