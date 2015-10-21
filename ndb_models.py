@@ -283,6 +283,18 @@ class getUserRecordFastViaWorkers(BaseHandler):
     if my_id:
       try:
         # logged in
+        #check if the client version is allowed
+        good_version = False
+        if 'version' in self.request.params:
+          version = float(self.request.params['version'])
+          min_version = Config.min_server_version_allowed()
+          if version >= float(min_version):
+            good_version = True
+        if not good_version:
+          self.response.out.write("BAD_VERSION")
+          return
+
+        #good client version if we got here
         result = {
           "id": my_id,
           "admin": self.user.profile().is_admin,
@@ -365,3 +377,20 @@ class getUserRecordFastViaWorkers(BaseHandler):
     else:
         logging_ext.error('** getFullUserRecord: No ID')
     self.error(401)
+
+class Config (ndb.Model):
+  Name = model.StringProperty()
+  Value = model.StringProperty()
+
+  @classmethod
+  def min_server_version_allowed(cls):
+    kvp = cls.query(cls.Name == 'min_server_version').get()
+    if not kvp:
+      kvp = cls()
+      kvp.Name = 'min_server_version'
+      kvp.Value = settings.config['min_version']
+      kvp.put()
+    if float(kvp.Value) < float(settings.config['min_version']):
+      kvp.Value = settings.config['min_version']
+      kvp.put()
+    return  kvp.Value

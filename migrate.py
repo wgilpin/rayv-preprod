@@ -8,6 +8,7 @@ from google.appengine.ext.db import ReferencePropertyResolveError
 from auth_logic import BaseHandler, user_required
 from auth_model import User
 import geohash
+import logging_ext
 from models import Item, Vote, DBImage, Category, VoteValue, MealKind, PlaceStyle
 import geo
 
@@ -540,6 +541,7 @@ class migrate(BaseHandler):
       self.wipe_votes_json()
       self.response.out.write("Json Wiped")
     else:
+      logging_ext.logging_ext.error("No Migration - %s"%migration_name)
       self.response.out.write("No Migration - %s"%migration_name)
 
 

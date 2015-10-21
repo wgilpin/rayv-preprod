@@ -35,6 +35,10 @@ def user_required(handler):
 
   return check_login
 
+def toIphoneCase(word):
+  #first letter capital
+  return word[0].upper() + word[1:]
+
 def CheckAPILogin(handler):
   username = ""
   logging.debug("Login headers " + str(handler.request.headers.environ))
@@ -43,9 +47,22 @@ def CheckAPILogin(handler):
     token = handler.request.headers.environ['HTTP_AUTHORIZATION']
   elif 'Authorization' in handler.request.headers:
     token = handler.request.headers['Authorization']
+  tried = 0
   if token:
     (username, password) = base64.b64decode(token.split(' ')[1]).split(':')
+    # logging.info("CheckAPILogin supplied %s, %s"%(username, password))
+    tried = 1
     user = handler.user_model.get_by_auth_id(username)
+    if not user:
+      #try lowercase
+      username = username.lower()
+      user = handler.user_model.get_by_auth_id(username)
+      tried = 2
+    if not user:
+      #try lowercase
+      username = toIphoneCase(username)
+      user = handler.user_model.get_by_auth_id(username)
+      tried = 3
     if user and user.blocked:
       logging.info('views.loginAPI: Blocked user ' + username)
       handler.abort(403)
@@ -53,8 +70,11 @@ def CheckAPILogin(handler):
       handler.auth.get_user_by_password(username, password, remember=True,
                                      save_session=True)
     except InvalidAuthIdError:
-      logging.warning('LoginAPI bad login')
+      logging.warning('LoginAPI bad login: %s'%tried)
       handler.abort(401)
+    except InvalidPasswordError:
+      logging.warning('LoginAPI bad login  %s'%(tried))
+      raise
     logging.info('LoginAPI: Logged in')
     # tok = user.create_auth_token(handler.user_id)
     # handler.response.out.write('{"auth":"%s"}'%tok)
@@ -75,8 +95,10 @@ def api_login_required(handler):
       try:
         username, isOk = CheckAPILogin(self)
         if not isOk:
+          logging.warning("401 in api_login_required (1)")
           self.abort(401)
       except InvalidPasswordError:
+        logging.warning("401 in api_login_required (2)")
         self.abort(401)
     return handler(self, *args, **kwargs)
 
