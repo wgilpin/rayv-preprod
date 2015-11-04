@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb import model
@@ -48,12 +48,13 @@ class AddVoteChangesWorker(webapp2.RequestHandler):
         logging_ext.error("** AddVoteChangesWorker: no user_id")
         return
       user_id = int(user_id_str)
+      me = User.get_by_id(user_id)
       time = self.request.get('time')
       old_votes = VoteChange.\
         query(VoteChange.voteId==vote_id_str).\
         fetch(keys_only=True)
       ndb.delete_multi(old_votes)
-      friends_list = User.get_by_id(user_id).get_friends_key_list()
+      friends_list = me.get_friends_key_list()
       for u in friends_list:
         change = VoteChange()
         change.voteId = vote_id_str
@@ -106,24 +107,22 @@ class AddPlaceChangesWorker(webapp2.RequestHandler):
 class ClearUserChangesWorker(webapp2.RequestHandler):
   def post(self): # should run at most 1/s due to entity group limit
     """
-    Deletes all records of updated votes & places for the given user
-     Params:
-        userID: string urlsafe
+    Deletes all records of updated votes & places for the given user more than
+    n days old
+
     """
     try:
-      user_id_str = self.request.get('userId')
-      since = datetime.strptime(
-              self.request.params['before'],
-              views.config['DATETIME_FORMAT'])
+      since = datetime.now() - timedelta(days=settings.config['updates_max_age'])
       # @ndb.transactional
       old_votes = VoteChange.\
-        query(VoteChange.subscriberId==user_id_str, VoteChange.when < since).\
+        query(VoteChange.when < since).\
         fetch(keys_only=True)
       ndb.delete_multi(old_votes)
       old_places = PlaceChange.\
-        query(PlaceChange.subscriberId==user_id_str, PlaceChange.when < since).\
+        query(PlaceChange.when < since).\
         fetch(keys_only=True)
       ndb.delete_multi(old_places)
+      logging.info("ClearUserChangesWorker")
     except:
       logging_ext.error('** ClearUserChangesWorker', exc_info=True)
 
@@ -134,9 +133,7 @@ class ClearUserUpdates(BaseHandler):
       before = datetime.now().strftime(
               views.config['DATETIME_FORMAT'])
       taskqueue.add(url='/api/ClearUserChanges',
-                    params={
-                      'userId': user_id_str,
-                      'before': before})
+                    params={})
     except:
       logging_ext.error('** ClearUserUpdates', exc_info=True)
 
@@ -291,6 +288,7 @@ class getUserRecordFastViaWorkers(BaseHandler):
           if version >= float(min_version):
             good_version = True
         if not good_version:
+          logging_ext.error("getUserRecordFastViaWorkers BAD VERSION")
           self.response.out.write("BAD_VERSION")
           return
 

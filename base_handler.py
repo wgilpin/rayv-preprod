@@ -130,7 +130,7 @@ class BaseHandler(webapp2.RequestHandler):
         if tablet:
           # tablets get the desktop page, unless a tablet one exists
           for tmp in config["template_dirs"]:
-            if os.path.exists(tmp + "/tablet/t_" + template):
+            if os.path.exists(tmp + "/tablet/t_" + template_file):
               logging.debug("template path 3: " + 'mobile/' + template_file)
               return "tablet/t_" + template_file
           logging.debug("template path 3 pass")
@@ -167,4 +167,4 @@ class BaseHandler(webapp2.RequestHandler):
       webapp2.RequestHandler.dispatch(self)
     finally:
       # Save all sessions.
-      self.session_store.save_sessions(self.response)
+       self.session_store.save_sessions(self.response)

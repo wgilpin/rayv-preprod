@@ -16,7 +16,7 @@ config = {
   'template_dirs': ["/", "/mobile"],
   'online': True,
   'mobile': False,
-  'place_types': 'food|restaurant|bar|cafe|meal_delivery|meal_takeaway',
+  'place_types': 'food|restaurant|bar|cafe|meal_delivery|meal_takeaway|lodging',
   'ALLOWED_INCLUDE_ROOTS': "/templates",
   'google_api_key': 'AIzaSyDiTThta8R7EFuFo8cGfPHxIGYoFkc77Bw',
   'all_are_friends': False,
@@ -24,8 +24,9 @@ config = {
   'system_email': 'wgilpin+rayv@gmail.com',
   'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S',
   'memcache_life': timedelta(1), #1 day,
-  'version':"0.7",
   'min_version':"0.7",
+  'version':"0.7",
+  'updates_max_age':30,
 }
 
 auth.default_config['token_max_age'] = 86400 * 7 * 8  # 8 weeks login auth token timeout

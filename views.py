@@ -862,11 +862,24 @@ class UpdateItemFromAnotherAppAPI(BaseHandler):
       logging.debug("UpdateItemFromAnotherAppAPI not allowed")
       self.abort(403)
 
+def check_good_server_version(request):
+  good_version = False
+  if 'version' in request.params:
+    version = float(request.params['version'])
+    min_version = ndb_models.Config.min_server_version_allowed()
+    if version >= float(min_version):
+      return True
+  if not good_version:
+    logging_ext.error("check_good_server_version BAD VERSION")
+    return False
 
 class newOrUpdateItem(BaseHandler):
   @user_required
   def post(self):
     try:
+      if not check_good_server_version(self.request):
+        self.response.out.write("BAD VERSION")
+        return
       it = update_item_internal(self, self.user_id)
       logging.info('newOrUpdateItem %s by %s'%(it.place_name, self.user_id))
       ndb_models.mark_place_as_updated(str(it.key.id()),str(self.user_id))
@@ -880,6 +893,9 @@ class newOrUpdateItem(BaseHandler):
 class UpdateVote(BaseHandler):
   @user_required
   def post(self):
+    if not check_good_server_version(self.request):
+        self.response.out.write("BAD VERSION")
+        return
     id = self.request.get('key')
     it = ndb.Key(Item, int(id)).get()
     if it:

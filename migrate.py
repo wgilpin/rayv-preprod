@@ -3,8 +3,12 @@ import logging
 import urllib2
 from datetime import datetime
 from google.appengine.api import memcache
+from google.appengine.api.taskqueue import taskqueue
 from google.appengine.ext import db
+from google.appengine.ext import ndb
+
 from google.appengine.ext.db import ReferencePropertyResolveError
+from google.appengine.ext.deferred import deferred
 from auth_logic import BaseHandler, user_required
 from auth_model import User
 import geohash
@@ -324,6 +328,27 @@ class migrate(BaseHandler):
     self.response.out.write("\n%d "%n)
 
   @user_required
+  def rename_category(self):
+    #change the name of a cat
+    old_cat = self.request.params["old_cat"]
+    new_cat = self.request.params["new_cat"]
+    if Category.get_by_id(new_cat) == None:
+      new_cat_instance = Category(id=new_cat)
+      new_cat_instance.title = new_cat
+      new_cat_instance.put()
+    taskqueue.add(url='/task/batch_update_items',
+                    params={
+                      'migration':'rename_category',
+                      'p1': old_cat,
+                      'p2': new_cat})
+    taskqueue.add(url='/task/batch_update_votes',
+                    params={
+                      'migration':'rename_category',
+                      'p1': old_cat,
+                      'p2': new_cat})
+    self.response.out.write("Batch job started")
+
+  @user_required
   def change_votes_to_votevalue(self):
     n=0
     votes = Vote.query()
@@ -540,6 +565,9 @@ class migrate(BaseHandler):
     elif migration_name == "reset-votes-json":
       self.wipe_votes_json()
       self.response.out.write("Json Wiped")
+    elif migration_name == "rename-category":
+      self.rename_category()
+      self.response.out.write("Cat renamed")
     else:
       logging_ext.logging_ext.error("No Migration - %s"%migration_name)
       self.response.out.write("No Migration - %s"%migration_name)
@@ -575,3 +603,95 @@ class migrate(BaseHandler):
       if not u.blocked:
         u.blocked = False
         u.put()
+
+
+def batch_rename_category_items(item, old_cat, new_cat, nothing=None):
+  if item.category.get().title == old_cat:
+    item.category = Category.get_by_id(new_cat).key
+
+def batch_rename_category_votes(vote, old_cat, new_cat, nothing=None):
+  if vote.cuisine.get().title == old_cat:
+    vote.cuisine = Category.get_by_id(new_cat).key
+
+BATCH_SIZE=100
+def BatchUpdateItems(update_fn_name, cursor=None, num_updated=0, p1=None, p2=None):
+  query = Item.query()
+  to_put = []
+  q, cursor, more  = query.fetch_page(BATCH_SIZE, start_cursor=cursor)
+  for it in q:
+    if update_fn_name == "rename_category":
+      batch_rename_category_items(it, p1, p2)
+    else:
+      continue
+    to_put.append(it)
+
+  if to_put:
+    ndb.put_multi(to_put)
+    num_updated += len(to_put)
+    logging.debug(
+        'Put %d items to Datastore for a total of %d',
+        len(to_put), num_updated)
+    deferred.defer(
+      BatchUpdateItems,
+      update_fn_name=update_fn_name,
+      cursor=cursor,
+      num_updated=num_updated,
+      p1=p1,
+      p2=p2)
+  else:
+    logging.debug(
+        'BatchUpdateItems complete with %d updates!', num_updated)
+
+class BatchUpdateItemsHandler(BaseHandler):
+  def post(self):
+    p1 = self.request.get('p1',None)
+    p2 = self.request.get('p2',None)
+    migration = self.request.get('migration','')
+    deferred.defer(BatchUpdateItems,
+                   update_fn_name=migration,
+                   cursor=None,
+                   num_updated=0,
+                   p1=p1,
+                   p2=p2)
+    self.response.out.write('Batch update successfully initiated.')
+
+def BatchUpdateVotes(update_fn_name, cursor=None, num_updated=0, p1=None, p2=None):
+  query = Vote.query()
+  to_put = []
+  q, cursor, more  = query.fetch_page(BATCH_SIZE, start_cursor=cursor)
+  for vote in q:
+    if update_fn_name == "rename_category":
+      batch_rename_category_votes(vote, p1, p2)
+    else:
+      continue
+    to_put.append(vote)
+
+  if to_put:
+    ndb.put_multi(to_put)
+    num_updated += len(to_put)
+    logging.debug(
+        'Put %d votes to Datastore for a total of %d',
+        len(to_put), num_updated)
+    deferred.defer(
+      BatchUpdateItems,
+      update_fn_name=update_fn_name,
+      cursor=cursor,
+      num_updated=num_updated,
+      p1=p1,
+      p2=p2)
+  else:
+    logging.debug(
+        'BatchUpdateVotes complete with %d updates!', num_updated)
+
+class BatchUpdateVotesHandler(BaseHandler):
+  def post(self):
+    p1 = self.request.get('p1',None)
+    p2 = self.request.get('p2',None)
+    migration = self.request.get('migration','')
+    deferred.defer(BatchUpdateVotes,
+                   update_fn_name=migration,
+                   cursor=None,
+                   num_updated=0,
+                   p1=p1,
+                   p2=p2)
+    self.response.out.write('Batch update votes successfully initiated.')

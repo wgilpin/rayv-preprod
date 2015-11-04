@@ -48,6 +48,8 @@ urls = [
 
 
   webapp2.Route('/clear_user_updates',ndb_models.ClearUserUpdates),
+  webapp2.Route('/task/batch_update_items',migrate.BatchUpdateItemsHandler),
+  webapp2.Route('/task/batch_update_votes',migrate.BatchUpdateItemsHandler),
   webapp2.Route('/GetItemsAjax', views.GetItemsAjax, name='GetItemsAjax'),
   webapp2.Route('/getMapList_Ajax', views.getMapList_Ajax),
   webapp2.Route('/getAddresses_ajax', views.getAddresses_ajax),

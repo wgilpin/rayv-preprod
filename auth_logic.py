@@ -67,14 +67,22 @@ def CheckAPILogin(handler):
       logging.info('views.loginAPI: Blocked user ' + username)
       handler.abort(403)
     try:
-      handler.auth.get_user_by_password(username, password, remember=True,
+      #set pwd[0] to lower
+      pwd_lower = password[0].lower() + password[1:]
+      handler.auth.get_user_by_password(username, pwd_lower, remember=True,
                                      save_session=True)
     except InvalidAuthIdError:
       logging.warning('LoginAPI bad login: %s'%tried)
       handler.abort(401)
     except InvalidPasswordError:
-      logging.warning('LoginAPI bad login  %s'%(tried))
-      raise
+      try:
+        #set pwd[0] to upper
+        pwd_lower = password[0].upper() + password[1:]
+        handler.auth.get_user_by_password(username, pwd_lower, remember=True,
+                                       save_session=True)
+      except:
+        logging.warning('LoginAPI bad login  %s'%(tried))
+        raise
     logging.info('LoginAPI: Logged in')
     # tok = user.create_auth_token(handler.user_id)
     # handler.response.out.write('{"auth":"%s"}'%tok)

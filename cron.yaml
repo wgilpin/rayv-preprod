@@ -1,0 +1,5 @@
+cron:
+- description: daily clear updates that are old
+  url: /api/ClearUserChanges
+  schedule: every 24 hours
+
