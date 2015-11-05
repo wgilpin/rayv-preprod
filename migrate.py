@@ -57,7 +57,7 @@ class migrate(BaseHandler):
     votes = Vote.query()
     for v in votes:
       try:
-        it = v.item.place_name
+        it = v.item.get().place_name
       except ReferencePropertyResolveError:
         v.key.delete()
         self.response.out.write('Delete 1')

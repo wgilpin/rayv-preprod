@@ -122,14 +122,17 @@ class RegisterInOne(BaseHandler):
         logging.info('SignupHandler: Blocked user ' + username)
         self.response.out.write("BLOCKED")
       password = self.request.get('password')
-      last_name = self.request.get('lastname')
+      last_name = self.request.get('ln')
+      name = self.request.get('fn')
 
       unique_properties = ['email_address']
       user_data = self.user_model.create_user(username,
                                               unique_properties,
                                               email_address=email,
                                               password_raw=password,
-                                              last_name=last_name, verified=False)
+                                              last_name=last_name, name=name,
+                                              verified=False)
+      logging.info("Create User %s, %s, %s"%(email,last_name,name))
       if not user_data[0]:  #user_data is a tuple
         self.response.out.write("BAD_USERNAME")
 

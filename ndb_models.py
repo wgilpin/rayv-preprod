@@ -243,20 +243,21 @@ class getUserRecordFastViaWorkers(BaseHandler):
       place_json = None
       place_id = None
       for u in q:
-        user_votes = models.Vote.query(models.Vote.voter == u.key.integer_id()).fetch()
-        for vote in user_votes:
-          try:
-            place_id = vote.item.id()
-            vote_list.append(vote.get_json())
-            if not place_id in places_id2json:
-              place_json = models.Item.id_to_json(place_id)
-              if "cuisineName" in place_json:
-                places_id2json[place_id] = place_json
-          except Exception, e:
-            if place_json:
-              logging_ext.error("** getFullUserRecord Exception 1 %s"%place_json['place_name'], exc_info=True)
-            else:
-              logging_ext.error("** getFullUserRecord Exception %s"%place_id, exc_info=True)
+        if u:
+          user_votes = models.Vote.query(models.Vote.voter == u.key.integer_id()).fetch()
+          for vote in user_votes:
+            try:
+              place_id = vote.item.id()
+              vote_list.append(vote.get_json())
+              if not place_id in places_id2json:
+                place_json = models.Item.id_to_json(place_id)
+                if "cuisineName" in place_json:
+                  places_id2json[place_id] = place_json
+            except Exception, e:
+              if place_json:
+                logging_ext.error("** getFullUserRecord Exception 1 %s"%place_json['place_name'], exc_info=True)
+              else:
+                logging_ext.error("** getFullUserRecord Exception %s"%place_id, exc_info=True)
       return vote_list, places_id2json
     except:
       logging_ext.error('** getFullUserRecord', exc_info=True)
@@ -329,10 +330,13 @@ class getUserRecordFastViaWorkers(BaseHandler):
             friends = self.user.get_friends_key_list()
             for f in friends:
               friend = f.get()
-              user_str = {
-                  "id": f.id(),
-                  # todo is it first_name?
-                  'name': friend.screen_name}
+              try:
+                user_str = {
+                    "id": f.id(),
+                    # todo is it first_name?
+                    'name': friend.screen_name}
+              except:
+                logging.error("getFullUserRecord Friends error")
               friends_list.append(user_str)
 
         sentInvites = models.InviteInternal.query(models.InviteInternal.inviter == my_id)
