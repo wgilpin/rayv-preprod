@@ -45,6 +45,19 @@ handlers:
   script: main.app
   login: admin
 
+
+- url: /www
+  script: main.app
+  secure: never
+
+- url: /index.html
+  script: main.app
+  secure: never
+
+- url: /
+  script: main.app
+  secure: never
+
 - url: .*
   script: main.app
   secure: always
@@ -52,4 +65,7 @@ handlers:
 libraries:
 - name: webapp2
   version: "2.5.2"
+
+- name: ssl
+  version: latest
 

@@ -1273,3 +1273,57 @@ class passwordVerificationHandler(BaseHandler):
 
         self.handle_verification(self,user_id,signup_token,verification_type,invite_token)
 
+class RegisterApnsToken(BaseHandler):
+  @api_login_required
+  def post(self):
+    """
+    Register the token against current user
+    Params:
+    token: string: the token
+    kind: string: platform - one of iOS, Android, WinPhone
+    :return:
+    """
+    token = self.request.params['token'].translate(None, '< >')
+    device_kind_str = self.request.params['kind'].lower()
+    device_kind = ndb_models.NotificationToken.ios
+    if device_kind_str == 'android':
+      device_kind = ndb_models.NotificationToken.android
+    if device_kind_str == 'winphone':
+      device_kind = ndb_models.NotificationToken.winPhone
+    tr = ndb_models.NotificationToken.query(
+      ndb_models.NotificationToken.userId == self.user_id,
+      ndb_models.NotificationToken.kind == device_kind).get()
+    if not tr:
+      tr = ndb_models.NotificationToken()
+      tr.kind = device_kind
+      tr.userId = self.user_id
+    tr.token = token
+    tr.put()
+
+
+class FbRedirect (BaseHandler):
+  def get(self):
+    con = {"email": Category.query()}
+    tok_list = ",".join(self.request.GET)
+    logging_ext.info('FbRedirect: Params '+tok_list)
+    try:
+      # get the token
+      token = self.request.params["access_token"]
+
+      # is the email a user?
+      # email not known
+
+      # check if token is registered for user
+      # if not, store it
+      # log the user
+      logging.info('FbRedirect: Logged in')
+      con['message'] = "Logged in using facebook"
+      self.render_template("oauth-fb.html", con)
+    except:
+      logging_ext.error("Unable to read data", exc_info=True)
+      con['message'] = "Unable to read data"
+      self.render_template("oauth-fb.html", con)
+
+class WebServer(BaseHandler):
+  def get(self):
+    self.render_template("www-index.html")

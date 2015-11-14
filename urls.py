@@ -13,7 +13,7 @@ import views
 __author__ = 'Will'
 
 urls = [
-  webapp2.Route('/', views.MainHandler, name='home'),
+  webapp2.Route('/', views.WebServer ),
   webapp2.Route('/signup', SignupHandler),
   webapp2.Route('/<type:v|p>/<user_id:\d+>-<signup_token:.+>',
                 handler=views.passwordVerificationHandler, name='verification'),
@@ -45,6 +45,7 @@ urls = [
   webapp2.Route('/api/UpdatePlace',ndb_models.AddPlaceChangesWorker),
   webapp2.Route('/api/ClearUserChanges',ndb_models.ClearUserChangesWorker),
   webapp2.Route('/api/vote',views.UpdateVote),
+  webapp2.Route('/apns/register',views.RegisterApnsToken),
 
 
   webapp2.Route('/clear_user_updates',ndb_models.ClearUserUpdates),
@@ -82,6 +83,11 @@ urls = [
   webapp2.Route('/admin/update_photos', admin.updatePhotoFromGoogle),
   webapp2.Route('/admin/put_place_api', views.UpdateItemFromAnotherAppAPI),
   webapp2.Route('/admin/update_vote', admin.UpdateAdminVote),
+  webapp2.Route('/admin/broadcast', admin.NotificationBroadcast),
+
+  webapp2.Route('/oauth/fb', views.FbRedirect),
+  webapp2.Route('/www', views.WebServer),
+  webapp2.Route('/index.html', views.WebServer),
   RedirectRoute('/admin/cleanup_votes', redirect_to='/migrate_datastore?no=12'),
 
 ]

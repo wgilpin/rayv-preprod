@@ -31,6 +31,20 @@ class User(webapp2_extras.appengine.auth.models.User):
     self.set_friends()
     return self.friends
 
+  @classmethod
+  def get_by_email(cls, auth_id):
+      """Returns a user object based on a auth_id.
+
+      :param auth_id:
+          String representing a unique id for the user. Examples:
+
+          - own:username
+          - google:username
+      :returns:
+          A user object.
+      """
+      return cls.query(cls.email_address == auth_id).get()
+
   def set_password(self, raw_password):
     """Sets the password for the current userId
 

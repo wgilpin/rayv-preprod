@@ -17,6 +17,17 @@ import views
 import places_db
 import geo
 
+
+class NotificationToken(ndb.Model):
+  android = 0
+  ios = 1
+  winPhone = 2
+
+  userId = model.IntegerProperty()
+  token = model.StringProperty()
+  email = model.StringProperty()
+  kind = model.IntegerProperty()
+
 class VoteChange (ndb.Model):
   voteId = model.StringProperty()
   when = model.DateTimeProperty()

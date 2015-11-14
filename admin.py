@@ -2,6 +2,7 @@ import json
 import logging
 import urllib2
 from google.appengine.ext import ndb
+from apns import APNs, Payload
 from auth_logic import BaseHandler
 from webapp2_extras import auth
 from auth_model import User
@@ -133,3 +134,29 @@ class UpdateAdminVote(BaseHandler):
       return
     logging.error("UpdateAdminVote 404 for %s"%vote_key)
     self.abort(404)
+
+class NotificationBroadcast(BaseHandler):
+  def get(self):
+    if not is_administrator():
+      self.abort(403)
+    self.render_template("admin-apns.html")
+
+  def post(self):
+    if not is_administrator():
+      self.abort(403)
+    message = self.request.params["message"]
+    if 'use_sandbox' in self.request.params:
+      use_sandbox = self.request.params["use_sandbox"]
+    else:
+      use_sandbox = False
+    apns = APNs(use_sandbox=use_sandbox,
+        cert_file='RayvIosCerts.pem',
+    )
+    payload = Payload(alert='hello', sound="default", badge=1,custom={})
+    for registered_user in ndb_models.NotificationToken.query():
+      token = str(registered_user.token)
+      hex_token = token.translate(None, '< >')
+      apns.gateway_server.send_notification(hex_token, payload)
+      for (token_hex, fail_time) in apns.feedback_server.items():
+          logging.info(token_hex)
+          logging.info(fail_time)
