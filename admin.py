@@ -1,6 +1,10 @@
 import json
 import logging
 import urllib2
+
+from datetime import datetime, timedelta, time
+from time import sleep
+
 from google.appengine.ext import ndb
 from apns import APNs, Payload
 from auth_logic import BaseHandler
@@ -145,18 +149,27 @@ class NotificationBroadcast(BaseHandler):
     if not is_administrator():
       self.abort(403)
     message = self.request.params["message"]
-    if 'use_sandbox' in self.request.params:
-      use_sandbox = self.request.params["use_sandbox"]
-    else:
-      use_sandbox = False
+    use_sandbox = 'use_sandbox' in self.request.params
+    certFile = 'RayvIosCerts.pem'
+    logging.info("NotificationBroadcast with cert %s & sandbox %s"%(certFile, str(use_sandbox)))
     apns = APNs(use_sandbox=use_sandbox,
-        cert_file='RayvIosCerts.pem',
+        cert_file= certFile
     )
-    payload = Payload(alert='hello', sound="default", badge=1,custom={})
+    payload = Payload(alert=message, sound="default", badge=1,custom={})
+    count = 0
     for registered_user in ndb_models.NotificationToken.query():
       token = str(registered_user.token)
       hex_token = token.translate(None, '< >')
-      apns.gateway_server.send_notification(hex_token, payload)
-      for (token_hex, fail_time) in apns.feedback_server.items():
-          logging.info(token_hex)
-          logging.info(fail_time)
+      try:
+        apns.gateway_server.send_notification(hex_token, payload, expiry = (datetime.utcnow() + timedelta(300)))
+        for (token_hex, fail_time) in apns.feedback_server.items():
+            logging.info(token_hex)
+            logging.info(fail_time)
+        count += 1
+        self.response.out.write('User %s<br>'%registered_user.userId)
+      except:
+        logging.warning("NotificationBroadcast error for %d tok:%s"%(
+          registered_user.userId,
+          registered_user.token),
+                        exc_info=True)
+    self.response.out.write('Sent %d messages, sandbox:%s'%(count, str(use_sandbox)))

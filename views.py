@@ -1283,7 +1283,7 @@ class RegisterApnsToken(BaseHandler):
     kind: string: platform - one of iOS, Android, WinPhone
     :return:
     """
-    token = self.request.params['token'].translate(None, '< >')
+    token = str(self.request.params['token']).translate(None, '< >')
     device_kind_str = self.request.params['kind'].lower()
     device_kind = ndb_models.NotificationToken.ios
     if device_kind_str == 'android':

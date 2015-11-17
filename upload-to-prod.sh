@@ -13,5 +13,6 @@ cp -rp ~/PycharmProjects/rayv-preprod/*.py .
 cp ~/PycharmProjects/rayv-preprod/index.yaml .
 cp -rp ~/PycharmProjects/rayv-preprod/static/* ./static
 cp -r ~/PycharmProjects/rayv-preprod/templates/* ./templates
+cp -rp ~/PycharmProjects/rayv-preprod/*.pem .
 rm settings_per_server.py
 mv settings_per_server.keep settings_per_server.py
