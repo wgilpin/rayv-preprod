@@ -47,49 +47,74 @@ def CheckAPILogin(handler):
     token = handler.request.headers.environ['HTTP_AUTHORIZATION']
   elif 'Authorization' in handler.request.headers:
     token = handler.request.headers['Authorization']
-  tried = 0
   if token:
-    (username, password) = base64.b64decode(token.split(' ')[1]).split(':')
-    # logging.info("CheckAPILogin supplied %s, %s"%(username, password))
-    tried = 1
-    user = handler.user_model.get_by_auth_id(username)
-    if not user:
-      #try lowercase
-      username = username.lower()
-      user = handler.user_model.get_by_auth_id(username)
-      tried = 2
-    if not user:
-      #try lowercase
-      username = toIphoneCase(username)
-      user = handler.user_model.get_by_auth_id(username)
-      tried = 3
-    if user and user.blocked:
-      logging.info('views.loginAPI: Blocked user ' + username)
-      handler.abort(403)
-    try:
-      #set pwd[0] to lower
-      pwd_lower = password[0].lower() + password[1:]
-      handler.auth.get_user_by_password(username, pwd_lower, remember=True,
-                                     save_session=True)
-    except InvalidAuthIdError:
-      logging.warning('LoginAPI bad login: %s'%tried)
-      handler.abort(401)
-    except InvalidPasswordError:
-      try:
-        #set pwd[0] to upper
-        pwd_lower = password[0].upper() + password[1:]
-        handler.auth.get_user_by_password(username, pwd_lower, remember=True,
-                                       save_session=True)
-      except:
-        logging.warning('LoginAPI bad login  %s'%(tried))
-        raise
-    logging.info('LoginAPI: Logged in')
-    # tok = user.create_auth_token(handler.user_id)
-    # handler.response.out.write('{"auth":"%s"}'%tok)
+    username = process_auth_token(handler, token)
   else:
-    logging.warning('LoginAPI no auth header')
-    handler.abort(401)
+    oauth_token = handler.request.get('oauth_token',None)
+    if oauth_token:
+      username = process_oauth_token(handler, token)
+    else:
+      logging.warning('LoginAPI no auth credentials')
+      handler.abort(401)
   return username, True
+
+
+def process_auth_token(handler, token):
+  (username, password) = base64.b64decode(token.split(' ')[1]).split(':')
+  # logging.info("CheckAPILogin supplied %s, %s"%(username, password))
+  tried = 1
+  user = handler.user_model.get_by_auth_id(username)
+  if not user:
+    # try lowercase
+    username = username.lower()
+    user = handler.user_model.get_by_auth_id(username)
+    tried = 2
+  if not user:
+    # try lowercase
+    username = toIphoneCase(username)
+    user = handler.user_model.get_by_auth_id(username)
+    tried = 3
+  if user and user.blocked:
+    logging.info('views.loginAPI: Blocked user ' + username)
+    handler.abort(403)
+  try:
+    # set pwd[0] to lower
+    pwd_lower = password[0].lower() + password[1:]
+    handler.auth.get_user_by_password(username, pwd_lower, remember=True,
+                                      save_session=True)
+  except InvalidAuthIdError:
+    logging.warning('LoginAPI bad login: %s' % tried)
+    handler.abort(401)
+  except InvalidPasswordError:
+    try:
+      # set pwd[0] to upper
+      pwd_lower = password[0].upper() + password[1:]
+      handler.auth.get_user_by_password(username, pwd_lower, remember=True,
+                                        save_session=True)
+    except:
+      logging.warning('LoginAPI bad login  %s' % (tried))
+      raise
+  logging.info('LoginAPI: Logged in')
+  # tok = user.create_auth_token(handler.user_id)
+  # handler.response.out.write('{"auth":"%s"}'%tok)
+  return username
+
+
+def process_oauth_token(handler, token):
+  email = handler.request.get('email',None)
+  # logging.info("CheckAPILogin supplied %s, %s"%(username, password))
+  tried = 1
+  user = handler.user_model.get_by_email(email)
+  if user and user.blocked:
+    logging.info('views.loginAPI: Blocked user with oauth email ' + email)
+    handler.abort(403)
+  if not user:
+    handler.abort(401)
+
+  logging.info('LoginAPI: oauth Logged in')
+  # user.auth_ids[0] is the username
+  return user.auth_ids[0]
+
 
 def api_login_required(handler):
   """

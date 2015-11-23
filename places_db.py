@@ -152,8 +152,9 @@ class PlacesDB():
     try:
       # remove AND or & from name
       search_words = cls.get_word_list(name)
-      search_text = "|".join(search_words)
-      escaped_name = urllib2.quote(search_text)
+      search_text_or = "|".join(search_words)
+      search_text_and = " ".join(search_words)
+      escaped_name = "%s%%7C%s"%(urllib2.quote(search_text_and), urllib2.quote(search_text_or))
       url = ("https://maps.googleapis.com/maps/api/place/nearbysearch/"
             "json?rankby=distance&types=%s&location=%f,%f&name=%s&sensor=false&key=%s")\
             % \
@@ -166,6 +167,7 @@ class PlacesDB():
       response = urllib2.urlopen(url, timeout=15)
       jsonResult = response.read()
       addressResult = json.loads(jsonResult)
+      logging.info("get_google_db_places: Url=%s"%url)
 
     except Exception, e:
       if settings.running_on_test_server():

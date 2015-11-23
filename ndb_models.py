@@ -209,31 +209,37 @@ def get_updated_places_for_user(user_id_str, since):
   """
   try:
     result = PlaceChange.\
-      query(PlaceChange.subscriberId==user_id_str, PlaceChange.when < since)
+      query(PlaceChange.subscriberId==user_id_str, PlaceChange.when > since)
     return result
   except:
       logging_ext.error('** get_updated_places_for_user', exc_info=True)
 
 class getUserRecordFastViaWorkers(BaseHandler):
-  def getIncrement(self, my_id, now):
+  def getIncrement(self, my_id, since):
     try:
       places_id2json = {}
       vote_list=[]
-      updated_places = get_updated_places_for_user(str(my_id), now)
+      updated_places = PlaceChange.query(
+        PlaceChange.subscriberId==str(my_id),
+        PlaceChange.when > since
+      )
       for up in updated_places:
         p = models.Item.get_by_id(int(up.placeId))
-        places_id2json[up.placeId] =p.get_json()
-      updated_votes = VoteChange.query(VoteChange.subscriberId==str(my_id))
+        places_id2json[int(up.placeId)] =p.get_json()
+      updated_votes = VoteChange.query(
+        VoteChange.subscriberId==str(my_id),
+        VoteChange.when > since
+      )
       for uv in updated_votes:
-        key = ndb.Key('Vote', uv.voteId)
+        key = ndb.Key('Vote', int(uv.voteId))
         v = key.get()
         if v:
           try:
             vote_list.append(v.json)
-            place_id = v.item.key.id()
+            place_id = v.item.id()
             if not place_id in places_id2json:
-              places_id2json[place_id] = v.item.get_json()
-          except:
+              places_id2json[place_id] = v.item.get().get_json()
+          except Exception, E:
             pass
       return vote_list, places_id2json
     except:
@@ -318,7 +324,7 @@ class getUserRecordFastViaWorkers(BaseHandler):
               self.request.params['since'],
               views.config['DATETIME_FORMAT']) - \
                     views.config['TIMING_DELTA']
-            vote_list, place_id2json = self.getIncrement(my_id, now)
+            vote_list, place_id2json = self.getIncrement(my_id, since)
           except OverflowError, ex:
             logging_ext.error("** getFullUserRecord Time error with %s"%since,
                           exc_info=True)
