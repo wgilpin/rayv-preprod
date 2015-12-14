@@ -13,7 +13,7 @@ from auth_model import User
 from dataloader import load_data
 import mail_wrapper
 from models import Item, DBImage, Vote, Category, getProp, \
-  Invite, Friends, InviteInternal
+  Invite, Friends, InviteInternal, Comment
 from places_db import PlacesDB
 from profiler import profile_in, profile_out
 from settings import config
@@ -1327,3 +1327,52 @@ class FbRedirect (BaseHandler):
 class WebServer(BaseHandler):
   def get(self):
     self.render_template("www-index.html")
+
+class CommentsHandler(BaseHandler):
+  def get(self):
+    """
+    Get all comments for a vote
+    param: Vote: int
+    :return: list of json comments
+    """
+    vote_id = self.request.get("vote")
+    vote = Vote.get_by_id(int(vote_id))
+    list = []
+    comments_q = Comment.query(Comment.vote == vote.key)
+    for c in comments_q:
+      list.append(c.get_json())
+    json.dump({"comments":list},
+              self.response.out)
+
+  def post(self):
+    """
+    Put a single comment, update or insert
+    params:
+    vote: int
+    author: int
+    comment: string
+    when: datetime
+    :return:
+    """
+    when = datetime.datetime.strptime(
+            self.request.params['when'],
+            config['DATETIME_FORMAT'])
+    author = int(self.request.get('author'))
+    vote = int(self.request.get('vote'))
+    comment = None
+    if vote:
+      vote_key = ndb.Key(Vote,vote)
+      comment = Comment.query(
+          Comment.author == author,
+          Comment.when == when,
+          Comment.vote == vote_key
+      ).get()
+    if not comment:
+      comment = Comment()
+      comment.author = author
+      comment.vote = vote_key
+    comment.when = when
+    comment.comment = self.request.get('comment')
+    comment.put()
+    self.response.out.write('OK')
+

@@ -45,6 +45,8 @@ urls = [
   webapp2.Route('/api/UpdatePlace',ndb_models.AddPlaceChangesWorker),
   webapp2.Route('/api/ClearUserChanges',ndb_models.ClearUserChangesWorker),
   webapp2.Route('/api/vote',views.UpdateVote),
+  webapp2.Route('/api/comment',views.CommentsHandler),
+  webapp2.Route('/api/comments',views.CommentsHandler),
   webapp2.Route('/apns/register',views.RegisterApnsToken),
 
 
@@ -84,6 +86,7 @@ urls = [
   webapp2.Route('/admin/put_place_api', views.UpdateItemFromAnotherAppAPI),
   webapp2.Route('/admin/update_vote', admin.UpdateAdminVote),
   webapp2.Route('/admin/broadcast', admin.NotificationBroadcast),
+  webapp2.Route('/admin/password', admin.ResetUserPassword),
 
   webapp2.Route('/oauth/fb', views.FbRedirect),
   webapp2.Route('/www', views.WebServer),

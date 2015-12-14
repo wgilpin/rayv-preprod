@@ -445,6 +445,8 @@ def datetime_parser(dct):
                 pass
     return dct
 
+
+
 """
 A vote for an item
 """
@@ -459,6 +461,7 @@ class Vote(ndb.Model):
   place_style = ndb.IntegerProperty(default=PlaceStyle.STYLE_RELAXED)
   meal_kind = ndb.IntegerProperty(default=MealKind.KIND_ALL())
   cuisine = ndb.KeyProperty(kind=Category)
+  replies = ndb.IntegerProperty(default=0)
   json = ndb.StringProperty(default="")
 
   @classmethod
@@ -510,18 +513,21 @@ class Vote(ndb.Model):
    when =  self.when
    if not when:
      when = datetime.datetime.now()
+   replies =  Comment.query(Comment.vote == self.key)
    return {"key": str(self.item.id()),
-                     "vote": self.stars,
-                     "untried": self.untried,
-                     "style": self.place_style,
-                     "kind": self.meal_kind,
-                     "comment": self.comment,
-                     "cuisineName": self.cuisine.get().title,
-                     "voter": self.voter,
-                     "place_name": self.item.get().place_name,
-                     # Json date format 1984-10-02T01:00:00
-                     "when": when.strftime(
-                       config['DATETIME_FORMAT']),
+           "voteId": self.key.id(),
+           "vote": self.stars,
+           "untried": self.untried,
+           "style": self.place_style,
+           "kind": self.meal_kind,
+           "comment": self.comment,
+           "cuisineName": self.cuisine.get().title,
+           "voter": self.voter,
+           "place_name": self.item.get().place_name,
+           "replies": replies.count(),
+           # Json date format 1984-10-02T01:00:00
+           "when": when.strftime(
+             config['DATETIME_FORMAT']),
       }
 
   @classmethod
@@ -546,6 +552,52 @@ class Vote(ndb.Model):
     except Exception:
       logging.error("get_user_votes Exception", exc_info=True)
       return {}
+
+"""
+A comment on a vote
+"""
+
+class Comment(ndb.Model):
+  vote = ndb.KeyProperty(kind=Vote)
+  author = ndb.IntegerProperty()
+  comment = ndb.TextProperty()
+  when = ndb.DateTimeProperty(auto_now=True)
+  json = ndb.StringProperty(default="")
+
+  def to_json(self):
+    when =  self.when
+    if not when:
+      when = datetime.datetime.now()
+    if not self.key:
+      ndb.Model.put(self)
+    return {"Vote": str(self.vote.id()),
+           "Comment": self.comment,
+           "CommentId": self.key.id(),
+           "Author": self.author,
+           # Json date format 1984-10-02T01:00:00
+           "When": when.strftime(
+             config['DATETIME_FORMAT'])
+            }
+
+  def get_json(self):
+    if len(self.json)==0:
+      self.put()
+    return json.loads(self.json,object_hook=datetime_parser)
+
+  @classmethod
+  def json_serial(cls, o):
+    """
+    JSON serializer for objects not serializable by default json code
+       http://stackoverflow.com/questions/11875770/how-to-overcome-
+              datetime-datetime-not-json-serializable-in-python
+    """
+    if type(o) is datetime.date or type(o) is datetime.datetime:
+        return o.isoformat()
+
+  def put(self):
+    # override put to set the json
+    self.json = json.dumps(self.to_json(),default=self.json_serial)
+    ndb.Model.put(self)
 
 class Trust(ndb.Model):
   # Trust value from first user to second user, where firstId < secondId

@@ -466,7 +466,7 @@ class migrate(BaseHandler):
 
   @user_required
   def get(self):
-    migration_name = self.request.get("no")
+    migration_name = self.request.get("m")
     if migration_name == '1':
       self.set_votes_up_down()
       self.response.out.write("1-items OK")

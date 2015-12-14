@@ -69,9 +69,9 @@ class BaseHandler(webapp2.RequestHandler):
       params = {}
     try:
       user = self.user_info
+      params['userId'] = user
     except:
       user = None
-    params['userId'] = user
     path = os.path.dirname(__file__) + '/' + config["templates_dir"] + view_filename
     logging.debug("render_template path " + path)
     output = template.render(path, params)

@@ -173,3 +173,26 @@ class NotificationBroadcast(BaseHandler):
           registered_user.token),
                         exc_info=True)
     self.response.out.write('Sent %d messages, sandbox:%s'%(count, str(use_sandbox)))
+
+class ResetUserPassword(BaseHandler):
+  def get(self):
+    if not is_administrator():
+      self.abort(403)
+    self.render_template("admin-password.html")
+
+  def post(self):
+    if not is_administrator():
+      self.abort(403)
+    pwd = self.request.get("pwd")
+    pwd2 = self.request.get("pwd2")
+    if pwd != pwd2:
+      self.render_template("admin-password.html",{'message':'Passwords don\'t match'})
+      return
+    try:
+      email = self.request.get('email')
+      user = User.get_by_email(email)
+      user.set_password(pwd)
+      self.response.out.write("Password has been reset")
+    except Exception, e:
+      self.response.out.write(e)
+

@@ -25,7 +25,7 @@ config = {
   'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S',
   'memcache_life': timedelta(1), #1 day,
   'min_version':"0.7",
-  'version':"0.7",
+  'version':"0.8",
   'updates_max_age':30,
 }
 
