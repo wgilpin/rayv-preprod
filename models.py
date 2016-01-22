@@ -476,14 +476,19 @@ class Vote(ndb.Model):
 
   def put(self):
     # override put to set the json
+    if self.key and self.key.id() == 6507171000877056:
+      logging.debug('sara put')
+      # put twice so we have a key
+    ndb.Model.put(self)
     self.json = json.dumps(self.to_json(),default=self.json_serial)
     ndb.Model.put(self)
+    if self.key.id() == 6507171000877056:
+      logging.debug('sara put json %s'%self.json)
 
   def get_json(self):
     if len(self.json)==0:
       self.put()
     return json.loads(self.json,object_hook=datetime_parser)
-
 
   def kind_str(self):
     kinds = []
@@ -510,10 +515,14 @@ class Vote(ndb.Model):
     memcache.set('USERNAME' + str(self.voter), name)
     
   def to_json(self):
+   if self.key and self.item.id() == 6507171000877056:
+    logging.debug('sara to json')
    when =  self.when
    if not when:
      when = datetime.datetime.now()
-   replies =  Comment.query(Comment.vote == self.key)
+   replies =  Comment.query(Comment.vote == self.key).count()
+   if self.item.id() == 6507171000877056:
+     logging.debug("Vote ToJson Sarah %d - %s, %s"%(replies, str(Comment.vote), str(self.key)))
    return {"key": str(self.item.id()),
            "voteId": self.key.id(),
            "vote": self.stars,
@@ -524,7 +533,7 @@ class Vote(ndb.Model):
            "cuisineName": self.cuisine.get().title,
            "voter": self.voter,
            "place_name": self.item.get().place_name,
-           "replies": replies.count(),
+           "replies": replies,
            # Json date format 1984-10-02T01:00:00
            "when": when.strftime(
              config['DATETIME_FORMAT']),
@@ -552,6 +561,37 @@ class Vote(ndb.Model):
     except Exception:
       logging.error("get_user_votes Exception", exc_info=True)
       return {}
+
+"""
+A feedback Item
+"""
+
+class Feedback(ndb.Model):
+  reply_to = ndb.IntegerProperty(default=-1)# -1 means it's not a reply
+  user = ndb.IntegerProperty(default=-1)
+  admin_response = ndb.BooleanProperty()# True means it's an admin reply - Sprout
+  comment = ndb.TextProperty()
+  when = ndb.DateTimeProperty(auto_now=True)
+
+  def to_json(self):
+    when =  self.when
+    if not when:
+      when = datetime.datetime.now()
+    if not self.key:
+      ndb.Model.put(self)
+    return {"FeedbackId": str(self.key.id()),
+           "Comment": self.comment,
+           "UserId": self.user,
+           "ReplyTo": self.reply_to,
+           "AdminResponse": self.admin_response,
+           # Json date format 1984-10-02T01:00:00
+           "When": when.strftime(
+             config['DATETIME_FORMAT'])
+            }
+
+  def get_email(self):
+    u = auth_model.User.get_by_id(self.user)
+    return u.email_address
 
 """
 A comment on a vote

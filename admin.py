@@ -11,11 +11,12 @@ from auth_logic import BaseHandler
 from webapp2_extras import auth
 from auth_model import User
 from models import Item, DBImage, VoteValue, Vote, \
-  Category
+  Category, Feedback
 import urllib
 from google.appengine.api import urlfetch
 import geo
 import ndb_models
+from settings import config
 
 __author__ = 'Will'
 
@@ -177,12 +178,12 @@ class NotificationBroadcast(BaseHandler):
 class ResetUserPassword(BaseHandler):
   def get(self):
     if not is_administrator():
-      self.abort(403)
+      self.abort(404)
     self.render_template("admin-password.html")
 
   def post(self):
     if not is_administrator():
-      self.abort(403)
+      self.abort(404)
     pwd = self.request.get("pwd")
     pwd2 = self.request.get("pwd2")
     if pwd != pwd2:
@@ -191,8 +192,23 @@ class ResetUserPassword(BaseHandler):
     try:
       email = self.request.get('email')
       user = User.get_by_email(email)
+      if not user:
+        self.render_template("admin-password.html",{'message':'User not found'})
+        return
       user.set_password(pwd)
-      self.response.out.write("Password has been reset")
+      user.put()
+      if config['log_passwords']:
+        self.response.out.write("Password has been reset to %s"%pwd)
+      else:
+        self.response.out.write("Password has been reset ")
     except Exception, e:
       self.response.out.write(e)
 
+
+class FeedbackList(BaseHandler):
+  def get(self):
+    if not is_administrator():
+      self.redirect('/login')
+    feedbacks = Feedback.query().order(Feedback.when)
+    con = {'feedback':feedbacks}
+    self.render_template("admin-feedback.html", con)

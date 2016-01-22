@@ -321,11 +321,10 @@ class migrate(BaseHandler):
 
   @user_required
   def wipe_votes_json(self):
-    n = 0
-    for v in Vote.query():
-      v.put()
-      n += 1
-    self.response.out.write("\n%d "%n)
+    #reset all votes json
+    taskqueue.add(url='/task/batch_update_votes',
+                    params={'migration':'reset-votes-json'})
+    self.response.out.write("Batch job started<br/>")
 
   @user_required
   def rename_category(self):
@@ -568,6 +567,12 @@ class migrate(BaseHandler):
     elif migration_name == "rename-category":
       self.rename_category()
       self.response.out.write("Cat renamed")
+    elif migration_name == "single-change-queue-places":
+      self.single_change_queue_places()
+      self.response.out.write("Queues merged")
+    elif migration_name == "single-change-queue-votes":
+      self.single_change_queue_votes()
+      self.response.out.write("Queues merged")
     else:
       logging_ext.logging_ext.error("No Migration - %s"%migration_name)
       self.response.out.write("No Migration - %s"%migration_name)
@@ -603,6 +608,15 @@ class migrate(BaseHandler):
       if not u.blocked:
         u.blocked = False
         u.put()
+
+  def single_change_queue_places(self):
+    from ndb_models import Change
+    Change.migrate_old_places_to_changes()
+
+  def single_change_queue_votes(self):
+    from ndb_models import Change
+    Change.migrate_old_votes_to_changes()
+
 
 
 def batch_rename_category_items(item, old_cat, new_cat, nothing=None):
@@ -642,6 +656,8 @@ def BatchUpdateItems(update_fn_name, cursor=None, num_updated=0, p1=None, p2=Non
     logging.debug(
         'BatchUpdateItems complete with %d updates!', num_updated)
 
+
+
 class BatchUpdateItemsHandler(BaseHandler):
   def post(self):
     p1 = self.request.get('p1',None)
@@ -655,13 +671,21 @@ class BatchUpdateItemsHandler(BaseHandler):
                    p2=p2)
     self.response.out.write('Batch update successfully initiated.')
 
+
+def batch_reset_vote_json(vote):
+  # no put as the put is done in the batch handler
+  vote.json = json.dumps(vote.to_json(),default=vote.json_serial)
+
 def BatchUpdateVotes(update_fn_name, cursor=None, num_updated=0, p1=None, p2=None):
+  logging_ext.logging_ext.info("BatchUpdateVotes %s %d"%(update_fn_name,num_updated))
   query = Vote.query()
   to_put = []
   q, cursor, more  = query.fetch_page(BATCH_SIZE, start_cursor=cursor)
   for vote in q:
     if update_fn_name == "rename_category":
       batch_rename_category_votes(vote, p1, p2)
+    elif update_fn_name == "reset-votes-json":
+      batch_reset_vote_json(vote)
     else:
       continue
     to_put.append(vote)
@@ -673,15 +697,15 @@ def BatchUpdateVotes(update_fn_name, cursor=None, num_updated=0, p1=None, p2=Non
         'Put %d votes to Datastore for a total of %d',
         len(to_put), num_updated)
     deferred.defer(
-      BatchUpdateItems,
+      BatchUpdateVotes,
       update_fn_name=update_fn_name,
       cursor=cursor,
       num_updated=num_updated,
       p1=p1,
       p2=p2)
   else:
-    logging.debug(
-        'BatchUpdateVotes complete with %d updates!', num_updated)
+    logging_ext.logging_ext.info(
+        'BatchUpdateVotes complete with %d updates!'% num_updated)
 
 class BatchUpdateVotesHandler(BaseHandler):
   def post(self):

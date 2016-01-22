@@ -15,6 +15,12 @@ indexes:
   - name: userId=
   - name: percentage_posted_for_category
 
+- kind: Change
+  properties:
+  - name: kind
+  - name: subscriberId
+  - name: when
+
 - kind: Item
   properties:
   - name: owner

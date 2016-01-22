@@ -46,13 +46,15 @@ urls = [
   webapp2.Route('/api/ClearUserChanges',ndb_models.ClearUserChangesWorker),
   webapp2.Route('/api/vote',views.UpdateVote),
   webapp2.Route('/api/comment',views.CommentsHandler),
+  webapp2.Route('/api/comments/updates',views.CommentsUpdatesHandler),
   webapp2.Route('/api/comments',views.CommentsHandler),
+  webapp2.Route('/api/feedback',views.FeedbackHandler),
   webapp2.Route('/apns/register',views.RegisterApnsToken),
 
 
   webapp2.Route('/clear_user_updates',ndb_models.ClearUserUpdates),
   webapp2.Route('/task/batch_update_items',migrate.BatchUpdateItemsHandler),
-  webapp2.Route('/task/batch_update_votes',migrate.BatchUpdateItemsHandler),
+  webapp2.Route('/task/batch_update_votes',migrate.BatchUpdateVotesHandler),
   webapp2.Route('/GetItemsAjax', views.GetItemsAjax, name='GetItemsAjax'),
   webapp2.Route('/getMapList_Ajax', views.getMapList_Ajax),
   webapp2.Route('/getAddresses_ajax', views.getAddresses_ajax),
@@ -87,6 +89,7 @@ urls = [
   webapp2.Route('/admin/update_vote', admin.UpdateAdminVote),
   webapp2.Route('/admin/broadcast', admin.NotificationBroadcast),
   webapp2.Route('/admin/password', admin.ResetUserPassword),
+  webapp2.Route('/admin/feedback', admin.FeedbackList),
 
   webapp2.Route('/oauth/fb', views.FbRedirect),
   webapp2.Route('/www', views.WebServer),

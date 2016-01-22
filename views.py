@@ -2,6 +2,8 @@ import re
 import urllib
 import urllib2
 import datetime
+from time import strptime
+
 from google.appengine.ext import ndb
 from google.appengine.api import images, memcache
 from google.appengine.api.images import Image
@@ -13,7 +15,7 @@ from auth_model import User
 from dataloader import load_data
 import mail_wrapper
 from models import Item, DBImage, Vote, Category, getProp, \
-  Invite, Friends, InviteInternal, Comment
+  Invite, Friends, InviteInternal, Comment, Feedback
 from places_db import PlacesDB
 from profiler import profile_in, profile_out
 from settings import config
@@ -732,7 +734,7 @@ def update_votes(item, request_handler, user_id):
     vote = Vote()
     vote.item = item.key
     vote.voter = user_id
-    vote.comment =  str(request_handler.request.get('myComment'))
+    vote.comment =  unicode(request_handler.request.get('myComment'))
     vote.meal_kind =  int(request_handler.request.get('kind'))
     vote.place_style=  int(request_handler.request.get('style'))
     vote.cuisine = Category.get_by_id(request_handler.request.get('cuisine')).key
@@ -1088,6 +1090,10 @@ class login(BaseHandler):
       logging.debug("Login Started")
       username = self.request.get('username')
       user = self.user_model.get_by_auth_id(username)
+      if not user:
+          logging.info('views.login: No such user '+username)
+
+          return self.render_template("login.html", {"message": "Bad User"})
       if user and user.blocked:
           logging.info('views.login: Blocked user '+username)
           return self.render_template("login.html", {"message": "Login Denied"})
@@ -1097,9 +1103,21 @@ class login(BaseHandler):
       con = {"cats": Category.query()}
       logging.info('Login: Logged in')
       return self.render_template("index.html", con)
-    except (InvalidAuthIdError, InvalidPasswordError) :
-      logging.info(
-        'Login failed for userId %s'%username)
+    except InvalidAuthIdError, E:
+      if config['log_passwords']:
+        logging.info(
+          'Login failed for userId %s/%s - InvalidAuthIdError'%(username, password))
+      else:
+        logging.info(
+          'Login failed for userId %s - InvalidAuthIdError'%(username))
+      return self.render_template("login.html", {"message": "Login Failed"})
+    except InvalidPasswordError, E:
+      if config['log_passwords']:
+        logging.info(
+          'Login failed for userId %s/%s - InvalidPasswordError'%(username, password))
+      else:
+        logging.info(
+          'Login failed for userId %s - InvalidPasswordError'%(username))
       return self.render_template("login.html", {"message": "Login Failed"})
     except Exception:
       logging.exception(
@@ -1328,7 +1346,32 @@ class WebServer(BaseHandler):
   def get(self):
     self.render_template("www-index.html")
 
+class CommentsUpdatesHandler(BaseHandler):
+  @api_login_required
+  def get(self):
+    """
+    Get any updates on my comments
+    :return: list of vote ids
+    """
+    author = self.user_id
+    since = datetime.datetime.strptime(
+              self.request.params['since'],
+              config['DATETIME_FORMAT']) - \
+                config['TIMING_DELTA']
+    from ndb_models import  Change
+    results = {}
+    votesQ = Change.query(
+        Change.kind == Change.CHANGE_COMMENT,
+        Change.subscriberId == str(author),
+        Change.when > since)
+    for v in votesQ:
+        results[v.recordId]= v.when
+    json.dump({"changed_votes":results},
+              self.response.out,
+              default=json_serial)
+
 class CommentsHandler(BaseHandler):
+  @api_login_required
   def get(self):
     """
     Get all comments for a vote
@@ -1338,12 +1381,14 @@ class CommentsHandler(BaseHandler):
     vote_id = self.request.get("vote")
     vote = Vote.get_by_id(int(vote_id))
     list = []
-    comments_q = Comment.query(Comment.vote == vote.key)
-    for c in comments_q:
-      list.append(c.get_json())
+    if vote:
+      comments_q = Comment.query(Comment.vote == vote.key)
+      for c in comments_q:
+        list.append(c.get_json())
     json.dump({"comments":list},
               self.response.out)
 
+  @api_login_required
   def post(self):
     """
     Put a single comment, update or insert
@@ -1358,21 +1403,73 @@ class CommentsHandler(BaseHandler):
             self.request.params['when'],
             config['DATETIME_FORMAT'])
     author = int(self.request.get('author'))
-    vote = int(self.request.get('vote'))
-    comment = None
-    if vote:
-      vote_key = ndb.Key(Vote,vote)
+    vote_id  = int(self.request.get('vote'))
+    if vote_id:
+      vote_key = ndb.Key(Vote,vote_id)
       comment = Comment.query(
           Comment.author == author,
           Comment.when == when,
           Comment.vote == vote_key
       ).get()
-    if not comment:
-      comment = Comment()
-      comment.author = author
-      comment.vote = vote_key
-    comment.when = when
-    comment.comment = self.request.get('comment')
-    comment.put()
-    self.response.out.write('OK')
+      if not comment:
+        comment = Comment()
+        comment.author = author
+        comment.vote = vote_key
+      comment.when = when
+      comment.comment = self.request.get('comment')
+      comment.put()
+      vote_record = vote_key.get()
+      vote_record.put()
+      change_record = ndb_models.Change()
+      change_record.kind = ndb_models.Change.CHANGE_COMMENT
+      change_record.when = when
+      change_record.subscriberId = str(vote_record.voter)
+      change_record.recordId = str(vote_id)
+      change_record.put()
+      self.response.out.write('OK')
+    else:
+      self.abort(500)
+
+class FeedbackHandler(BaseHandler):
+  @api_login_required
+  def get(self):
+    """
+    Get all feedback for a user
+    :return: list of json feedbacks
+    """
+    # get feedbacks
+    try:
+      feedbacksQ = Feedback.query(Feedback.user == self.request.userId)
+      feedbacks = []
+      for f in feedbacksQ:
+        feedbacks.append(f.to_json())
+      json.dump({"comments":list},
+              self.response.out)
+    except Exception, e:
+      logging.error("FeedbackHandler.get",e)
+
+  @api_login_required
+  def post(self):
+    """
+    Write a feedback for a user
+    Params:
+    ReplyTo: int: 0 if a new item
+    Comment: string
+    """
+    try:
+      feedbackId = int(self.request.get('ReplyTo'))
+      fb = None
+      if feedbackId>0:
+        #find item
+        fb = Feedback.get_by_id(feedbackId)
+      if not fb:
+        # new item
+        fb = Feedback()
+        fb.user = self.user_id
+      fb.comment = self.request.get('Comment')
+      fb.admin_response = self.user.profile().is_admin
+      fb.put()
+      self.response.out.write("OK")
+    except Exception, e:
+      logging.error("FeedbackHandler.post",e)
 

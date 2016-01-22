@@ -25,8 +25,9 @@ config = {
   'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S',
   'memcache_life': timedelta(1), #1 day,
   'min_version':"0.7",
-  'version':"0.8",
+  'version':"0.7",
   'updates_max_age':30,
+  'log_passwords': False,
 }
 
 auth.default_config['token_max_age'] = 86400 * 7 * 8  # 8 weeks login auth token timeout

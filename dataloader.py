@@ -278,10 +278,10 @@ def load_data(wipe=False, section=None, Max=None):
         vote = models.Vote()
         vote_score = randint(0,5)
         if vote_score == 0:
-          vote.vote = 0
+          vote.stars = 0
           vote.untried = True
         else:
-          vote.vote = vote_score
+          vote.stars = vote_score
           vote.untried = False
         vote.comment = "blah v" + str(i)
         vote.voter = a_sample_user.key.integer_id()

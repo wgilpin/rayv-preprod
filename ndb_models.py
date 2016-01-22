@@ -38,6 +38,44 @@ class PlaceChange (ndb.Model):
   when = model.DateTimeProperty()
   subscriberId = model.StringProperty()
 
+class Change (ndb.Model):
+  recordId = model.StringProperty()
+  when = model.DateTimeProperty()
+  subscriberId = model.StringProperty()
+  kind = model.IntegerProperty()
+
+  CHANGE_VOTE = 1
+  CHANGE_PLACE = 2
+  CHANGE_COMMENT = 3
+
+  @classmethod
+  def migrate_old_votes_to_changes(cls):
+    count = 0
+    vote_changes = VoteChange.query()
+    for v in vote_changes:
+      new_change = Change()
+      new_change.kind = cls.CHANGE_VOTE
+      new_change.subscriberId = v.subscriberId
+      new_change.recordId = v.voteId
+      new_change.when = v.when
+      new_change.put()
+      count += 1
+    return count
+
+  @classmethod
+  def migrate_old_places_to_changes(cls):
+    count = 0
+    place_changes = PlaceChange.query()
+    for p in place_changes:
+      new_change = Change()
+      new_change.kind = cls.CHANGE_PLACE
+      new_change.subscriberId = p.subscriberId
+      new_change.recordId = p.placeId
+      new_change.when = p.when
+      new_change.put()
+      count += 1
+    return count
+
 class AddVoteChangesWorker(webapp2.RequestHandler):
   def post(self): # should run at most 1/s due to entity group limit
     """
@@ -61,14 +99,15 @@ class AddVoteChangesWorker(webapp2.RequestHandler):
       user_id = int(user_id_str)
       me = User.get_by_id(user_id)
       time = self.request.get('time')
-      old_votes = VoteChange.\
-        query(VoteChange.voteId==vote_id_str).\
+      old_votes = Change.\
+        query(Change.kind == Change.CHANGE_VOTE, Change.recordId == vote_id_str).\
         fetch(keys_only=True)
       ndb.delete_multi(old_votes)
       friends_list = me.get_friends_key_list()
       for u in friends_list:
-        change = VoteChange()
-        change.voteId = vote_id_str
+        change = Change()
+        change.kind = Change.CHANGE_VOTE
+        change.recordId = vote_id_str
         change.subscriberId = str(u.id())
         change.when = datetime.strptime(
           time,
@@ -92,8 +131,8 @@ class AddPlaceChangesWorker(webapp2.RequestHandler):
       logging_ext.log_to_console("AddPlaceChangesWorker")
       place_id_str = self.request.get('placeId')
       user_id_str = self.request.get('userId')
-      place_entries = PlaceChange.\
-        query(PlaceChange.placeId == place_id_str)
+      place_entries = Change.\
+        query(Change.kind==Change.CHANGE_PLACE, Change.recordId == place_id_str)
       now = datetime.now()
       for p in place_entries:
         if p.when < now:
@@ -102,12 +141,14 @@ class AddPlaceChangesWorker(webapp2.RequestHandler):
       user = User.get_by_id(int(user_id_str))
       friends_key_list = user.get_friends_key_list()
       for user_key in friends_key_list:
-        p = PlaceChange.\
+        p = Change.\
           query(
-            PlaceChange.subscriberId == str(user_key.id()),
-            PlaceChange.placeId == place_id_str).get()
+          Change.kind == Change.CHANGE_PLACE,
+            Change.subscriberId == str(user_key.id()),
+            Change.recordId == place_id_str).get()
         if not p:
-          p = PlaceChange()
+          p = Change()
+          p.kind = Change.CHANGE_PLACE
           p.subscriberId = str(user_key.id())
           p.placeId = place_id_str
         p.when = now
@@ -125,12 +166,12 @@ class ClearUserChangesWorker(webapp2.RequestHandler):
     try:
       since = datetime.now() - timedelta(days=settings.config['updates_max_age'])
       # @ndb.transactional
-      old_votes = VoteChange.\
-        query(VoteChange.when < since).\
+      old_votes = Change.\
+        query(Change.kind==Change.CHANGE_VOTE, Change.when < since).\
         fetch(keys_only=True)
       ndb.delete_multi(old_votes)
-      old_places = PlaceChange.\
-        query(PlaceChange.when < since).\
+      old_places = Change.\
+        query(Change.kind==Change.CHANGE_VOTE, Change.when < since).\
         fetch(keys_only=True)
       ndb.delete_multi(old_places)
       logging.info("ClearUserChangesWorker")
@@ -184,7 +225,9 @@ class getStrangerPlaces(BaseHandler):
       lat = float(self.request.get("lat"))
       lng = float(self.request.get("lng"))
       place_names = []
-      results = geo.findDbPlacesNearLoc(geo.LatLng(lat=lat, lng=lng), place_names=place_names)
+      results = geo.findDbPlacesNearLoc(
+          geo.LatLng(lat=lat, lng=lng),
+          place_names=place_names)
       if results:
         results['search'] = {'lat': lat,'lng':lng}
         # check_for_dirty_data(self, results)
@@ -208,8 +251,11 @@ def get_updated_places_for_user(user_id_str, since):
   :return: query object on PlaceChange
   """
   try:
-    result = PlaceChange.\
-      query(PlaceChange.subscriberId==user_id_str, PlaceChange.when > since)
+    result = Change.\
+      query(
+        Change.kind == Change.CHANGE_PLACE,
+        Change.subscriberId==user_id_str,
+        Change.when > since)
     return result
   except:
       logging_ext.error('** get_updated_places_for_user', exc_info=True)
@@ -219,16 +265,18 @@ class getUserRecordFastViaWorkers(BaseHandler):
     try:
       places_id2json = {}
       vote_list=[]
-      updated_places = PlaceChange.query(
-        PlaceChange.subscriberId==str(my_id),
-        PlaceChange.when > since
+      updated_places = Change.query(
+        Change.kind == Change.CHANGE_PLACE,
+        Change.subscriberId==str(my_id),
+        Change.when > since
       )
       for up in updated_places:
         p = models.Item.get_by_id(int(up.placeId))
         places_id2json[int(up.placeId)] =p.get_json()
-      updated_votes = VoteChange.query(
-        VoteChange.subscriberId==str(my_id),
-        VoteChange.when > since
+      updated_votes = Change.query(
+        Change.kind== Change.CHANGE_VOTE,
+        Change.subscriberId==str(my_id),
+        Change.when > since
       )
       for uv in updated_votes:
         key = ndb.Key('Vote', int(uv.voteId))
@@ -314,7 +362,8 @@ class getUserRecordFastViaWorkers(BaseHandler):
         result = {
           "id": my_id,
           "admin": self.user.profile().is_admin,
-          "version": settings.config["version"]}
+          "version": settings.config["version"],
+          "min_version": settings.config['min_version']}
         since = None
         now = datetime.now()
         if 'since' in self.request.params:
